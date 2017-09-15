@@ -1,0 +1,42 @@
+{
+	"@Note": "When updating this file please also update TinyMCE.php with the same changes.",
+	"name": "TinyMCE",
+	"version": "0.1",
+	"author": [
+		"Hallo Welt",
+		"Duncan Crane",
+		"Yaron Koren"
+	],
+	"url": "https://www.mediawiki.org/wiki/Extension:TinyMCE",
+	"descriptionmsg": "tinymce-desc",
+	"license-name": "GPL-2.0+",
+	"type": "hook",
+	"callback": "TinyMCEHooks::registerExtension",
+	"requires": {
+		"MediaWiki": ">= 1.27.0"
+	},
+	"MessagesDirs": {
+		"TinyMCE": [
+			"i18n"
+		]
+	},
+	"AutoloadClasses": {
+		"TinyMCEHooks": "TinyMCE.hooks.php",
+	},
+	"ResourceModules": {
+		"ext.pageforms.autoedit": {
+			"scripts": "MW_tinymce.js",
+			"styles": "MW_tinymce.css"
+		}
+	},
+	"ResourceFileModulePaths": {
+		"localBasePath": "",
+		"remoteExtPath": "PageForms"
+	},
+	"Hooks": {
+		"MakeGlobalVariablesScript": "TinyMCEHooks::setGlobalJSVariables",
+		"EditPageBeforeEditToolbar": "TinyMCEHooks::removeDefaultToolbar",
+		"EditPage::showEditForm:initial": "TinyMCEHooks::addToEditPage"
+	},
+	"manifest_version": 1
+}
