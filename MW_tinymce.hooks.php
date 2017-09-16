@@ -34,14 +34,20 @@ class TinyMCEHooks {
 
 		$context = new RequestContext();
 		$action = Action::getActionName( $context );
-		if ( $action !== 'edit' && $action !== 'formedit' ) {
+		$title = $context->getTitle();
+		$namespace = $title->getNamespace();
+		if ( $namespace == NS_SPECIAL ) {
+			list( $canonicalSpecialPageName, /*...*/ ) =
+				SpecialPageFactory::resolveAlias( $title->getDBkey() );
+		} else {
+			$canonicalSpecialPageName = null;
+		}
+		if ( $action !== 'edit' && $action !== 'formedit' && $canonicalSpecialPageName != 'FormEdit' ) {
 			return true;
 		}
 
-		$title = $context->getTitle();
-
 		// @TODO - this should not be hardcoded.
-		$tinyMCEEnabled = $title->getNamespace() != NS_TEMPLATE && $title->getNamespace() != PF_NS_FORM;
+		$tinyMCEEnabled = $namespace != NS_TEMPLATE && $namespace != PF_NS_FORM;
 		$vars['wgTinyMCEEnabled'] = $tinyMCEEnabled;
 
 		if ( !$tinyMCEEnabled ) {
