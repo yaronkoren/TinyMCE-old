@@ -21,17 +21,17 @@
 		]
 	},
 	"AutoloadClasses": {
-		"TinyMCEHooks": "TinyMCE.hooks.php",
+		"TinyMCEHooks": "TinyMCE.hooks.php"
 	},
 	"ResourceModules": {
-		"ext.pageforms.autoedit": {
+		"ext.tinymce": {
 			"scripts": "MW_tinymce.js",
 			"styles": "MW_tinymce.css"
 		}
 	},
 	"ResourceFileModulePaths": {
 		"localBasePath": "",
-		"remoteExtPath": "PageForms"
+		"remoteExtPath": "TinyMCE"
 	},
 	"Hooks": {
 		"MakeGlobalVariablesScript": "TinyMCEHooks::setGlobalJSVariables",
