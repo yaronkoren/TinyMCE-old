@@ -1,0 +1,41 @@
+{
+	"@metadata": {
+		"authors": [
+			"Duncan Crane",
+			"Yaron Koren"
+		]
+	},
+	"tinymce-desc": "The TinyMCE WYSIWYG editor",
+	"tinymce-upload-alternate-text": "Alternate text",
+	"tinymce-upload-title": "Title",
+	"tinymce-upload-caption": "Caption",
+	"tinymce-upload-link": "Link",
+	"tinymce-upload-width": "Width",
+	"tinymce-upload-height": "Height",
+	"tinymce-horizontal-align": "Horizontal alignment",
+	"tinymce-horizontal-align-left": "Left",
+	"tinymce-horizontal-align-centre": "Centre",
+	"tinymce-horizontal-align-right": "Right",
+	"tinymce-horizontal-align-none": "None",
+	"tinymce-vertical-align": "Vertical alignment",
+	"tinymce-vertical-align-middle": "middle",
+	"tinymce-vertical-align-top": "top",
+	"tinymce-vertical-align-bottom": "bottom",
+	"tinymce-vertical-align-baseline": "baseline",
+	"tinymce-vertical-align-sub": "sub",
+	"tinymce-vertical-align-super": "super",
+	"tinymce-vertical-align-text-top": "text-top",
+	"tinymce-vertical-align-text-bottom": "text-bottom",
+	"tinymce-format": "Format",
+	"tinymce-format-thumb": "thumb",
+	"tinymce-format-border": "border",
+	"tinymce-format-frame": "frame",
+	"tinymce-format-frameless": "frameless",
+	"tinymce-source-local-file": "Insert existing file",
+	"tinymce-source-insert-local-file": "Enter the title of file that has already been uploaded (without the namespace prefix)",
+	"tinymce-no-file-name": "File name empty - did you select the appropriate radio button?",
+	"tinymce-insertbtn": "Insert existing file",
+	"tinymce-uploadbtn": "Upload/Insert/Update file/link",
+	"tinymce-sideupload-drop-error": "Problem encountered uploading $1 directly from website. Try downloading to a local disk and using the insert image button to upload from there",
+	"tooltip-pf-tinymce-upload": "Start upload/insert file"
+}
