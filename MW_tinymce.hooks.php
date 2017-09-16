@@ -32,6 +32,22 @@ class TinyMCEHooks {
 
 		global $wgParser;
 
+		$context = new RequestContext();
+		$action = Action::getActionName( $context );
+		if ( $action !== 'edit' && $action !== 'formedit' ) {
+			return true;
+		}
+
+		$title = $context->getTitle();
+
+		// @TODO - this should not be hardcoded.
+		$tinyMCEEnabled = $title->getNamespace() != NS_TEMPLATE && $title->getNamespace() != PF_NS_FORM;
+		$vars['wgTinyMCEEnabled'] = $tinyMCEEnabled;
+
+		if ( !$tinyMCEEnabled ) {
+			return true;
+		}
+
 		$extensionTags = $wgParser->getTags(); 
 		$specialTags = '';
 		foreach ( $extensionTags as $tagName ) {
@@ -49,7 +65,6 @@ class TinyMCEHooks {
 
 		$vars['wgTinyMCETagList'] = $tinyMCETagList;
 
-		$context = new RequestContext();
 		$vars['wgTinyMCELanguage'] = $context->getLanguage()->getCode();
 
 		return true;
