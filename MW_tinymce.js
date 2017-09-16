@@ -1,3 +1,5 @@
+if ( mw.config.get( 'wgTinyMCEEnabled' ) ) {
+
 var scriptPath = mw.config.get( 'wgScriptPath' );
 
 // Try to translate between MediaWiki's language codes and TinyMCE's -
@@ -96,6 +98,22 @@ if ( contentLanguage !== 'en' ) {
 
 jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
   function() {
+	$('#wpTextbox1, .tinymce').each( function() {
+		$(this).before("<p><a class=\"toggleMCE\" data-current-state=\"enabled\" data-input-id=\"" +
+			$(this).attr('id') + "\" href=\"\#\">Switch to basic editor</a></p>");
+	});
+	$('.toggleMCE').click( function() {
+		tinymce.EditorManager.execCommand('mceToggleEditor', true, $(this).attr('data-input-id'));
+		var currentState = $(this).attr('data-current-state');
+		if ( currentState === 'enabled' ) {
+			$(this).attr('data-current-state', 'disabled')
+				.html("Switch to advanced editor");
+		} else {
+			$(this).attr('data-current-state', 'enabled')
+				.html("Switch to basic editor");
+		}
+	});
+
       window.tinymce.init({ 
 //          selector: '.tinymce',
           selector: '#wpTextbox1, .tinymce',
@@ -165,7 +183,7 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
              'colorpicker': scriptPath + '/extensions/TinyMCE/tinymce/plugins/colorpicker/plugin.js',
              'wikisourcecode': scriptPath + '/extensions/TinyMCE/tinymce/plugins/pf_code/plugin.js',
              'wikilink': scriptPath + '/extensions/TinyMCE/tinymce/plugins/pf_link/plugin.js',
-             'wikimagic': scriptPath + '/extensions/TinyMCE/tinymce/plugins/pf_wikimagic/plugin.js',
+             //'wikimagic': scriptPath + '/extensions/TinyMCE/tinymce/plugins/pf_wikimagic/plugin.js',
              'wikipaste': scriptPath + '/extensions/TinyMCE/tinymce/plugins/pf_paste/plugin.js',
              'wikicode': scriptPath + '/extensions/TinyMCE/tinymce/plugins/pf_wikicode/plugin.js',
           },
@@ -274,3 +292,5 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
           }
       });
   });
+ 
+}
