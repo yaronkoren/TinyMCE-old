@@ -38,5 +38,8 @@
 		"EditPageBeforeEditToolbar": "TinyMCEHooks::removeDefaultToolbar",
 		"EditPage::showEditForm:initial": "TinyMCEHooks::addToEditPage"
 	},
+	"config": {
+		"TinyMCEEnabled": false
+	},
 	"manifest_version": 1
 }
