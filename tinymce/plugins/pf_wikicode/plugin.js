@@ -95,7 +95,7 @@ var BsWikiCode = function() {
 		 * Used for numbering external links with no label
 		 * @type Number
 		 */
-        _externalLinkNo = 1,
+		_externalLinkNo = 1,
 		/**
 		 *
 		 * @type TinyMCE
@@ -225,20 +225,20 @@ var BsWikiCode = function() {
 	});
 
 	function print_r(printthis, returnoutput) {
-    		var output = '';
+		var output = '';
 
-    		if($.isArray(printthis) || typeof(printthis) == 'object') {
-        		for(var i in printthis) {
-            			output += i + ' : ' + print_r(printthis[i], true) + '\n';
-        		}
-    		} else {
-        		output += printthis;
-    		}
-    		if(returnoutput && returnoutput == true) {
-        		return output;
-    		}else {
-        		alert(output);
-    		}
+ 		if ($.isArray(printthis) || typeof(printthis) == 'object') {
+			for(var i in printthis) {
+				output += i + ' : ' + print_r(printthis[i], true) + '\n';
+			}
+		} else {
+			output += printthis;
+		}
+		if (returnoutput && returnoutput == true) {
+			return output;
+		} else {
+			alert(output);
+		}
 	}
 
 	function _image2html(link) {
@@ -305,7 +305,7 @@ var BsWikiCode = function() {
 			}
 
 			if ($.inArray(part, ['top']) !== -1) {
-				wikiImageObject.top  = true;
+				wikiImageObject.top = true;
 				wikiImageObject.verticalalign = 'top';
 				continue;
 			}
@@ -323,7 +323,7 @@ var BsWikiCode = function() {
 			}
 
 			if ($.inArray(part, ['sub']) !== -1) {
-				wikiImageObject.sub  = true;
+				wikiImageObject.sub = true;
 				wikiImageObject.verticalalign = 'sub';
 				continue;
 			}
@@ -570,8 +570,8 @@ var BsWikiCode = function() {
 				var properties = stylestring.split(';');
 				var stylearray = {};
 				properties.forEach(function(property) {
-				    var option = property.split(':');
-				    stylearray[option[0]] = option [1];
+					var option = property.split(':');
+					stylearray[option[0]] = option [1];
 				});
 				var stylestring = JSON.stringify(stylearray);
 				var style = JSON.parse(stylestring);
@@ -920,7 +920,7 @@ var BsWikiCode = function() {
 					target = decodeURI( hrefAttr[1] );
 					// 03.03.2014 STM ??? target = target; //unescape(target);
 				}
-				// @todo <br /> br-tags bereits in insertLink abfangen oder hier einfügen
+				// @todo <br /> br-tags bereits in insertLink abfangen oder hier einfÃ¼gen
 				inner = link.match(/>(.*?)<\/a>/i);
 				if (inner) {
 					label = inner[1];
@@ -1125,7 +1125,7 @@ var BsWikiCode = function() {
 					lines[i] = endTd + "<tr" + attr + ">";
 					inTr = true;
 				}
-			} else if (line = lines[i].match(/^\|(.*)/gi) && inTable) {
+			} else if ( ( line = lines[i].match(/^\|(.*)/gi) ) && inTable) {
 				cells = line[0].substr(1, line[0].length).split(/(\|\|)/);
 				var curLine = '';
 
@@ -1171,7 +1171,7 @@ var BsWikiCode = function() {
 					}
 				}
 				lines[i] = curLine;
-			} else if (line = lines[i].match(/^\!(.*)/gi) && inTable) {
+			} else if ( ( line = lines[i].match(/^\!(.*)/gi) ) && inTable) {
 				cells = line[0].substr(1, line[0].length).split(/!!/);
 				curLine = "";
 
@@ -1402,7 +1402,7 @@ var BsWikiCode = function() {
 			emptyLineAfter = false,
 			lastLine = false;
 
-                //Walk trough text line by line
+                // Walk through text line by line
 		for (var i = 0; i < lines.length; i++) {
 			// Prevent REDIRECT from being rendered as list
 			line = lines[i].match(/^(\*|#(?!REDIRECT)|:|;)+/);
@@ -1465,7 +1465,7 @@ var BsWikiCode = function() {
 				matchEndTags = false;
 
 				matchStartTags = lines[i].match(/^(<table|<blockquote|<h1|<h2|<h3|<h4|<h5|<h6|<pre|@@@PRE|<tr|<td|<p|<div|<ul|<ol|<li|<\/tr|<\/td|<\/th|<hr)/gi);
-				// Achtung!! Habe gegenüber MW-Parser hier td und th und /table rausgenommen. Wenn das mal gut geht... Nachtrag: ist mom. obsolet
+				// Achtung!! Habe gegenÃ¼ber MW-Parser hier td und th und /table rausgenommen. Wenn das mal gut geht... Nachtrag: ist mom. obsolet
 				matchEndTags = lines[i].match(/(<\/blockquote|<\/h1|<\/h2|<\/h3|<\/h4|<\/h5|<\/h6|<\/?div|<hr|<\/pre|@@@PRE|<\/p|<\/li|<\/ul|<\/ol|<\/?center|<td|<th|<\/table)/gi);
 
 				// hopefully temporary measure. divs with one or two empty lines in between are rendered correctly using these two variables
@@ -1621,7 +1621,7 @@ var BsWikiCode = function() {
 		// faster replacement for header processing
 		// One regexp to rule them all, on regexp to find them,
 		// one regexp to bring them all and in html bind them!!!
-		text = text.replace(/(^|\n)?((?:=){1,6})\s*(.+?)\s*\2(?:\n+|$)/img, _wikiHeader2html);
+		text = text.replace(/(^|\n)((?:=){1,6})\s*(.+?)\s*\2(?:\n+|$)/img, _wikiHeader2html);
 
 		// horizontal rule
 		text = text.replace(/^\n?----\n?/gmi, "\n<hr>\n");
@@ -1945,7 +1945,7 @@ var BsWikiCode = function() {
 		// Cleanup empty lines that exists if enter was pressed within an aligned paragraph
 		// However, leave empty divs with ids or classes
 		text = text.replace(/<div (?!(id|class))[^>]*?>(\s|&nbsp;)*<\/div>/gmi, "");
-		// Cleanup am Schluss löscht alle Zeilenumbrüche und Leerzeilen/-Zeichen am Ende.
+		// Cleanup am Schluss lÃ¶scht alle ZeilenumbrÃ¼che und Leerzeilen/-Zeichen am Ende.
 		// Important: do not use m flag, since this makes $ react to any line ending instead of text ending
 		text = text.replace(/((<p( [^>]*?)?>(\s|&nbsp;|<br\s?\/>)*?<\/p>)|<br\s?\/>|\s)*$/gi, "");
 		text = text.replace(/<br [^>]*bs_lastline[^>]*>/gmi, '');
@@ -1969,12 +1969,12 @@ var BsWikiCode = function() {
 	 * @param {String} text
 	 * @returns {String}
 	 */
-	function _preserveSpecialTags(text) {
+	function _preserveSpecialTags(text, e) {
 		var mtext, regex, matcher, swt, i, pos, specialTagsList, st, cmt,
 			curlyBraceDepth, squareBraceDepth, templateDepth,
 			squareBraceFirst, tempTemplate, innerText, id, htmlText, el,
 			templateName, templateText, templateResult, templateNameLines, switchWikiText;
-		var ed = tinymce.activeEditor;
+		var ed = tinymce.get(e.target.id);
 		var switches = new Array();
 		if (!_switches) {
 			_switches = new Array();
@@ -2093,11 +2093,11 @@ if (false) {
 					'disabletoc': '',
 					'format': 'json',};
 				$.ajax({
-  					dataType: "json",
-  					url: script,
+					dataType: "json",
+					url: script,
  	 				data: data,
-  					async: false, 
-  					success: function(data) {
+					async: false, 
+					success: function(data) {
 						var templateHTML = data.parse.text["*"];
 						// DC remove leading and trailing <p>
 						templateHTML = $.trim(templateHTML);
@@ -2115,7 +2115,7 @@ if (false) {
 							'title': templateWikiText,
 							'data-bs-type': "template",
 							'data-bs-id': i,
-							'data-bs-name': templateName, 
+							'data-bs-name': templateName,
 							'data-bs-wikitext': templateWikiText,
 							'contenteditable': "false"
 						};
@@ -2206,7 +2206,7 @@ if (false) {
 
 			innerText = cmt[2] + cmt[3];
 			// @todo MRG (20.12.12 01:49): This is adapted to german needs. Other languages might want other characters
-			innerText = innerText.replace(/[^a-zA-Z0-9äöüÄÖÜß\(\)_]/gmi, " ");
+			innerText = innerText.replace(/[^a-zA-Z0-9Ã¤Ã¶Ã¼Ã„Ã–ÃœÃŸ\(\)_]/gmi, " ");
 			text = text.replace(
 				cmt[0],
 				cmt[1]
@@ -2228,9 +2228,9 @@ if (false) {
 	 * @param {String} text
 	 * @returns {String}
 	 */
-	function _recoverSpecialTags(text) {
+	function _recoverSpecialTags(text, e) {
 		var matcher, nlBefore, nlAfter, i;
-		var ed = tinymce.activeEditor;
+		var ed = tinymce.get(e.target.id);
 
 		// this must be in inverse order as preserveSpecialTags
 		// in order to allow for nested constructions
@@ -2332,7 +2332,7 @@ if (false) {
 		if (_nowikiTags) {
 				for (i = 0; i < _nowikiTags.length; i++) {
 						text = text.replace(_nowikiTags[i], "@@@NOWIKI" + i + "@@@");
-						_nowikiTags[i] = _nowikiTags[i].replace( "\n",  "<span class='single_linebreak' title='single linebreak'>&para;<\/span> " );
+						_nowikiTags[i] = _nowikiTags[i].replace( "\n", "<span class='single_linebreak' title='single linebreak'>&para;<\/span> " );
 				}
 		}
 
@@ -2589,11 +2589,11 @@ if (false) {
 	 * @param {String} text
 	 * @returns {String}
 	 */
-	function _preprocessWiki2Html(text) {
+	function _preprocessWiki2Html(text, e) {
 		// normalize line endings to \n
 		text = text.replace(/\r\n/gmi, "\n");
 
-		/* DC because the table may be part of a template parameter {{!}} may 
+		/* DC because the table may be part of a template parameter {{!}} may
 		have been used instead of | so do this substitution first*/
 		text = text.replace(/{{!}}/gmi, "|");
 
@@ -2645,7 +2645,7 @@ if (false) {
 		}
 
 		//special tags before pres prevents spaces in special tags like GeSHi to take effect
-		text = _preserveSpecialTags(text);
+		text = _preserveSpecialTags(text, e);
 
 		//cleanup linebreaks in tags except comments
 		text = text.replace(/(<[^!][^>]+?)(\n)([^<]+?>)/gi, "$1$3");
@@ -2715,10 +2715,10 @@ if (false) {
 		// undo/redo. So no additional processing should occur. Default is 'html'
 		if (e.format == 'raw' ) return;
 		if (e.load) {
-			e.content = _preprocessWiki2Html(e.content);
+			e.content = _preprocessWiki2Html(e.content, e);
 		}
 		_images = []; //Reset the images "array"
-		e.content = _wiki2html(e.content);
+		e.content = _wiki2html(e.content, e);
 		_loadImageRealUrls();
 
 	}
@@ -2759,7 +2759,7 @@ if (false) {
 				e.content = e.content.replace(/(<span class="bs_htmlentity">)(.+?)(<\/span>)/gmi, '$2');
 			}
 
-			e.content = _recoverSpecialTags(e.content);
+			e.content = _recoverSpecialTags(e.content, e);
 
 			// cleanup templates in table markers
 			e.content = e.content.replace(/data-bs-t.*?-tpl.*?="(.*?)"/gmi, "{{$1}}");
