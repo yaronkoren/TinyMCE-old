@@ -30,27 +30,10 @@ class TinyMCEHooks {
 		 * @return bool Allow other hooked methods to be executed. Always true.
 		 */
 
+		global $wgTinyMCEEnabled, $wgTinyMCELanguage;
 		global $wgParser;
 
-		$context = new RequestContext();
-		$action = Action::getActionName( $context );
-		$title = $context->getTitle();
-		$namespace = $title->getNamespace();
-		if ( $namespace == NS_SPECIAL ) {
-			list( $canonicalSpecialPageName, /*...*/ ) =
-				SpecialPageFactory::resolveAlias( $title->getDBkey() );
-		} else {
-			$canonicalSpecialPageName = null;
-		}
-		if ( $action !== 'edit' && $action !== 'formedit' && $canonicalSpecialPageName != 'FormEdit' ) {
-			return true;
-		}
-
-		// @TODO - this should not be hardcoded.
-		$tinyMCEEnabled = $namespace != NS_TEMPLATE && $namespace != PF_NS_FORM;
-		$vars['wgTinyMCEEnabled'] = $tinyMCEEnabled;
-
-		if ( !$tinyMCEEnabled ) {
+		if ( !$wgTinyMCEEnabled ) {
 			return true;
 		}
 
@@ -71,7 +54,7 @@ class TinyMCEHooks {
 
 		$vars['wgTinyMCETagList'] = $tinyMCETagList;
 
-		$vars['wgTinyMCELanguage'] = $context->getLanguage()->getCode();
+		$vars['wgTinyMCELanguage'] = $wgTinyMCELanguage;
 
 		return true;
 	}
@@ -86,6 +69,19 @@ class TinyMCEHooks {
 	}
 
 	public static function addToEditPage( EditPage &$editPage, OutputPage &$output ) {
+		global $wgTinyMCEEnabled, $wgTinyMCELanguage;
+
+		$context = $editPage->getArticle()->getContext();
+		$title = $editPage->getTitle();
+		$namespace = $title->getNamespace();
+
+		// @TODO - this should not be hardcoded.
+		$wgTinyMCEEnabled = $namespace != NS_TEMPLATE && $namespace != PF_NS_FORM;
+		if ( !$wgTinyMCEEnabled ) {
+			return true;
+		}
+
+		$wgTinyMCELanguage = $context->getLanguage()->getCode();
 		$output->addModules( 'ext.tinymce' );
 		return true;
 	}
