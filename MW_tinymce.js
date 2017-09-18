@@ -1,5 +1,3 @@
-if ( mw.config.get( 'wgTinyMCEEnabled' ) ) {
-
 var scriptPath = mw.config.get( 'wgScriptPath' );
 
 // Try to translate between MediaWiki's language codes and TinyMCE's -
@@ -291,6 +289,4 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 	     	});
           }
       });
-  });
- 
-}
+});
