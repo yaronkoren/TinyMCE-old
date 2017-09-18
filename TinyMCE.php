@@ -88,3 +88,5 @@ $GLOBALS['wgResourceModules'] += array(
 
 // PHP fails to find relative includes at some level of inclusion:
 // $pathfix = $IP . $GLOBALS['wgTinyMCEScriptPath'];
+
+$GLOBALs['wgTinyMCEEnabled'] = false;
