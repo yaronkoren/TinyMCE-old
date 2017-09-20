@@ -206,8 +206,8 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
             	{title: "Pre", block: "pre", classes: "bs_pre_from_space" },
             	{title: "Paragraph", block: "p" }
           ],
+          images_upload_credentials: true,
           setup: function(editor) {
-             	images_upload_credentials: true;
 
 		/* dc debugger */
 		function print_r(printthis, returnoutput) {
