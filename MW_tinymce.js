@@ -209,24 +209,6 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
           images_upload_credentials: true,
           setup: function(editor) {
 
-		/* dc debugger */
-		function print_r(printthis, returnoutput) {
-    			var output = '';
-
-    			if($.isArray(printthis) || typeof(printthis) == 'object') {
-		 	       for(var i in printthis) {
-            				output += i + ' : ' + print_r(printthis[i], true) + '\n';
-        			}
-   		 	}else {
-        			output += printthis;
-    			}
-    			if(returnoutput && returnoutput == true) {
-        			return output;
-   			}else {
-        			alert(output);
-    			}
-		}
-
              	function insertImage() {
                 	var editorid = editor.id;
 		 	var node = editor.selection.getNode();
