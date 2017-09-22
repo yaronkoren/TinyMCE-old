@@ -6,6 +6,7 @@
 		]
 	},
 	"tinymce-desc": "The TinyMCE WYSIWYG editor",
+	"upload-displayparams": "Display parameters",
 	"tinymce-upload-alternate-text": "Alternate text",
 	"tinymce-upload-title": "Title",
 	"tinymce-upload-caption": "Caption",
@@ -37,5 +38,5 @@
 	"tinymce-insertbtn": "Insert existing file",
 	"tinymce-uploadbtn": "Upload/Insert/Update file/link",
 	"tinymce-sideupload-drop-error": "Problem encountered uploading $1 directly from website. Try downloading to a local disk and using the insert image button to upload from there",
-	"tooltip-pf-tinymce-upload": "Start upload/insert file"
+	"tooltip-tinymce-upload": "Start upload/insert file"
 }

@@ -71,6 +71,10 @@ $GLOBALS['wgHooks']['EditPageBeforeEditToolbar'][] = 'TinyMCEHooks::removeDefaul
 $GLOBALS['wgHooks']['EditPage::showEditForm:initial'][] = 'TinyMCEHooks::addToEditPage';
 
 $GLOBALS['wgAutoloadClasses']['TinyMCEHooks'] = __DIR__ . '/TinyMCE.hooks.php';
+$GLOBALS['wgAutoloadClasses']['TinyMCEUploadForm'] = __DIR__ . '/upload/TinyMCEUploadForm.php';
+$GLOBALS['wgAutoloadClasses']['TinyMCEUploadSourceField'] = __DIR__ . '/upload/TinyMCEUploadSourceField.php';
+$GLOBALS['wgAutoloadClasses']['TinyMCEUploadWindow'] = __DIR__ . '/upload/TinyMCEUploadWindow.php';
+$GLOBALS['wgSpecialPages']['TinyMCEUploadWindow'] = 'TinyMCEUploadWindow';
 
 $GLOBALS['wgMessagesDirs']['TinyMCE'] = __DIR__ . '/i18n';
 
@@ -82,8 +86,18 @@ $wgTinyMCEResourceTemplate = array(
 $GLOBALS['wgResourceModules'] += array(
 	'ext.tinymce' => $wgTinyMCEResourceTemplate + array(
 		'scripts' => 'MW_tinymce.js',
-		'styles' => 'MW_tinymce.css'
+		'styles' => 'MW_tinymce.css',
+		'dependencies' => 'ext.tinymce.fancybox'
+	),
+	'ext.tinymce.fancybox' => $wgTinyMCEResourceTemplate + array(
+		'scripts' => 'fancybox/jquery.fancybox.js',
+		'styles' => 'fancybox/jquery.fancybox.css',
+		'dependencies' => 'ext.tinymce.browser'
+	),
+	'ext.tinymce.browser' => $wgTinyMCEResourceTemplate + array(
+		'scripts' => 'jquery.browser.js'
 	)
+
 );
 
 // PHP fails to find relative includes at some level of inclusion:

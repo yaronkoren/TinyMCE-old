@@ -219,7 +219,7 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 				var upLoadType = "file";
 		 	}
 
-                 	var uploadform = scriptPath + '/index.php?title=Special:UploadWindow&pfInputID=' + editorid + 
+                 	var uploadform = scriptPath + '/index.php?title=Special:TinyMCEUploadWindow&pfInputID=' + editorid + 
 				'&pfEditor=tinymce' + 
 				'&pfSelect=' + editor.selection.getContent() + 
 				'&pfNode=' + nodeID + 
