@@ -44989,7 +44989,12 @@ define(
 
         // Pass submit/reset from form to editor instance
         editor.formEventDelegate = function (e) {
-          editor.fire(e.type, e);
+		// Special handling if TinyMCE editor
+		// is disabled. -YK
+		var mceEditor = $('#' + editor.id).prev();
+		if ( mceEditor.css('display') != 'none' ) {
+			editor.fire(e.type, e);
+		}
         };
 
         DOM.bind(form, 'submit reset', editor.formEventDelegate);
