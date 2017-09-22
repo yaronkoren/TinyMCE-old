@@ -4,6 +4,9 @@ var scriptPath = mw.config.get( 'wgScriptPath' );
 // they're similar, but not identical. MW's are always lowercase, and
 // they tend to use less country codes.
 var contentLanguage = mw.config.get( 'wgTinyMCELanguage' );
+if ( contentLanguage == null ) {
+	contentLanguage = 'en';
+}
 var supportedLanguages = [
 	'ar', 'ar_SA',
 	'hy',
