@@ -113,6 +113,22 @@ class TinyMCEHooks {
 			}
 		}
 
+		// If there was no match found, see if there's a matching
+		// "fallback language" for the current language - like
+		// 'fr' for 'frc'.
+		$fallbackLangs = Language::getFallbacksFor( $mwLang );
+		foreach ( $fallbackLangs as $fallbackLang ) {
+			if ( $fallbackLang === 'en' ) {
+				continue;
+			}
+			foreach ( $tinyMCELanguages as $tinyMCELang ) {
+				if ( $fallbackLang === strtolower( $tinyMCELang ) ||
+					$fallbackLang === substr( $tinyMCELang, 0, 2 ) ) {
+					return $tinyMCELang;
+				}
+			}
+		}
+
 		return 'en';
 	}
 
