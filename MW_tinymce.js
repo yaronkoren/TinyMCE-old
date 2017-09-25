@@ -6,6 +6,7 @@ if ( tinyMCELanguage !== 'en' ) {
 	tinyMCELangURL = scriptPath + '/extensions/TinyMCE/tinymce/langs/' +
 		tinyMCELanguage + '.js';
 }
+var tinyMCEDirectionality = mw.config.get( 'wgTinyMCEDirectionality' );
 
 jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
   function() {
@@ -55,7 +56,7 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
           height: 400,
           statusbar: false,
 	  // the default text direction for the editor
-	  directionality: 'ltr',
+	  directionality: tinyMCEDirectionality,
 	  // default language
 	  //language: 'en',
 	  language_url: tinyMCELangURL,

@@ -154,6 +154,8 @@ class TinyMCEHooks {
 		$mwLanguage = $context->getLanguage()->getCode();
 		$tinyMCELanguage = self::mwLangToTinyMCELang( $mwLanguage );
 		$vars['wgTinyMCELanguage'] = $tinyMCELanguage;
+		$directionality = $context->getLanguage()->getDir();
+		$vars['wgTinyMCEDirectionality'] = $directionality;
 
 		return true;
 	}
