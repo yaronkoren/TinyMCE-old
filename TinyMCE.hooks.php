@@ -54,6 +54,7 @@ class TinyMCEHooks {
 			'eo',
 			'es', 'es_AR', 'es_MX',
 			'et',
+			'eu',
 			'fa',
 			'fa_IR',
 			'fi',
