@@ -34,6 +34,7 @@ class TinyMCEHooks {
 		}
 
 		$tinyMCELanguages = array(
+			'af_ZA',
 			'ar', 'ar_SA',
 			'az',
 			'eu',
@@ -55,8 +56,8 @@ class TinyMCEHooks {
 			'et',
 			'fa',
 			'fa_IR',
-			'fo',
 			'fi',
+			'fo',
 			'fr_FR', 'fr_CH',
 			'ga',
 			'gd',
@@ -102,6 +103,7 @@ class TinyMCEHooks {
 			'tt',
 			'ug',
 			'uk', 'uk_UA',
+			'uz',
 			'vi', 'vi_VN',
 			'zh_CN', 'zh_CN.GB2312', 'zh_TW',
 		);
