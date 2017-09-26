@@ -13,7 +13,7 @@ function tinyMCEInitInstance(instance) {
 	if ( minimizeOnBlur ) {
 		var mcePane = $("textarea#" + instance.id).prev();
 			mcePane.find(".mce-menubar .mce-container-body").hide("medium");
-		// Keep a little "sliver" of the toolbar so that users see it.
+		// Keep a little sliver of the toolbar so that users see it.
 		mcePane.find(".mce-menubar").css("height", "15px");
 		mcePane.find(".mce-toolbar-grp").hide("medium");
 	}
@@ -191,13 +191,29 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
                  	onclick:  insertSingleLinebreak
              	});
 
-	     	editor.addMenuItem('singlelinebreak', {
+		editor.addMenuItem('singlelinebreak', {
 			icon: 'visualchars',
 			text: 'Single linebreak',
 			tooltip: 'Insert single linebreak at current position',
 			context: 'insert',
 			onclick: insertSingleLinebreak
-	     	});
+		});
+
+		if ( minimizeOnBlur ) {
+			editor.on('focus', function(e) {
+				var mcePane = $("textarea#" + e.target.id).prev();
+				mcePane.find(".mce-menubar .mce-container-body").show("medium");
+				mcePane.find(".mce-menubar").css("height", "");
+				mcePane.find(".mce-toolbar-grp").show("medium");
+			});
+			editor.on('blur', function(e) {
+				var mcePane = $("textarea#" + e.target.id).prev();
+				mcePane.find(".mce-menubar .mce-container-body").hide("medium");
+				// Keep a little sliver of the toolbar so that users see it.
+				mcePane.find(".mce-menubar").css("height", "15px");
+				mcePane.find(".mce-toolbar-grp").hide("medium");
+			});
+		}
           },
           init_instance_callback: "tinyMCEInitInstance"
       });
