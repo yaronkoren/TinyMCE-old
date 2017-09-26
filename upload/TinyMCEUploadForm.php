@@ -80,43 +80,42 @@ class TinyMCEUploadForm extends HTMLForm {
 		if ( $this->mSelect ) {
 			$nodestring = $this->mSelect;
 			// Check the node is an internal wikki link and strip square brackets if it is
-			if ( strpos($nodestring,'[[') == 0 ) {
+			if ( strpos( $nodestring, '[[' ) == 0 ) {
 				$nodestring = trim( $nodestring , '[]');
 
 				$nodearray = explode('|', $nodestring);
-				if ( strpos($nodearray[0],':') > -1 ) {
+				if ( strpos( $nodearray[0], ':' ) > -1 ) {
 					$nodefile = substr($nodearray[0],strpos($nodearray[0],':')+1);
 					//Swap ' ' for '_'
 					$this->mFile = $nodefile;
 					$this->mDestFile = $nodefile;
 					$i=0;
-					for( $i = 1; $i <= count($nodearray)-1; $i++ ) {
-
+					for ( $i = 1; $i <= count( $nodearray ) - 1; $i++ ) {
 						if ( in_array($nodearray[$i],array("left", "right", "center", "none"))) {
 							$this->mHorizontalAlignment = $nodearray[$i];
-						} else if ( in_array($nodearray[$i],array("middle", "top", "bottom", "baseline", "sub", "super", "text-top", "text-bottom"))) {
+						} elseif ( in_array( $nodearray[$i], array( "middle", "top", "bottom", "baseline", "sub", "super", "text-top", "text-bottom" ) ) ) {
 							$this->mVerticalAlignment = $nodearray[$i];
-						} else if ( in_array($nodearray[$i],array("thumb", "border", "frame", "frameless"))) {
+						} elseif ( in_array( $nodearray[$i], array( "thumb", "border", "frame", "frameless" ) ) ) {
 							$this->mFormat = $nodearray[$i];
 ## DC To Do link not picked up as part of Node so next bit doesen't work
-						} else if ( strpos($nodearray[$i],'link=') > -1 ) {
+						} elseif ( strpos( $nodearray[$i], 'link=' ) > -1 ) {
 							$link = explode('=', $nodearray[$i]);
 							$this->mLink = $link[1];
-						} else if ( strpos($nodearray[$i],'alt=') > -1 ) {
+						} elseif ( strpos( $nodearray[$i], 'alt=' ) > -1 ) {
 							$alt = explode('=', $nodearray[$i]);
 							$this->mAlt = $alt[1];
-						} else if ( strpos($nodearray[$i],'px') > -1 ) {
+						} elseif ( strpos( $nodearray[$i], 'px' ) > -1 ) {
 							$dimensions = substr( $nodearray[$i] , 0, strlen($nodearray[$i])-2);
 							$dimension = explode('x', $dimensions);
-							if ($dimension[0] > 0) {
+							if ( $dimension[0] > 0 ) {
 								$this->mWidth = $dimension[0];
 							}
-							if (count($dimension) > 1){
-								if ($dimension[1] > 0) {
+							if ( count( $dimension) > 1 ) {
+								if ( $dimension[1] > 0 ) {
 									$this->mHeight = $dimension[1];
 								}
 							}
-						} else if ( $nodearray[$i] ) {
+						} elseif ( $nodearray[$i] ) {
 							$this->mTitle = $nodearray[$i];
 						}
 					}
@@ -150,11 +149,11 @@ class TinyMCEUploadForm extends HTMLForm {
 		}
 		// added for Page Forms
 ## DC for TinyMCE
-		if ( isset( $options['pfInput'] )) $this->addHiddenField( 'pfInputID', $options['pfInputID'] );
-		if ( isset( $options['pfDelimiter'] )) $this->addHiddenField( 'pfDelimiter', $options['pfDelimiter'] );
-		if ( isset( $options['pfSelect'] )) $this->addHiddenField( 'pfNode', $options['pfSelect'] );
-		if ( isset( $options['pfNode'] )) $this->addHiddenField( 'pfNode', $options['pfNode'] );
-		if ( isset( $options['pfDropSrc'] )) $this->addHiddenField( 'pfDropSrc', $options['pfDropSrc'] );
+		if ( isset( $options['pfInput'] ) ) $this->addHiddenField( 'pfInputID', $options['pfInputID'] );
+		if ( isset( $options['pfDelimiter'] ) ) $this->addHiddenField( 'pfDelimiter', $options['pfDelimiter'] );
+		if ( isset( $options['pfSelect'] ) ) $this->addHiddenField( 'pfNode', $options['pfSelect'] );
+		if ( isset( $options['pfNode'] ) ) $this->addHiddenField( 'pfNode', $options['pfNode'] );
+		if ( isset( $options['pfDropSrc'] ) ) $this->addHiddenField( 'pfDropSrc', $options['pfDropSrc'] );
 ##DC End
 	}
 
@@ -204,8 +203,8 @@ class TinyMCEUploadForm extends HTMLForm {
 		$maxUploadSizeFile = ini_get( 'upload_max_filesize' );
 		$maxUploadSizeURL = ini_get( 'upload_max_filesize' );
 		global $wgMaxUploadSize;
-		if( isset( $wgMaxUploadSize ) )	{
-			if( gettype( $wgMaxUploadSize ) == "array" ) {
+		if ( isset( $wgMaxUploadSize ) ) {
+			if ( gettype( $wgMaxUploadSize ) == "array" ) {
 				$maxUploadSizeFile = $wgMaxUploadSize['*'];
 				$maxUploadSizeURL = $wgMaxUploadSize['url'];
 			} else {
