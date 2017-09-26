@@ -94,6 +94,7 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
              'advlist': scriptPath + '/extensions/TinyMCE/tinymce/plugins/advlist/plugin.js',
              'anchor': scriptPath + '/extensions/TinyMCE/tinymce/plugins/anchor/plugin.js',
              'autolink': scriptPath + '/extensions/TinyMCE/tinymce/plugins/autolink/plugin.js',
+             'autoresize': scriptPath + '/extensions/TinyMCE/tinymce/plugins/autoresize/plugin.js',
              'charmap': scriptPath + '/extensions/TinyMCE/tinymce/plugins/charmap/plugin.js',
              'colorpicker': scriptPath + '/extensions/TinyMCE/tinymce/plugins/colorpicker/plugin.js',
              'contextmenu': scriptPath + '/extensions/TinyMCE/tinymce/plugins/contextmenu/plugin.js',
@@ -134,6 +135,7 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
             	{title: "Paragraph", block: "p" }
           ],
           images_upload_credentials: true,
+          autoresize_max_height: 400,
           setup: function(editor) {
 
              	function insertImage() {
