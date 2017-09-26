@@ -1,4 +1,5 @@
 var scriptPath = mw.config.get( 'wgScriptPath' );
+var minimizeOnBlur = mw.config.get( 'wgTinyMCEMinimizeOnBlur' );
 
 var tinyMCELanguage = mw.config.get( 'wgTinyMCELanguage' );
 var tinyMCELangURL = null;
@@ -7,6 +8,16 @@ if ( tinyMCELanguage !== 'en' ) {
 		tinyMCELanguage + '.js';
 }
 var tinyMCEDirectionality = mw.config.get( 'wgTinyMCEDirectionality' );
+
+function tinyMCEInitInstance(instance) {
+	if ( minimizeOnBlur ) {
+		var mcePane = $("textarea#" + instance.id).prev();
+			mcePane.find(".mce-menubar .mce-container-body").hide("medium");
+		// Keep a little "sliver" of the toolbar so that users see it.
+		mcePane.find(".mce-menubar").css("height", "15px");
+		mcePane.find(".mce-toolbar-grp").hide("medium");
+	}
+}
 
 jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
   function() {
@@ -183,6 +194,7 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 			context: 'insert',
 			onclick: insertSingleLinebreak
 	     	});
-          }
+          },
+          init_instance_callback: "tinyMCEInitInstance"
       });
 });
