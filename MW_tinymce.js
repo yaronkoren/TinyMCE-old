@@ -23,7 +23,7 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
   function() {
 	$('#wpTextbox1, .tinymce').each( function() {
 		$(this).before("<p><a class=\"toggleMCE\" data-current-state=\"enabled\" data-input-id=\"" +
-			$(this).attr('id') + "\" href=\"\#\">Switch to basic editor</a></p>");
+			$(this).attr('id') + "\" href=\"javascript:void(0)\">Switch to basic editor</a></p>");
 	});
 	$('.toggleMCE').click( function() {
 		tinymce.EditorManager.execCommand('mceToggleEditor', true, $(this).attr('data-input-id'));
@@ -35,6 +35,8 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 			$(this).attr('data-current-state', 'enabled')
 				.html("Switch to basic editor");
 		}
+		// Prevent reload of the page.
+		return false;
 	});
 
       window.tinymce.init({ 
