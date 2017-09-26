@@ -198,6 +198,9 @@ class TinyMCEHooks {
 
 		// @TODO - this should not be hardcoded.
 		$wgTinyMCEEnabled = $namespace != NS_TEMPLATE && $namespace != PF_NS_FORM;
+		if ( $context->getRequest()->getCheck('undo') ) {
+			$wgTinyMCEEnabled = false;
+		}
 		if ( !$wgTinyMCEEnabled ) {
 			return true;
 		}
