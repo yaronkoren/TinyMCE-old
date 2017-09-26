@@ -143,13 +143,14 @@ class TinyMCEHooks {
 	 * @return bool Allow other hooked methods to be executed. Always true.
 	 */
 	static function setGlobalJSVariables( &$vars, $out ) {
-
-		global $wgTinyMCEEnabled;
+		global $wgTinyMCEEnabled, $wgTinyMCEMinimizeOnBlur;
 		global $wgParser;
 
 		if ( !$wgTinyMCEEnabled ) {
 			return true;
 		}
+
+		$vars['wgTinyMCEMinimizeOnBlur'] = $wgTinyMCEMinimizeOnBlur;
 
 		$context = $out->getContext();
 
@@ -189,7 +190,7 @@ class TinyMCEHooks {
 	}
 
 	public static function addToEditPage( EditPage &$editPage, OutputPage &$output ) {
-		global $wgTinyMCEEnabled;
+		global $wgTinyMCEEnabled, $wgTinyMCEMinimizeOnBlur;
 
 		$context = $editPage->getArticle()->getContext();
 		$title = $editPage->getTitle();
@@ -202,6 +203,9 @@ class TinyMCEHooks {
 		}
 
 		$output->addModules( 'ext.tinymce' );
+
+		$wgTinyMCEMinimizeOnBlur = false;
+
 		return true;
 	}
 
