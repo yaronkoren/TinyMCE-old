@@ -54,6 +54,7 @@
 		"TinyMCEUploadWindow": "TinyMCEUploadWindow"
 	},
 	"config": {
+		"TinyMCEMacros": [],
 		"TinyMCEEnabled": false
 	},
 	"manifest_version": 1

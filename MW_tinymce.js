@@ -8,6 +8,7 @@ if ( tinyMCELanguage !== 'en' ) {
 		tinyMCELanguage + '.js';
 }
 var tinyMCEDirectionality = mw.config.get( 'wgTinyMCEDirectionality' );
+var tinyMCEMacros = mw.config.get( 'wgTinyMCEMacros' );
 
 function tinyMCEInitInstance(instance) {
 	if ( minimizeOnBlur ) {
@@ -17,6 +18,16 @@ function tinyMCEInitInstance(instance) {
 		mcePane.find(".mce-menubar").css("height", "15px");
 		mcePane.find(".mce-toolbar-grp").hide("medium");
 	}
+}
+
+// Based on https://stackoverflow.com/a/7124052
+function tinyMCEHTMLEncode(str) {
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
 }
 
 jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
@@ -198,6 +209,39 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 			context: 'insert',
 			onclick: insertSingleLinebreak
 		});
+
+		var numMacros = tinyMCEMacros.length;
+		for ( var i = 0; i < numMacros; i++ ) {
+			var curMacro = tinyMCEMacros[i];
+			editor.addMenuItem('macro' + i, {
+				text: curMacro['name'],
+				image: curMacro['image'],
+				context: 'insert',
+				wikitext: tinyMCEHTMLEncode( curMacro['text'] ),
+				onclick: function () {
+					// Insert the user-selected text into
+					// the macro text, if the macro text
+					// has a section to be replaced.
+					// (Demarcated by '!...!'.)
+					// @TODO - handle actual ! marks.
+					var selectedContent = editor.selection.getContent();
+					var insertText = this.settings.wikitext;
+					if ( selectedContent == '' ) {
+						editor.insertContent( insertText );
+						return;
+					}
+					var replacementStart = insertText.indexOf('!');
+					var replacementEnd = insertText.indexOf('!', replacementStart + 1);
+					if ( replacementStart < 0 || replacementEnd < 0 ) {
+						editor.insertContent( insertText );
+						return;
+					}
+
+					insertText = insertText.substr( 0, replacementStart ) + selectedContent + insertText.substr( replacementEnd + 1 );
+					editor.insertContent( insertText );
+				}
+			});
+		}
 
 		if ( minimizeOnBlur ) {
 			editor.on('focus', function(e) {

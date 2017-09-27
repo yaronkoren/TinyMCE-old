@@ -144,6 +144,7 @@ class TinyMCEHooks {
 	 */
 	static function setGlobalJSVariables( &$vars, $out ) {
 		global $wgTinyMCEEnabled, $wgTinyMCEMinimizeOnBlur;
+		global $wgTinyMCEMacros;
 		global $wgParser;
 
 		if ( !$wgTinyMCEEnabled ) {
@@ -176,6 +177,8 @@ class TinyMCEHooks {
 		$vars['wgTinyMCELanguage'] = $tinyMCELanguage;
 		$directionality = $context->getLanguage()->getDir();
 		$vars['wgTinyMCEDirectionality'] = $directionality;
+
+		$vars['wgTinyMCEMacros'] = $wgTinyMCEMacros;
 
 		return true;
 	}

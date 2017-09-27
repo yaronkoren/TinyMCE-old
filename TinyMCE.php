@@ -104,3 +104,4 @@ $GLOBALS['wgResourceModules'] += array(
 // $pathfix = $IP . $GLOBALS['wgTinyMCEScriptPath'];
 
 $GLOBALs['wgTinyMCEEnabled'] = false;
+$GLOBALs['wgTinyMCEMacros'] = array();
