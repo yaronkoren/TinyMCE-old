@@ -75,7 +75,7 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
     		{title: 'Internal', value: 'internal bs-internal-link mceNonEditable'},
 	  ],
           table_default_attributes: {
-              class: 'contenttable'
+              class: 'wikitable'
           },
           height: 400,
           statusbar: false,
