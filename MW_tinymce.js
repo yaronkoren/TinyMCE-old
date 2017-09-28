@@ -227,6 +227,7 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 					var selectedContent = editor.selection.getContent();
 					var insertText = this.settings.wikitext;
 					if ( selectedContent == '' ) {
+						insertText = insertText.replace( /!/g, '' );
 						editor.insertContent( insertText );
 						return;
 					}
