@@ -20,16 +20,6 @@ function tinyMCEInitInstance(instance) {
 	}
 }
 
-// Based on https://stackoverflow.com/a/7124052
-function tinyMCEHTMLEncode(str) {
-    return str
-        .replace(/&/g, '&amp;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-}
-
 jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
   function() {
 	$('#wpTextbox1, .tinymce').each( function() {
@@ -217,7 +207,7 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 				text: curMacro['name'],
 				image: curMacro['image'],
 				context: 'insert',
-				wikitext: tinyMCEHTMLEncode( curMacro['text'] ),
+				wikitext: curMacro['text'],
 				onclick: function () {
 					// Insert the user-selected text into
 					// the macro text, if the macro text

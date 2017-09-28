@@ -178,7 +178,28 @@ class TinyMCEHooks {
 		$directionality = $context->getLanguage()->getDir();
 		$vars['wgTinyMCEDirectionality'] = $directionality;
 
-		$vars['wgTinyMCEMacros'] = $wgTinyMCEMacros;
+		$jsMacroArray = array();
+		foreach ( $wgTinyMCEMacros as $macro ) {
+			if ( !array_key_exists( 'name', $macro ) || !array_key_exists( 'text', $macro ) ) {
+				continue;
+			}
+ 
+			$imageURL = null;
+			if ( array_key_exists( 'image', $macro ) ) {
+				if ( strtolower( substr( $macro['image'], 0, 4 ) ) === 'http' ) {
+					$imageURL = $macro['image'];
+				} else {
+					$imageFile =  wfLocalFile( $macro['image'] );
+					$imageURL = $imageFile->getURL();
+				}
+			}
+			$jsMacroArray[] = array(
+				'name' => $macro['name'],
+				'image' => $imageURL,
+				'text' => htmlentities( $macro['text'] )
+			);
+		}
+		$vars['wgTinyMCEMacros'] = $jsMacroArray;
 
 		return true;
 	}
