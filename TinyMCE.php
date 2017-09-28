@@ -106,5 +106,5 @@ $wgDefaultUserOptions['tinymce-use'] = 1;
 // PHP fails to find relative includes at some level of inclusion:
 // $pathfix = $IP . $GLOBALS['wgTinyMCEScriptPath'];
 
-$GLOBALs['wgTinyMCEEnabled'] = false;
-$GLOBALs['wgTinyMCEMacros'] = array();
+$GLOBALS['wgTinyMCEEnabled'] = false;
+$GLOBALS['wgTinyMCEMacros'] = array();
