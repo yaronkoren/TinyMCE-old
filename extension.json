@@ -48,10 +48,14 @@
 	"Hooks": {
 		"MakeGlobalVariablesScript": "TinyMCEHooks::setGlobalJSVariables",
 		"EditPageBeforeEditToolbar": "TinyMCEHooks::removeDefaultToolbar",
-		"EditPage::showEditForm:initial": "TinyMCEHooks::addToEditPage"
+		"EditPage::showEditForm:initial": "TinyMCEHooks::addToEditPage",
+		"GetPreferences": "TinyMCEHooks::addPreference"
 	},
 	"SpecialPages": {
 		"TinyMCEUploadWindow": "TinyMCEUploadWindow"
+	},
+	"DefaultUserOptions": {
+		"tinymce-use": 1
 	},
 	"config": {
 		"TinyMCEMacros": [],

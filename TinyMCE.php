@@ -69,6 +69,7 @@ $GLOBALS['wgTinyMCEIP'] = dirname( __FILE__ );
 $GLOBALS['wgHooks']['MakeGlobalVariablesScript'][] = 'TinyMCEHooks::setGlobalJSVariables';
 $GLOBALS['wgHooks']['EditPageBeforeEditToolbar'][] = 'TinyMCEHooks::removeDefaultToolbar';
 $GLOBALS['wgHooks']['EditPage::showEditForm:initial'][] = 'TinyMCEHooks::addToEditPage';
+$GLOBALS['wgHooks']['GetPreferences'][] = 'TinyMCEHooks::addPreference';
 
 $GLOBALS['wgAutoloadClasses']['TinyMCEHooks'] = __DIR__ . '/TinyMCE.hooks.php';
 $GLOBALS['wgAutoloadClasses']['TinyMCEUploadForm'] = __DIR__ . '/upload/TinyMCEUploadForm.php';
@@ -99,6 +100,8 @@ $GLOBALS['wgResourceModules'] += array(
 	)
 
 );
+
+$wgDefaultUserOptions['tinymce-use'] = 1;
 
 // PHP fails to find relative includes at some level of inclusion:
 // $pathfix = $IP . $GLOBALS['wgTinyMCEScriptPath'];

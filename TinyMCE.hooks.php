@@ -204,6 +204,11 @@ class TinyMCEHooks {
 		if ( $context->getRequest()->getCheck('undo') ) {
 			$wgTinyMCEEnabled = false;
 		}
+
+		if ( !$context->getUser()->getOption( 'tinymce-use' ) ) {
+			$wgTinyMCEEnabled = false;
+		}
+
 		if ( !$wgTinyMCEEnabled ) {
 			return true;
 		}
@@ -211,6 +216,16 @@ class TinyMCEHooks {
 		$output->addModules( 'ext.tinymce' );
 
 		$wgTinyMCEMinimizeOnBlur = false;
+
+		return true;
+	}
+
+	public static function addPreference( $user, &$preferences ) {
+		$preferences['tinymce-use'] = array(
+			'type' => 'toggle',
+			'label-message' => 'tinymce-preference', // a system message
+			'section' => 'editing/advancedediting',
+		);
 
 		return true;
 	}

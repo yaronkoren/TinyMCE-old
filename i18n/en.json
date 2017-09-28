@@ -38,5 +38,6 @@
 	"tinymce-insertbtn": "Insert existing file",
 	"tinymce-uploadbtn": "Upload/Insert/Update file/link",
 	"tinymce-sideupload-drop-error": "Problem encountered uploading $1 directly from website. Try downloading to a local disk and using the insert image button to upload from there",
-	"tooltip-tinymce-upload": "Start upload/insert file"
+	"tooltip-tinymce-upload": "Start upload/insert file",
+	"tinymce-preference": "Use the TinyMCE editor to edit pages"
 }
