@@ -2061,6 +2061,7 @@ var BsWikiCode = function() {
 				}
 			}
 		}
+
 		if (Object.keys(templates).length > 0) {
 			for (var aTemplate in templates) {
 				templateText = templates[aTemplate];
@@ -2080,7 +2081,6 @@ var BsWikiCode = function() {
 				}
 				/*DC now go and get parsed html for this template to insert into the edit window 
 				as not editable html (TODO addexclusions)*/
-if (false) {
 				var server = mw.config.get( "wgServer" ) ;
 				var script = mw.config.get( 'wgScriptPath' ) + '/api.php';
 				var title = mw.config.get( "wgCanonicalNamespace" ) + ':' + mw.config.get( "wgTitle" ) ;
@@ -2092,43 +2092,84 @@ if (false) {
 					'disableeditsection': '',
 					'disabletoc': '',
 					'format': 'json',};
+//debugger;
 				$.ajax({
 					dataType: "json",
 					url: script,
  	 				data: data,
 					async: false, 
 					success: function(data) {
+						function escapeHtml(text) {
+						    'use strict';
+						    return text.replace(/[\"&'\/<>]/g, function (a) {
+						        return {
+						            '"': '&quot;', '&': '&amp;', "'": '&#39;',
+						            '/': '&#47;',  '<': '&lt;',  '>': '&gt;'
+						        }[a];
+						    });
+						}
 						var templateHTML = data.parse.text["*"];
+//debugger;
 						// DC remove leading and trailing <p>
 						templateHTML = $.trim(templateHTML);
-						templateHTML = templateHTML.substring(3, templateHTML.length)
-						templateHTML = templateHTML.substring(0, templateHTML.length-5)
+						templateHTML = templateHTML.replace(/<\/?p[^>]*>/g, "");
+
+/*						if (templateHTML.substring(0, 3) == '<p>') {
+							templateHTML = templateHTML.substring(3, templateHTML.length);
+						}
+						if (templateHTML.substring(templateHTML.length-4,templateHTML.length) == '</p>') {
+							templateHTML = templateHTML.substring(0, templateHTML.length-4);
+						}
+*/
+						templateHTML = $.trim(templateHTML);
 						templateHTML = templateHTML.replace(/\&amp\;/gmi,'&');
 						// DC remove href tags in returned html as links will screw up conversions
 						templateHTML = templateHTML.replace(/\shref="([^"]*)"/gmi,'');
+						templateHTML = templateHTML.replace(/(\r\n|\n|\r)/gm,"");
+//						templateHTML = escapeHtml(templateHTML);
+
+
 						var templateWikiText = data.parse.wikitext["*"];
+						templateWikiText = $.trim(templateWikiText);
+						if (templateWikiText.substring(0, 3) == '<p>') {
+							templateWikiText = templateWikiText.substring(3, templateWikiText.length);
+						}
+						if (templateWikiText.substring(templateWikiText.length-4,templateWikiText.length) == '</p>') {
+							templateWikiText = templateWikiText.substring(0, templateWikiText.length-4);
+						}
+						templateWikiText = $.trim(templateWikiText);
+//						var displayTemplateWikiText = escapeHtml(templateWikiText);
+						var displayTemplateWikiText = encodeURIComponent(templateWikiText);
+
 						var t = Math.floor((Math.random() * 100000) + 100000);
 						var id = "bs_template:@@@TPL"+ t + "@@@";
 						var codeAttrs = {
 							'id': id,
 							'class': "mceNonEditable wikimagic template",
-							'title': templateWikiText,
+//							'title': displayTemplateWikiText ,
+							'title': "title:templateWikiText",
 							'data-bs-type': "template",
 							'data-bs-id': i,
 							'data-bs-name': templateName,
-							'data-bs-wikitext': templateWikiText,
+//							'data-bs-wikitext': "templateWikiText",
+							'data-bs-wikitext': displayTemplateWikiText,
 							'contenteditable': "false"
 						};
 
-						var htmlText = ed.dom.createHTML('span', codeAttrs, templateHTML);
+//						var htmlText = ed.dom.createHTML('span', codeAttrs, templateHTML);
 						var el = ed.dom.create('span', codeAttrs, templateHTML);
-						var sText = new RegExp('\\|', 'g');
+//						var el = ed.dom.create('span', codeAttrs, htmlText);
+debugger;
+/*						var sText = new RegExp('\\|', 'g');
 						var rText = '\\|';
 						templateWikiText = templateWikiText.replace(
 							sText ,
 							rText
-						);
+						);*/
+						templateWikiText = templateWikiText.replace(/[^A-Za-z0-9_]/g, '\\$&');
 						var searchText = new RegExp(templateWikiText, 'g');
+/*						var replaceText = htmlText;
+*/
 						var replaceText = el.outerHTML;
 						text = text.replace(
 							searchText,
@@ -2136,7 +2177,6 @@ if (false) {
 						);
 					}
 				});
-}
 			}
 		}
 
@@ -2255,12 +2295,14 @@ if (false) {
 
 		if (templates) {
 			for (i = 0; i < templates.length; i++) {
+//debugger;
 				var templateText = templates[i].outerHTML;
 				templateText = templateText.replace(/\&amp\;/gmi,'&');
 				templateText = templateText.replace(/ contenteditable="false"/gmi,'')
 				templateText = templateText.replace(/<a.*\/a>/gmi,'');
 				templateText = templateText.replace(/"data-mce-href=".*"/gmi,'');
-				text = text.replace(templateText, templates[i].attributes["data-bs-wikitext"].value);
+				var templateWikiText = decodeURIComponent(templates[i].attributes["data-bs-wikitext"].value);
+				text = text.replace(templateText, templateWikiText);
 			}
 		}
 
@@ -2646,7 +2688,7 @@ if (false) {
 
 		//special tags before pres prevents spaces in special tags like GeSHi to take effect
 		text = _preserveSpecialTags(text, e);
-
+//debugger;
 		//cleanup linebreaks in tags except comments
 		text = text.replace(/(<[^!][^>]+?)(\n)([^<]+?>)/gi, "$1$3");
 
@@ -2711,9 +2753,13 @@ if (false) {
 	 * @param {tinymce.ContentEvent} e
 	 */
 	function _onBeforeSetContent(e) {
+debugger;
 		// if raw format is requested, this is usually for internal issues like
 		// undo/redo. So no additional processing should occur. Default is 'html'
-		if (e.format == 'raw' ) return;
+//		if (e.format == 'raw' ) return;
+//DC Experimental
+e.format = 'raw';
+//DC end
 		if (e.load) {
 			e.content = _preprocessWiki2Html(e.content, e);
 		}
@@ -2729,17 +2775,22 @@ if (false) {
 	 * @param {tinymce.ContentEvent} e
 	 */
 	function _onGetContent(e) {
+debugger;
 		// if raw format is requested, this is usually for internal issues like
 		// undo/redo. So no additional processing should occur. Default is 'html'
-		if (e.format == 'raw' ) return;
+//		if (e.format == 'raw' ) return;
+/* DCEXPEIMENTAL
 		if (e.format != 'raw') e.format = 'wiki';
-
+*/
+		e.format = 'raw';
+/**/
 		e.content = _preprocessHtml2Wiki( e.content );
 
 		// process the html to wikicode
 		e.content = _html2wiki(e.content);
 
-/* DC removed the if test as this breaks the code function saving the wiki code properly when using the wikicodeplugin		if (e.save) {*/
+/* DC removed the if test as this breaks the code function saving the wiki code properly when using the wikicodeplugin
+		if (e.save) {*/
 			e.content = _convertTinyMceToPreWithSpaces(e.content);
 			// recover linebreaks
 			// use . here: blank would not match in IE
@@ -2768,6 +2819,7 @@ if (false) {
 	}
 
 	function _onLoadContent(ed, o) {
+debugger;
 		var internalLinks = [];
 		var internalLinksTitles = [];
 		$(this.dom.doc).find('a.bs-internal-link').each(function(){
@@ -2825,7 +2877,7 @@ if (false) {
 	this.getInfo = function() {
 		var info = {
 			longname: 'BlueSpice WikiCode Parser adapted for PageForms',
-			author: 'Hallo Welt! GmbH & Duncann Crane at Aoxomoxoa Limited',
+			author: 'Hallo Welt! GmbH & Duncan Crane at Aoxomoxoa Limited',
 			authorurl: 'http://www.hallowelt.biz, https://www.aoxomoxoa.co.uk',
 			infourl: 'http://www.hallowelt.biz, https://www.aoxomoxoa.co.uk'
 		};
