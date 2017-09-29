@@ -25,9 +25,10 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 		}
 
 		var value = '';
-
+debugger;
 		if (isWikimagic) {
 			value = selectedNode.attributes["data-bs-wikitext"].value;
+			value = decodeURIComponent(value);
 		} else {
 			value = editor.selection.getContent({format : 'text'});
 		}
@@ -178,12 +179,14 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 								};
 								htmlText = editor.dom.createHTML('span', codeAttrs, templateHTML);
 								el = editor.dom.create('span', codeAttrs, templateHTML);
-								var sText = new RegExp('\\|', 'g');
+/*								var sText = new RegExp('\\|', 'g');
 								var rText = '\\|';
 								templateWikiText = templateWikiText.replace(
 									sText ,
 									rText
-								);
+								);*/
+debugger;
+								templateWikiText = templateWikiText.replace(/[^A-Za-z0-9_]/g, '\\$&');
 								var searchText = new RegExp(templateWikiText, 'g');
 								var replaceText = el.outerHTML;
 								text = text.replace(
