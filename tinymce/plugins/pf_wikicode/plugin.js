@@ -2128,7 +2128,6 @@ var BsWikiCode = function() {
 						templateHTML = templateHTML.replace(/(\r\n|\n|\r)/gm,"");
 //						templateHTML = escapeHtml(templateHTML);
 
-
 						var templateWikiText = data.parse.wikitext["*"];
 						templateWikiText = $.trim(templateWikiText);
 						if (templateWikiText.substring(0, 3) == '<p>') {
@@ -2147,7 +2146,7 @@ var BsWikiCode = function() {
 							'id': id,
 							'class': "mceNonEditable wikimagic template",
 //							'title': displayTemplateWikiText ,
-							'title': "title:templateWikiText",
+							'title': "{{" + templateName + "}}",
 							'data-bs-type': "template",
 							'data-bs-id': i,
 							'data-bs-name': templateName,
@@ -2295,7 +2294,7 @@ debugger;
 
 		if (templates) {
 			for (i = 0; i < templates.length; i++) {
-//debugger;
+debugger;
 				var templateText = templates[i].outerHTML;
 				templateText = templateText.replace(/\&amp\;/gmi,'&');
 				templateText = templateText.replace(/ contenteditable="false"/gmi,'')
@@ -2303,6 +2302,18 @@ debugger;
 				templateText = templateText.replace(/"data-mce-href=".*"/gmi,'');
 				var templateWikiText = decodeURIComponent(templates[i].attributes["data-bs-wikitext"].value);
 				text = text.replace(templateText, templateWikiText);
+//DC exp
+				var templateText = templates[i].outerHTML;
+				templateText = templateText.replace(/[^A-Za-z0-9_]/g, '\\$&');
+				var searchText = new RegExp(templateText, 'g');
+				var templateWikiText = decodeURIComponent(templates[i].attributes["data-bs-wikitext"].value);
+
+				var replaceText = templateWikiText;
+				text = text.replace(
+					searchText,
+					replaceText
+				);
+// DC exp end
 			}
 		}
 
@@ -2784,6 +2795,10 @@ debugger;
 */
 		e.format = 'raw';
 /**/
+
+/* DC moved this up front */
+		e.content = _recoverSpecialTags(e.content, e);
+
 		e.content = _preprocessHtml2Wiki( e.content );
 
 		// process the html to wikicode
@@ -2810,7 +2825,9 @@ debugger;
 				e.content = e.content.replace(/(<span class="bs_htmlentity">)(.+?)(<\/span>)/gmi, '$2');
 			}
 
+/* DC moved this up front
 			e.content = _recoverSpecialTags(e.content, e);
+*/
 
 			// cleanup templates in table markers
 			e.content = e.content.replace(/data-bs-t.*?-tpl.*?="(.*?)"/gmi, "{{$1}}");
