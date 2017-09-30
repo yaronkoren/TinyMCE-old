@@ -12,6 +12,7 @@
 
 tinymce.PluginManager.add('wikisourcecode', function(editor) {
 	function showDialog() {
+debugger;
 		var win = editor.windowManager.open({
 			title: "Source code",
 			body: {
@@ -28,7 +29,6 @@ tinymce.PluginManager.add('wikisourcecode', function(editor) {
 				// don't move the focus to the editor before creating an undo
 				// transation since it tries to make a bookmark for the current selection
 				editor.focus();
-
 				editor.undoManager.transact(function() {
 					e.load = true;
 					editor.setContent(e.data.code,e);
@@ -41,7 +41,10 @@ tinymce.PluginManager.add('wikisourcecode', function(editor) {
 
 		// Gecko has a major performance issue with textarea
 		// contents so we need to set it when all reflows are done
+/* DC changed this to avoid serializer extracting HTML from template spans
 		win.find('#code').value(editor.getContent({source_view: true}));
+*/
+		win.find('#code').value(editor.getContent({source_view: true, format: 'raw'}));
 	}
 
 	editor.addCommand("mceCodeEditor", showDialog);
