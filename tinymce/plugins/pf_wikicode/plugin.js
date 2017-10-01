@@ -2781,6 +2781,22 @@ e.format = 'raw';
 	}
 
 	/**
+	 * Event handler for "submit"
+	 * This is used to save the content of the editor.
+	 * @param {tinymce.ContentEvent} e
+	 */
+	function _onSubmit(e) {
+debugger;
+		// if raw format is requested, this is usually for internal issues like
+		// undo/redo. So no additional processing should occur. Default is 'html'
+//		if (e.format == 'raw' ) return;
+//DC Experimental
+e.format = 'raw';
+//DC end
+
+	}
+
+	/**
 	 * Event handler for "getContent".
 	 * This is used to process html into wiki code.
 	 * @param {tinymce.ContentEvent} e
@@ -2792,11 +2808,12 @@ debugger;
 //		if (e.format == 'raw' ) return;
 /* DCEXPEIMENTAL
 		if (e.format != 'raw') e.format = 'wiki';
+		var tetsmp = ed.getContent({source_view: true, format: 'raw'});
 */
 		e.format = 'raw';
 /**/
 
-/* DC moved this up front */
+/* DC moved this up front from lower down */
 		e.content = _recoverSpecialTags(e.content, e);
 
 		e.content = _preprocessHtml2Wiki( e.content );
@@ -2910,6 +2927,7 @@ debugger;
 		ed.on('beforeSetContent', _onBeforeSetContent);
 		ed.on('getContent', _onGetContent);
 		ed.on('loadContent', _onLoadContent);
+		ed.on('submit', _onSubmit);
 
 		ed.on('click', function(e) {
 			var dataname = ed.dom.getAttrib(e.target.parentNode, 'data-bs-name');
