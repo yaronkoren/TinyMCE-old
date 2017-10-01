@@ -21,12 +21,24 @@
 		]
 	},
 	"AutoloadClasses": {
-		"TinyMCEHooks": "TinyMCE.hooks.php"
+		"TinyMCEHooks": "TinyMCE.hooks.php",
+		"TinyMCEUploadForm": "upload/TinyMCEUploadForm.php",
+		"TinyMCEUploadSourceField": "upload/TinyMCEUploadSourceField.php",
+		"TinyMCEUploadWindow": "upload/TinyMCEUploadWindow.php"
 	},
 	"ResourceModules": {
 		"ext.tinymce": {
 			"scripts": "MW_tinymce.js",
-			"styles": "MW_tinymce.css"
+			"styles": "MW_tinymce.css",
+			"dependencies": "ext.tinymce.fancybox"
+		},
+		"ext.tinymce.fancybox": {
+			"scripts": "fancybox/jquery.fancybox.js",
+			"styles": "fancybox/jquery.fancybox.css",
+			"dependencies": "ext.tinymce.browser"
+		},
+		"ext.tinymce.browser": {
+			"scripts": "jquery.browser.js"
 		}
 	},
 	"ResourceFileModulePaths": {
@@ -36,9 +48,17 @@
 	"Hooks": {
 		"MakeGlobalVariablesScript": "TinyMCEHooks::setGlobalJSVariables",
 		"EditPageBeforeEditToolbar": "TinyMCEHooks::removeDefaultToolbar",
-		"EditPage::showEditForm:initial": "TinyMCEHooks::addToEditPage"
+		"EditPage::showEditForm:initial": "TinyMCEHooks::addToEditPage",
+		"GetPreferences": "TinyMCEHooks::addPreference"
+	},
+	"SpecialPages": {
+		"TinyMCEUploadWindow": "TinyMCEUploadWindow"
+	},
+	"DefaultUserOptions": {
+		"tinymce-use": 1
 	},
 	"config": {
+		"TinyMCEMacros": [],
 		"TinyMCEEnabled": false
 	},
 	"manifest_version": 1

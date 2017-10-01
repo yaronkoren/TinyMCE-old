@@ -1,104 +1,30 @@
 var scriptPath = mw.config.get( 'wgScriptPath' );
+var minimizeOnBlur = mw.config.get( 'wgTinyMCEMinimizeOnBlur' );
 
-// Try to translate between MediaWiki's language codes and TinyMCE's -
-// they're similar, but not identical. MW's are always lowercase, and
-// they tend to use less country codes.
-var contentLanguage = mw.config.get( 'wgTinyMCELanguage' );
-var supportedLanguages = [
-	'ar', 'ar_SA',
-	'hy',
-	'az',
-	'eu',
-	'be',
-	'bn_BD',
-	'bs',
-	'bg_BG',
-	'ca',
-	'zh_CN', 'zh_CN.GB2312', 'zh_TW',
-	'hr',
-	'cs', 'cs_CZ',
-	'da',
-	'dv',
-	'nl',
-	'en_CA', 'en_GB',
-	'eo',
-	'et',
-	'fo',
-	'fi',
-	'fr_FR', 'fr_CH',
-	'gd',
-	'gl',
-	'ka_GE',
-	'de',
-	'de_AT',
-	'el',
-	'he_IL',
-	'hi_IN',
-	'hu_HU',
-	'is_IS',
-	'id',
-	'ga',
-	'it',
-	'ja',
-	'kab',
-	'kk',
-	'km_KH',
-	'ko',
-	'ko_KR',
-	'ku',
-	'ku_IQ',
-	'lv',
-	'lt',
-	'lb',
-	'mk_MK',
-	'ml', 'ml_IN',
-	'mn_MN',
-	'nb_NO',
-	'fa',
-	'fa_IR',
-	'pl',
-	'pt_BR', 'pt_PT',
-	'ro',
-	'ru', 'ru_RU', 'ru@petr1708',
-	'sr',
-	'si_LK',
-	'sk',
-	'sl_SI',
-	'es', 'es_AR', 'es_MX',
-	'sv_SE',
-	'tg',
-	'ta', 'ta_IN',
-	'tt',
-	'th_TH',
-	'tr', 'tr_TR',
-	'ug',
-	'uk', 'uk_UA',
-	'vi', 'vi_VN',
-	'cy'
-];
-
-var tinyMCELanguage = 'en';
+var tinyMCELanguage = mw.config.get( 'wgTinyMCELanguage' );
 var tinyMCELangURL = null;
-
-if ( contentLanguage !== 'en' ) {
-	var numLanguages = supportedLanguages.length;
-	for ( var i = 0; i < numLanguages; i++ ) {
-		if ( contentLanguage === supportedLanguages[i].toLowerCase() ||
-			contentLanguage === supportedLanguages[i].substring(0,2) ) {
-			tinyMCELanguage = supportedLanguages[i];
-			break;
-		}
-	}
-
+if ( tinyMCELanguage !== 'en' ) {
 	tinyMCELangURL = scriptPath + '/extensions/TinyMCE/tinymce/langs/' +
 		tinyMCELanguage + '.js';
+}
+var tinyMCEDirectionality = mw.config.get( 'wgTinyMCEDirectionality' );
+var tinyMCEMacros = mw.config.get( 'wgTinyMCEMacros' );
+
+function tinyMCEInitInstance(instance) {
+	if ( minimizeOnBlur ) {
+		var mcePane = $("textarea#" + instance.id).prev();
+			mcePane.find(".mce-menubar .mce-container-body").hide("medium");
+		// Keep a little sliver of the toolbar so that users see it.
+		mcePane.find(".mce-menubar").css("height", "15px");
+		mcePane.find(".mce-toolbar-grp").hide("medium");
+	}
 }
 
 jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
   function() {
 	$('#wpTextbox1, .tinymce').each( function() {
 		$(this).before("<p><a class=\"toggleMCE\" data-current-state=\"enabled\" data-input-id=\"" +
-			$(this).attr('id') + "\" href=\"\#\">Switch to basic editor</a></p>");
+			$(this).attr('id') + "\" href=\"javascript:void(0)\">Switch to basic editor</a></p>");
 	});
 	$('.toggleMCE').click( function() {
 		tinymce.EditorManager.execCommand('mceToggleEditor', true, $(this).attr('data-input-id'));
@@ -110,6 +36,8 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 			$(this).attr('data-current-state', 'enabled')
 				.html("Switch to basic editor");
 		}
+		// Prevent reload of the page.
+		return false;
 	});
 
       window.tinymce.init({ 
@@ -137,12 +65,12 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
     		{title: 'Internal', value: 'internal bs-internal-link mceNonEditable'},
 	  ],
           table_default_attributes: {
-              class: 'contenttable'
+              class: 'wikitable'
           },
           height: 400,
           statusbar: false,
 	  // the default text direction for the editor
-	  directionality: 'ltr',
+	  directionality: tinyMCEDirectionality,
 	  // default language
 	  //language: 'en',
 	  language_url: tinyMCELangURL,
@@ -167,6 +95,7 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
              'advlist': scriptPath + '/extensions/TinyMCE/tinymce/plugins/advlist/plugin.js',
              'anchor': scriptPath + '/extensions/TinyMCE/tinymce/plugins/anchor/plugin.js',
              'autolink': scriptPath + '/extensions/TinyMCE/tinymce/plugins/autolink/plugin.js',
+             'autoresize': scriptPath + '/extensions/TinyMCE/tinymce/plugins/autoresize/plugin.js',
              'charmap': scriptPath + '/extensions/TinyMCE/tinymce/plugins/charmap/plugin.js',
              'colorpicker': scriptPath + '/extensions/TinyMCE/tinymce/plugins/colorpicker/plugin.js',
              'contextmenu': scriptPath + '/extensions/TinyMCE/tinymce/plugins/contextmenu/plugin.js',
@@ -181,7 +110,7 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
              'visualblocks': scriptPath + '/extensions/TinyMCE/tinymce/plugins/visualblocks/plugin.js',
              'wikicode': scriptPath + '/extensions/TinyMCE/tinymce/plugins/pf_wikicode/plugin.js',
              'wikilink': scriptPath + '/extensions/TinyMCE/tinymce/plugins/pf_link/plugin.js',
-             //'wikimagic': scriptPath + '/extensions/TinyMCE/tinymce/plugins/pf_wikimagic/plugin.js',
+             'wikimagic': scriptPath + '/extensions/TinyMCE/tinymce/plugins/pf_wikimagic/plugin.js',
              'wikipaste': scriptPath + '/extensions/TinyMCE/tinymce/plugins/pf_paste/plugin.js',
              'wikisourcecode': scriptPath + '/extensions/TinyMCE/tinymce/plugins/pf_code/plugin.js'
           },
@@ -207,6 +136,7 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
             	{title: "Paragraph", block: "p" }
           ],
           images_upload_credentials: true,
+          autoresize_max_height: 400,
           setup: function(editor) {
 
              	function insertImage() {
@@ -219,7 +149,7 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 				var upLoadType = "file";
 		 	}
 
-                 	var uploadform = scriptPath + '/index.php?title=Special:UploadWindow&pfInputID=' + editorid + 
+                 	var uploadform = scriptPath + '/index.php?title=Special:TinyMCEUploadWindow&pfInputID=' + editorid + 
 				'&pfEditor=tinymce' + 
 				'&pfSelect=' + editor.selection.getContent() + 
 				'&pfNode=' + nodeID + 
@@ -262,13 +192,64 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
                  	onclick:  insertSingleLinebreak
              	});
 
-	     	editor.addMenuItem('singlelinebreak', {
+		editor.addMenuItem('singlelinebreak', {
 			icon: 'visualchars',
 			text: 'Single linebreak',
 			tooltip: 'Insert single linebreak at current position',
 			context: 'insert',
 			onclick: insertSingleLinebreak
-	     	});
-          }
+		});
+
+		var numMacros = tinyMCEMacros.length;
+		for ( var i = 0; i < numMacros; i++ ) {
+			var curMacro = tinyMCEMacros[i];
+			editor.addMenuItem('macro' + i, {
+				text: curMacro['name'],
+				image: curMacro['image'],
+				context: 'insert',
+				wikitext: curMacro['text'],
+				onclick: function () {
+					// Insert the user-selected text into
+					// the macro text, if the macro text
+					// has a section to be replaced.
+					// (Demarcated by '!...!'.)
+					// @TODO - handle actual ! marks.
+					var selectedContent = editor.selection.getContent();
+					var insertText = this.settings.wikitext;
+					if ( selectedContent == '' ) {
+						insertText = insertText.replace( /!/g, '' );
+						editor.insertContent( insertText );
+						return;
+					}
+					var replacementStart = insertText.indexOf('!');
+					var replacementEnd = insertText.indexOf('!', replacementStart + 1);
+					if ( replacementStart < 0 || replacementEnd < 0 ) {
+						editor.insertContent( insertText );
+						return;
+					}
+
+					insertText = insertText.substr( 0, replacementStart ) + selectedContent + insertText.substr( replacementEnd + 1 );
+					editor.insertContent( insertText );
+				}
+			});
+		}
+
+		if ( minimizeOnBlur ) {
+			editor.on('focus', function(e) {
+				var mcePane = $("textarea#" + e.target.id).prev();
+				mcePane.find(".mce-menubar .mce-container-body").show("medium");
+				mcePane.find(".mce-menubar").css("height", "");
+				mcePane.find(".mce-toolbar-grp").show("medium");
+			});
+			editor.on('blur', function(e) {
+				var mcePane = $("textarea#" + e.target.id).prev();
+				mcePane.find(".mce-menubar .mce-container-body").hide("medium");
+				// Keep a little sliver of the toolbar so that users see it.
+				mcePane.find(".mce-menubar").css("height", "15px");
+				mcePane.find(".mce-toolbar-grp").hide("medium");
+			});
+		}
+          },
+          init_instance_callback: "tinyMCEInitInstance"
       });
 });
