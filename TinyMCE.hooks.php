@@ -209,7 +209,10 @@ class TinyMCEHooks {
 	 * creation before it starts?
 	 */
 	public static function removeDefaultToolbar( &$toolbar ) {
-		$toolbar = null;
+		global $wgTinyMCEEnabled;
+		if ( $wgTinyMCEEnabled ) {
+			$toolbar = null;
+		}
 		return true;
 	}
 
