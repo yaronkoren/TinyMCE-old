@@ -1,0 +1,54 @@
+diff --git a/includes/forminputs/PF_TextAreaInput.php b/includes/forminputs/PF_TextAreaInput.php
+index 280eaa93..1a309e24 100644
+--- a/includes/forminputs/PF_TextAreaInput.php
++++ b/includes/forminputs/PF_TextAreaInput.php
+@@ -14,7 +14,7 @@
+  */
+ class PFTextAreaInput extends PFFormInput {
+ 
+-	protected $mUseWikieditor = false;
++	protected $mEditor = null;
+ 
+ 	public static function getDefaultCargoTypes() {
+ 			return array( 'Text' => array() );
+@@ -57,9 +57,24 @@ class PFTextAreaInput extends PFFormInput {
+ 			
+ 			class_exists( 'WikiEditorHooks' )
+ 		) {
+-			$this->mUseWikieditor = true;
++			$this->mEditor = 'wikieditor';
+ 			$this->addJsInitFunctionData( 'window.ext.wikieditor.init' );
+ 		}
++ 
++		if ( 
++			array_key_exists( 'editor', $this->mOtherArgs ) &&
++			$this->mOtherArgs['editor'] == 'tinymce' 
++		) {
++			$this->mEditor = 'tinymce';
++			if ( array_key_exists( 'class', $this->mOtherArgs ) ) {
++				$this->mOtherArgs['class'] .= " tinymce";
++			} else {
++				$this->mOtherArgs['class'] = "tinymce";
++			}
++			global $wgTinyMCEEnabled, $wgTinyMCEMinimizeOnBlur;
++			$wgTinyMCEEnabled = true;
++			$wgTinyMCEMinimizeOnBlur = true;
++		}
+ 	}
+ 
+ 	
+@@ -143,7 +158,13 @@ class PFTextAreaInput extends PFFormInput {
+ 	 * @return null|string|array
+ 	 */
+ 	public function getResourceModuleNames() {
+-		return $this->mUseWikieditor?'ext.pageforms.wikieditor':null;
++		if ( $this->mEditor == 'wikieditor' ) {
++			return 'ext.pageforms.wikieditor';
++		} elseif ( $this->mEditor == 'tinymce' ) {
++			return 'ext.tinymce';
++		} else {
++			return null;
++		}
+ 	}
+ 
+ 	protected function getTextAreaAttributes() {
