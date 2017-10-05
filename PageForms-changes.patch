@@ -1,54 +1,39 @@
 diff --git a/includes/forminputs/PF_TextAreaInput.php b/includes/forminputs/PF_TextAreaInput.php
-index 280eaa93..1a309e24 100644
+index 3cdf39c4..bb6e86da 100644
 --- a/includes/forminputs/PF_TextAreaInput.php
 +++ b/includes/forminputs/PF_TextAreaInput.php
-@@ -14,7 +14,7 @@
-  */
- class PFTextAreaInput extends PFFormInput {
- 
--	protected $mUseWikieditor = false;
-+	protected $mEditor = null;
- 
- 	public static function getDefaultCargoTypes() {
- 			return array( 'Text' => array() );
-@@ -57,9 +57,24 @@ class PFTextAreaInput extends PFFormInput {
- 			
- 			class_exists( 'WikiEditorHooks' )
- 		) {
--			$this->mUseWikieditor = true;
-+			$this->mEditor = 'wikieditor';
+@@ -56,6 +56,16 @@ class PFTextAreaInput extends PFFormInput {
+ 			$this->mEditor = 'wikieditor';
  			$this->addJsInitFunctionData( 'window.ext.wikieditor.init' );
  		}
-+ 
-+		if ( 
++
++		if (
 +			array_key_exists( 'editor', $this->mOtherArgs ) &&
-+			$this->mOtherArgs['editor'] == 'tinymce' 
++			$this->mOtherArgs['editor'] == 'tinymce'
 +		) {
 +			$this->mEditor = 'tinymce';
-+			if ( array_key_exists( 'class', $this->mOtherArgs ) ) {
-+				$this->mOtherArgs['class'] .= " tinymce";
-+			} else {
-+				$this->mOtherArgs['class'] = "tinymce";
-+			}
 +			global $wgTinyMCEEnabled, $wgTinyMCEMinimizeOnBlur;
 +			$wgTinyMCEEnabled = true;
 +			$wgTinyMCEMinimizeOnBlur = true;
 +		}
  	}
  
- 	
-@@ -143,7 +158,13 @@ class PFTextAreaInput extends PFFormInput {
- 	 * @return null|string|array
- 	 */
+ 	public static function getName() {
+@@ -140,6 +150,8 @@ class PFTextAreaInput extends PFFormInput {
  	public function getResourceModuleNames() {
--		return $this->mUseWikieditor?'ext.pageforms.wikieditor':null;
-+		if ( $this->mEditor == 'wikieditor' ) {
-+			return 'ext.pageforms.wikieditor';
+ 		if ( $this->mEditor == 'wikieditor' ) {
+ 			return 'ext.pageforms.wikieditor';
 +		} elseif ( $this->mEditor == 'tinymce' ) {
 +			return 'ext.tinymce';
-+		} else {
-+			return null;
-+		}
- 	}
- 
- 	protected function getTextAreaAttributes() {
+ 		} else {
+ 			return null;
+ 		}
+@@ -165,6 +177,8 @@ class PFTextAreaInput extends PFFormInput {
+ 			$editPage = new EditPage( $article );
+ 			WikiEditorHooks::editPageShowEditFormInitial( $editPage, $wgOut );
+ 			$className = 'wikieditor ';
++		} elseif ( $this->mEditor == 'tinymce' ) {
++			$className = 'tinymce ';
+ 		} else {
+ 			$className = '';
+ 		}
