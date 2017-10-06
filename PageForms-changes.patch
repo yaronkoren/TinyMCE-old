@@ -1,0 +1,39 @@
+diff --git a/includes/forminputs/PF_TextAreaInput.php b/includes/forminputs/PF_TextAreaInput.php
+index 3cdf39c4..bb6e86da 100644
+--- a/includes/forminputs/PF_TextAreaInput.php
++++ b/includes/forminputs/PF_TextAreaInput.php
+@@ -56,6 +56,16 @@ class PFTextAreaInput extends PFFormInput {
+ 			$this->mEditor = 'wikieditor';
+ 			$this->addJsInitFunctionData( 'window.ext.wikieditor.init' );
+ 		}
++
++		if (
++			array_key_exists( 'editor', $this->mOtherArgs ) &&
++			$this->mOtherArgs['editor'] == 'tinymce'
++		) {
++			$this->mEditor = 'tinymce';
++			global $wgTinyMCEEnabled, $wgTinyMCEMinimizeOnBlur;
++			$wgTinyMCEEnabled = true;
++			$wgTinyMCEMinimizeOnBlur = true;
++		}
+ 	}
+ 
+ 	public static function getName() {
+@@ -140,6 +150,8 @@ class PFTextAreaInput extends PFFormInput {
+ 	public function getResourceModuleNames() {
+ 		if ( $this->mEditor == 'wikieditor' ) {
+ 			return 'ext.pageforms.wikieditor';
++		} elseif ( $this->mEditor == 'tinymce' ) {
++			return 'ext.tinymce';
+ 		} else {
+ 			return null;
+ 		}
+@@ -165,6 +177,8 @@ class PFTextAreaInput extends PFFormInput {
+ 			$editPage = new EditPage( $article );
+ 			WikiEditorHooks::editPageShowEditFormInitial( $editPage, $wgOut );
+ 			$className = 'wikieditor ';
++		} elseif ( $this->mEditor == 'tinymce' ) {
++			$className = 'tinymce ';
+ 		} else {
+ 			$className = '';
+ 		}

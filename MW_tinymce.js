@@ -13,10 +13,9 @@ var tinyMCEMacros = mw.config.get( 'wgTinyMCEMacros' );
 function tinyMCEInitInstance(instance) {
 	if ( minimizeOnBlur ) {
 		var mcePane = $("textarea#" + instance.id).prev();
-			mcePane.find(".mce-menubar .mce-container-body").hide("medium");
 		// Keep a little sliver of the toolbar so that users see it.
-		mcePane.find(".mce-menubar").css("height", "15px");
-		mcePane.find(".mce-toolbar-grp").hide("medium");
+		mcePane.find(".mce-toolbar-grp").css("height", "10px");
+		mcePane.find(".mce-toolbar-grp .mce-flow-layout").hide("medium");
 	}
 }
 
@@ -114,7 +113,7 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
              'wikipaste': scriptPath + '/extensions/TinyMCE/tinymce/plugins/pf_paste/plugin.js',
              'wikisourcecode': scriptPath + '/extensions/TinyMCE/tinymce/plugins/pf_code/plugin.js'
           },
-          menubar: 'edit insert view format table tools',
+          menubar: false, //'edit insert view format table tools',
           removed_menuitems: 'media',
           toolbar1: 'undo redo | cut copy paste insert | bold italic underline strikethrough forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | charmap singlelinebreak wikilink unlink table wikiimageupload wikimagic wikisourcecode | styleselect removeformat | searchreplace ',
           style_formats_merge: true,
@@ -237,19 +236,17 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 		if ( minimizeOnBlur ) {
 			editor.on('focus', function(e) {
 				var mcePane = $("textarea#" + e.target.id).prev();
-				mcePane.find(".mce-menubar .mce-container-body").show("medium");
-				mcePane.find(".mce-menubar").css("height", "");
-				mcePane.find(".mce-toolbar-grp").show("medium");
+				mcePane.find(".mce-toolbar-grp").css("height", "");
+				mcePane.find(".mce-toolbar-grp .mce-flow-layout").show("medium");
 			});
 			editor.on('blur', function(e) {
 				var mcePane = $("textarea#" + e.target.id).prev();
-				mcePane.find(".mce-menubar .mce-container-body").hide("medium");
 				// Keep a little sliver of the toolbar so that users see it.
-				mcePane.find(".mce-menubar").css("height", "15px");
-				mcePane.find(".mce-toolbar-grp").hide("medium");
+				mcePane.find(".mce-toolbar-grp").css("height", "10px");
+				mcePane.find(".mce-toolbar-grp .mce-flow-layout").hide("medium");
 			});
 		}
           },
-          init_instance_callback: "tinyMCEInitInstance"
+//          init_instance_callback: "tinyMCEInitInstance"
       });
 });
