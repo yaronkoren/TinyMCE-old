@@ -115,7 +115,7 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
           },
           menubar: false, //'edit insert view format table tools',
           removed_menuitems: 'media',
-          toolbar1: 'undo redo | cut copy paste insert | bold italic underline strikethrough forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | charmap singlelinebreak wikilink unlink table wikiimageupload wikimagic wikisourcecode | styleselect removeformat | searchreplace ',
+          toolbar1: 'undo redo | cut copy paste insert | bold italic underline strikethrough forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | charmap singlelinebreak wikilink unlink table wikiimageupload wikimagic wikisourcecode | formatselect removeformat | searchreplace ',
           style_formats_merge: true,
           style_formats: [
             {title: "Table", items: [
