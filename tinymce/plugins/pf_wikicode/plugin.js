@@ -2092,41 +2092,22 @@ var BsWikiCode = function() {
 					'disableeditsection': '',
 					'disabletoc': '',
 					'format': 'json',};
-//debugger;
 				$.ajax({
 					dataType: "json",
 					url: script,
  	 				data: data,
 					async: false, 
 					success: function(data) {
-						function escapeHtml(text) {
-						    'use strict';
-						    return text.replace(/[\"&'\/<>]/g, function (a) {
-						        return {
-						            '"': '&quot;', '&': '&amp;', "'": '&#39;',
-						            '/': '&#47;',  '<': '&lt;',  '>': '&gt;'
-						        }[a];
-						    });
-						}
 						var templateHTML = data.parse.text["*"];
-//debugger;
 						// DC remove leading and trailing <p>
 						templateHTML = $.trim(templateHTML);
 						templateHTML = templateHTML.replace(/<\/?p[^>]*>/g, "");
 
-/*						if (templateHTML.substring(0, 3) == '<p>') {
-							templateHTML = templateHTML.substring(3, templateHTML.length);
-						}
-						if (templateHTML.substring(templateHTML.length-4,templateHTML.length) == '</p>') {
-							templateHTML = templateHTML.substring(0, templateHTML.length-4);
-						}
-*/
 						templateHTML = $.trim(templateHTML);
 						templateHTML = templateHTML.replace(/\&amp\;/gmi,'&');
 						// DC remove href tags in returned html as links will screw up conversions
 						templateHTML = templateHTML.replace(/\shref="([^"]*)"/gmi,'');
 						templateHTML = templateHTML.replace(/(\r\n|\n|\r)/gm,"");
-//						templateHTML = escapeHtml(templateHTML);
 
 						var templateWikiText = data.parse.wikitext["*"];
 						templateWikiText = $.trim(templateWikiText);
@@ -2137,7 +2118,6 @@ var BsWikiCode = function() {
 							templateWikiText = templateWikiText.substring(0, templateWikiText.length-4);
 						}
 						templateWikiText = $.trim(templateWikiText);
-//						var displayTemplateWikiText = escapeHtml(templateWikiText);
 						var displayTemplateWikiText = encodeURIComponent(templateWikiText);
 
 						var t = Math.floor((Math.random() * 100000) + 100000);
@@ -2145,30 +2125,17 @@ var BsWikiCode = function() {
 						var codeAttrs = {
 							'id': id,
 							'class': "mceNonEditable wikimagic template",
-//							'title': displayTemplateWikiText ,
 							'title': "{{" + templateName + "}}",
 							'data-bs-type': "template",
 							'data-bs-id': i,
 							'data-bs-name': templateName,
-//							'data-bs-wikitext': "templateWikiText",
 							'data-bs-wikitext': displayTemplateWikiText,
 							'contenteditable': "false"
 						};
 
-//						var htmlText = ed.dom.createHTML('span', codeAttrs, templateHTML);
 						var el = ed.dom.create('span', codeAttrs, templateHTML);
-//						var el = ed.dom.create('span', codeAttrs, htmlText);
-debugger;
-/*						var sText = new RegExp('\\|', 'g');
-						var rText = '\\|';
-						templateWikiText = templateWikiText.replace(
-							sText ,
-							rText
-						);*/
 						templateWikiText = templateWikiText.replace(/[^A-Za-z0-9_]/g, '\\$&');
 						var searchText = new RegExp(templateWikiText, 'g');
-/*						var replaceText = htmlText;
-*/
 						var replaceText = el.outerHTML;
 						text = text.replace(
 							searchText,
@@ -2294,15 +2261,6 @@ debugger;
 
 		if (templates) {
 			for (i = 0; i < templates.length; i++) {
-debugger;
-				var templateText = templates[i].outerHTML;
-				templateText = templateText.replace(/\&amp\;/gmi,'&');
-				templateText = templateText.replace(/ contenteditable="false"/gmi,'')
-				templateText = templateText.replace(/<a.*\/a>/gmi,'');
-				templateText = templateText.replace(/"data-mce-href=".*"/gmi,'');
-				var templateWikiText = decodeURIComponent(templates[i].attributes["data-bs-wikitext"].value);
-				text = text.replace(templateText, templateWikiText);
-//DC exp
 				var templateText = templates[i].outerHTML;
 				templateText = templateText.replace(/[^A-Za-z0-9_]/g, '\\$&');
 				var searchText = new RegExp(templateText, 'g');
@@ -2313,7 +2271,6 @@ debugger;
 					searchText,
 					replaceText
 				);
-// DC exp end
 			}
 		}
 
@@ -2699,7 +2656,7 @@ debugger;
 
 		//special tags before pres prevents spaces in special tags like GeSHi to take effect
 		text = _preserveSpecialTags(text, e);
-//debugger;
+
 		//cleanup linebreaks in tags except comments
 		text = text.replace(/(<[^!][^>]+?)(\n)([^<]+?>)/gi, "$1$3");
 
@@ -2764,13 +2721,11 @@ debugger;
 	 * @param {tinymce.ContentEvent} e
 	 */
 	function _onBeforeSetContent(e) {
-debugger;
+		// DC changes so that we always use 'raw' format
 		// if raw format is requested, this is usually for internal issues like
 		// undo/redo. So no additional processing should occur. Default is 'html'
 //		if (e.format == 'raw' ) return;
-//DC Experimental
-e.format = 'raw';
-//DC end
+		e.format = 'raw';
 		if (e.load) {
 			e.content = _preprocessWiki2Html(e.content, e);
 		}
@@ -2802,18 +2757,15 @@ e.format = 'raw';
 	 * @param {tinymce.ContentEvent} e
 	 */
 	function _onGetContent(e) {
-debugger;
+		// DC changed to assume content is  now 'raw'
 		// if raw format is requested, this is usually for internal issues like
 		// undo/redo. So no additional processing should occur. Default is 'html'
 //		if (e.format == 'raw' ) return;
-/* DCEXPEIMENTAL
-		if (e.format != 'raw') e.format = 'wiki';
-		var tetsmp = ed.getContent({source_view: true, format: 'raw'});
-*/
+		var ed = tinymce.get(e.target.id);
+		e.content= ed.getContent({source_view: true, no_events: true, format: 'raw'});
 		e.format = 'raw';
-/**/
 
-/* DC moved this up front from lower down */
+/* DC moved recover special tags up front from lower down */
 		e.content = _recoverSpecialTags(e.content, e);
 
 		e.content = _preprocessHtml2Wiki( e.content );
@@ -2853,7 +2805,6 @@ debugger;
 	}
 
 	function _onLoadContent(ed, o) {
-debugger;
 		var internalLinks = [];
 		var internalLinksTitles = [];
 		$(this.dom.doc).find('a.bs-internal-link').each(function(){
@@ -2927,7 +2878,6 @@ debugger;
 		ed.on('beforeSetContent', _onBeforeSetContent);
 		ed.on('getContent', _onGetContent);
 		ed.on('loadContent', _onLoadContent);
-		ed.on('submit', _onSubmit);
 
 		ed.on('click', function(e) {
 			var dataname = ed.dom.getAttrib(e.target.parentNode, 'data-bs-name');
