@@ -24,7 +24,7 @@ img {
 .pfMceUploadFailTxt {
 	position:absolute;
 	background-color:orange;
-	z-index:1;'
+	z-index:1;
 }
 
 .mceEditable {
@@ -33,6 +33,7 @@ img {
 
 .mceNonEditable {
 	border: 1px dotted #cc0000;
+	opacity: 0.3 !important;
 }
 
 .single_linebreak{
@@ -66,7 +67,7 @@ td.mceToolbar {
 	cursor:default;
 }
 
-.mce-content-body .template {
+/*.mce-content-body .template {
 	background:#DDDDDD;
 }
 
@@ -76,16 +77,52 @@ td.mceToolbar {
 
 .mce-content-body .comment {
 	background:#DDCCFF;
-}
+}*/
 
-.switch {
+/*.switch {
 	background:lightgray;
+	opacity: 0.3 !important;
 }
 
 .template {
 	background: lightgray;
-	opacity: 0.6;
+	opacity: 0.3 !important;
 }
+
+.tag {
+	background:lightgray;
+	opacity: 0.3 !important;
+}
+
+.comment {
+	background:lightgray;
+	opacity: 0.3 !important;
+}*/
+
+/*
+.mceNonEditable .wikimagic .template {
+	contenteditable = "false";
+	background:lightgray;
+	opacity: 0.3 !important;
+}
+*/
+
+.mceNonEditable img {
+	contenteditable = "false";
+	background:lightgray;
+	opacity: 0.3 !important;
+}
+
+.mceNonEditable table {
+	contenteditable = "false";
+	table-layout: fixed;
+	resize: none;
+	border-collapse: collapse;
+	border: 0px dotted #cc0000;
+	background:lightgray;
+	opacity: 0.3 !important;
+}
+
 
 a.new {
 	color: red;
