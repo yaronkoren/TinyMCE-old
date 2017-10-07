@@ -2120,14 +2120,14 @@ var BsWikiCode = function() {
 						templateWikiText = $.trim(templateWikiText);
 						var displayTemplateWikiText = encodeURIComponent(templateWikiText);
 
-						var t = Math.floor((Math.random() * 100000) + 100000);
+						var t = Math.floor((Math.random() * 100000) + 100000) + i;
 						var id = "bs_template:@@@TPL"+ t + "@@@";
 						var codeAttrs = {
 							'id': id,
 							'class': "mceNonEditable wikimagic template",
 							'title': "{{" + templateName + "}}",
 							'data-bs-type': "template",
-							'data-bs-id': i,
+							'data-bs-id': t,
 							'data-bs-name': templateName,
 							'data-bs-wikitext': displayTemplateWikiText,
 							'contenteditable': "false"
