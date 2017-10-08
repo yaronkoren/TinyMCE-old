@@ -1975,6 +1975,9 @@ var BsWikiCode = function() {
 			squareBraceFirst, tempTemplate, innerText, id, htmlText, el,
 			templateName, templateText, templateResult, templateNameLines, switchWikiText;
 		var ed = tinymce.get(e.target.id);
+		if (ed == null) {
+			ed = tinymce.activeEditor;
+		}
 		var switches = new Array();
 		if (!_switches) {
 			_switches = new Array();
