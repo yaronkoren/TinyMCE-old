@@ -30,8 +30,14 @@ img {
 	border: 1px dotted #0000cc;
 }
 
-.mceNonEditable {
-	border: 1px dotted #cc0000;
+.mceNonEditable .mw-parser-output {
+	/* Image created at http://www.patternify.com, with a 2-pixel width
+	 * of color #d9f7db on a 10x10 "canvas". */
+	background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAASElEQVQoU2NkgIKb32//BzHVOVUZYWLINFiQkCKQGkZiFMEV4rIO2VlY3YPsNpiNeBUiOwunQnS3Y1WIzYMYCnGFAopCfEEFANTAK18PA4AuAAAAAElFTkSuQmCC");
+	border: #90c693 1px solid;
+	padding: 3px;
+	margin: 15px 0 15px 0;
+	opacity: 0.7 !important;
 }
 
 .single_linebreak{
@@ -63,27 +69,6 @@ td.mceToolbar {
 .mceItemHiddenSpellWord {
 	/* background: url("tiny_mce/plugins/spellchecker/img/wline.gif") repeat-x bottom left;*/
 	cursor:default;
-}
-
-.mce-content-body .template {
-	background:#DDDDDD;
-}
-
-.mce-content-body .tag {
-	background:#CCDDFF;
-}
-
-.mce-content-body .comment {
-	background:#DDCCFF;
-}
-
-.switch {
-	background:lightgray;
-}
-
-.template {
-	background: lightgray;
-	opacity: 0.6;
 }
 
 a.new {

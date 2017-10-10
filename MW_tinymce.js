@@ -109,7 +109,7 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
              'visualblocks': scriptPath + '/extensions/TinyMCE/tinymce/plugins/visualblocks/plugin.js',
              'wikicode': scriptPath + '/extensions/TinyMCE/tinymce/plugins/pf_wikicode/plugin.js',
              'wikilink': scriptPath + '/extensions/TinyMCE/tinymce/plugins/pf_link/plugin.js',
-             //'wikimagic': scriptPath + '/extensions/TinyMCE/tinymce/plugins/pf_wikimagic/plugin.js',
+             'wikimagic': scriptPath + '/extensions/TinyMCE/tinymce/plugins/pf_wikimagic/plugin.js',
              'wikipaste': scriptPath + '/extensions/TinyMCE/tinymce/plugins/pf_paste/plugin.js',
              'wikisourcecode': scriptPath + '/extensions/TinyMCE/tinymce/plugins/pf_code/plugin.js'
           },

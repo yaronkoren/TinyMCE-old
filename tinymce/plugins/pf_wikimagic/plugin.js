@@ -25,9 +25,9 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 		}
 
 		var value = '';
-
 		if (isWikimagic) {
 			value = selectedNode.attributes["data-bs-wikitext"].value;
+			value = decodeURIComponent(value);
 		} else {
 			value = editor.selection.getContent({format : 'text'});
 		}
@@ -122,7 +122,7 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 				if (Object.keys(templates).length > 0) {
 					for (var aTemplate in templates) {
 						templateText = templates[aTemplate];
-						templateName = templates[templateText];
+						templateName = templateText;
 						templateName = templateName.replace(/[\{\}]/gmi, "");
 
 						templateNameLines = templateName.split(/\n/i);
@@ -158,32 +158,40 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 								var templateHTML = data.parse.text["*"];
 								// DC remove leading and trailing <p>
 								templateHTML = $.trim(templateHTML);
-								templateHTML = templateHTML.substring(3, templateHTML.length)
-								templateHTML = templateHTML.substring(0, templateHTML.length-5)
+								templateHTML = templateHTML.replace(/<\/?p[^>]*>/g, "");
+
+								templateHTML = $.trim(templateHTML);
 								templateHTML = templateHTML.replace(/\&amp\;/gmi,'&');
 								// DC remove href tags in returned htm as links will screw up conversions
 								templateHTML = templateHTML.replace(/\shref="([^"]*)"/gmi,'');
+								templateHTML = templateHTML.replace(/(\r\n|\n|\r)/gm,"");
+
 								var templateWikiText = data.parse.wikitext["*"];
+								templateWikiText = $.trim(templateWikiText);
+								if (templateWikiText.substring(0, 3) == '<p>') {
+									templateWikiText = templateWikiText.substring(3, templateWikiText.length);
+								}
+								if (templateWikiText.substring(templateWikiText.length-4,templateWikiText.length) == '</p>') {
+									templateWikiText = templateWikiText.substring(0, templateWikiText.length-4);
+								}
+								templateWikiText = $.trim(templateWikiText);
+								var displayTemplateWikiText = encodeURIComponent(templateWikiText);
+
 								t = Math.floor((Math.random() * 100000) + 100000) + i;
 								id = "bs_template:@@@TPL"+ t + "@@@";
 								var codeAttrs = {
 									'id': id,
 									'class': "mceNonEditable wikimagic template",
-									'title': templateWikiText,
+									'title': "{{" + templateName + "}}",
 									'data-bs-type': "template",
 									'data-bs-id': t,
 									'data-bs-name': templateName, 
-									'data-bs-wikitext': templateWikiText,
+									'data-bs-wikitext': displayTemplateWikiText,
 									'contenteditable': "false"
 								};
-								htmlText = editor.dom.createHTML('span', codeAttrs, templateHTML);
-								el = editor.dom.create('span', codeAttrs, templateHTML);
-								var sText = new RegExp('\\|', 'g');
-								var rText = '\\|';
-								templateWikiText = templateWikiText.replace(
-									sText ,
-									rText
-								);
+
+								var el = editor.dom.create('span', codeAttrs, templateHTML);
+								templateWikiText = templateWikiText.replace(/[^A-Za-z0-9_]/g, '\\$&');
 								var searchText = new RegExp(templateWikiText, 'g');
 								var replaceText = el.outerHTML;
 								text = text.replace(
@@ -220,4 +228,13 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 		context: 'insert',
 		onclick: showDialog
 	});
+
+	// Add option to double-click on non-editable sections to get
+	// "wikimagic" popup.
+        editor.on('dblclick', function(e) {
+            if (e.target.className == 'mw-parser-output') {
+                tinyMCE.activeEditor.execCommand('mceWikimagic');
+            }
+        });
+
 });
