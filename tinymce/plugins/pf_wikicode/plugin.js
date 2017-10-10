@@ -6,10 +6,6 @@
  * @author     Markus Glaser <glaser@hallowelt.com>
  * @author     Sebastian Ulbricht
  * @author     Duncan Crane <duncan.crane@aoxomoxoa.co.uk>
- * @version    2.22.0
-
- * @package    Bluespice_Extensions
- * @subpackage VisualEditor - adapted and extended for use with PageForms extension of Mediawiki by Duncan Crane
  * @copyright  Copyright (C) 2016 Hallo Welt! GmbH, All rights reserved.
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License v2 or later
  * @filesource
@@ -2153,7 +2149,7 @@ var BsWikiCode = function() {
 		if (!_specialtags) {
 			_specialtags = new Array();
 		}
-		specialTagsList = mw.config.get('wgPageFormsTinyTagList');
+		specialTagsList = mw.config.get('wgTinyMCETagList');
 		// Tags without innerHTML need /> as end marker. Maybe this should be task of a preprocessor, in order to allow mw style tags without /.
 		regex = '<(' + specialTagsList + ')[\\S\\s]*?((/>)|(>([\\S\\s]*?<\\/\\1>)))';
 		matcher = new RegExp(regex, 'gmi');
@@ -2864,7 +2860,7 @@ e.format = 'raw';
 
 	this.getInfo = function() {
 		var info = {
-			longname: 'BlueSpice WikiCode Parser adapted for PageForms',
+			longname: 'TinyMCE WikiCode Parser',
 			author: 'Hallo Welt! GmbH & Duncan Crane at Aoxomoxoa Limited',
 			authorurl: 'http://www.hallowelt.biz, https://www.aoxomoxoa.co.uk',
 			infourl: 'http://www.hallowelt.biz, https://www.aoxomoxoa.co.uk'
