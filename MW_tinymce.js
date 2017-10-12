@@ -46,7 +46,7 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 	  relative_urls: false,
 	  remove_script_host: false,
 	  document_base_url: mw.config.get( "wgServer" ),
-  	  automatic_uploads: true,
+	  automatic_uploads: true,
           paste_data_images: true,
 	  content_css: scriptPath + '/extensions/TinyMCE/MW_tinymce.css',
           theme_url: scriptPath + '/extensions/TinyMCE/tinymce/themes/modern/theme.js',
@@ -57,11 +57,11 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 	  wikimagic_context_toolbar: true,
           contextmenu: "undo redo | cut copy paste insert | link wikiimageupload wikimagic inserttable | styleselect removeformat ",
           convert_fonts_to_spans: true,
-  	  link_title: false,
+	  link_title: false,
 	  link_assume_external_targets: true,
 	  link_class_list: [
-    		{title: 'External', value: 'external bs-external-link mceNonEditable'},
-    		{title: 'Internal', value: 'internal bs-internal-link mceNonEditable'},
+ 		{title: 'External', value: 'external bs-external-link mceNonEditable'},
+ 		{title: 'Internal', value: 'internal bs-internal-link mceNonEditable'},
 	  ],
           table_default_attributes: {
               class: 'wikitable'
@@ -140,13 +140,13 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 
              	function insertImage() {
                 	var editorid = editor.id;
-		 	var node = editor.selection.getNode();
-		 	var nodeID = node.id;
-		 	if (node.nodeName == 'IMG') {
+			var node = editor.selection.getNode();
+			var nodeID = node.id;
+			if (node.nodeName == 'IMG') {
 				var upLoadType = "local";
-		 	} else {
+			} else {
 				var upLoadType = "file";
-		 	}
+			}
 
                  	var uploadform = scriptPath + '/index.php?title=Special:TinyMCEUploadWindow&pfInputID=' + editorid + 
 				'&pfEditor=tinymce' + 
@@ -178,23 +178,23 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 			});
             	}
 
-             	editor.addButton('wikiimageupload', {
+        	editor.addButton('wikiimageupload', {
                 	icon: 'image',
 			stateSelector: 'img',
-                	tooltip: "Upload/insert wiki image",
+                	tooltip: mw.msg("tinymce-upload"),
                 	onclick:  insertImage
-             	});
+        	});
 
-            	editor.addButton('singlelinebreak', {
+		editor.addButton('singlelinebreak', {
                  	icon: 'visualchars',
-                 	tooltip: "Insert single linebreak and current position",
+                 	tooltip: mw.msg("tinymce-insert-linebreak"),
                  	onclick:  insertSingleLinebreak
-             	});
+		});
 
 		editor.addMenuItem('singlelinebreak', {
 			icon: 'visualchars',
 			text: 'Single linebreak',
-			tooltip: 'Insert single linebreak at current position',
+			tooltip: mw.msg("tinymce-insert-linebreak"),
 			context: 'insert',
 			onclick: insertSingleLinebreak
 		});

@@ -9,6 +9,7 @@
  */
 
 /*global tinymce:true */
+/*global mw:true */
 
 tinymce.PluginManager.add('wikilink', function(editor) {
 	var attachState = {};
@@ -658,7 +659,7 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 	this.showDialog = showDialog;
 
 	editor.addMenuItem('openlink', {
-		text: 'Open link',
+		text: mw.msg('tinymce-openlink'),
 		icon: 'newtab',
 		onclick: gotoSelectedLink,
 		onPostRender: toggleViewLinkState,

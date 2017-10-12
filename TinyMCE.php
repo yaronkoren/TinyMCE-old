@@ -88,7 +88,16 @@ $GLOBALS['wgResourceModules'] += array(
 	'ext.tinymce' => $wgTinyMCEResourceTemplate + array(
 		'scripts' => 'MW_tinymce.js',
 		'styles' => 'MW_tinymce.css',
-		'dependencies' => 'ext.tinymce.fancybox'
+		'dependencies' => 'ext.tinymce.fancybox',
+		'messages' => array(
+			'tinymce-upload',
+			'tinymce-openlink',
+			'tinymce-wikimagic',
+			'tinymce-wikimagic-title',
+			'tinymce-wikisourcecode',
+			'tinymce-wikisourcecode-title',
+			'tinymce-insert-linebreak'
+		)
 	),
 	'ext.tinymce.fancybox' => $wgTinyMCEResourceTemplate + array(
 		'scripts' => 'fancybox/jquery.fancybox.js',

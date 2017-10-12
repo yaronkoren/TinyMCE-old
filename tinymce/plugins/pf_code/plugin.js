@@ -9,6 +9,7 @@
  */
 
 /*global tinymce:true */
+/*global mw:true */
 
 tinymce.PluginManager.add('wikisourcecode', function(editor) {
 	function showDialog() {
@@ -48,13 +49,13 @@ tinymce.PluginManager.add('wikisourcecode', function(editor) {
 
 	editor.addButton('wikisourcecode', {
 		icon: 'code',
-		tooltip: 'View and edit wiki source code',
+		tooltip: mw.msg('tinymce-wikisourcecode'),
 		onclick: showDialog
 	});
 
 	editor.addMenuItem('wikisourcecode', {
 		icon: 'code',
-		text: 'Wiki source code',
+		text: mw.msg('tinymce-wikisourcecode-title'),
 		context: 'tools',
 		onclick: showDialog
 	});

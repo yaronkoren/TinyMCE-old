@@ -15,6 +15,7 @@
  */
 
 /*global tinymce:true */
+/*global mw:true */
 
 tinymce.PluginManager.add('wikimagic', function(editor) {
 	var showDialog = function () {
@@ -33,7 +34,7 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 		}
 
 		editor.windowManager.open({
-			title: 'Wiki templates, parser functions and magic words',
+			title: mw.msg('tinymce-wikimagic-title'),
 			body: {type: 'textbox', name: 'code', size: 40, label: 'Code value', value: value},
 			onsubmit: function(e) {
 				var text = e.data.code;
@@ -216,7 +217,7 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 	editor.addButton('wikimagic', {
 		icon: 'codesample',
 		stateSelector: '.wikimagic',
-		tooltip: 'Add wiki templates, parser functions and magic words',
+		tooltip: mw.msg( 'tinymce-wikimagic' ),
 		onclick: showDialog/*,
 		stateSelector: 'a:not([href])'*/
 	});
@@ -224,7 +225,7 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 	editor.addMenuItem('wikimagic', {
 		icon: 'codesample',
 		text: 'Wikimagic',
-		tooltip: 'Add wiki templates, parser functions and magic words',
+		tooltip: mw.msg( 'tinymce-wikimagic' ),
 		context: 'insert',
 		onclick: showDialog
 	});

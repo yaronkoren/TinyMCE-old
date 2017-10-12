@@ -2561,13 +2561,14 @@ var BsWikiCode = function() {
 				function( data ) {
 					if ( data.query && data.query.pages ) {
 						var pages = data.query.pages;	
-						for ( var p in pages ) { 														if (p == -1) {
+						for ( var p in pages ) {
+							if (p == -1) {
 								//error in lookup
 								// Todo: i18n
 								var response = pages["-1"];
 								var reason = response["invalidreason"];
 								var title = response["title"]
-								alert('Sorry there was an error looking up ' + title + '. ' + reason);
+								alert('Error looking up ' + title + '. ' + reason);
 							} else {
 								var info = pages[p].imageinfo;
 								var imageurl = info[0].url;
