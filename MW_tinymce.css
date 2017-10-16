@@ -30,7 +30,7 @@ img {
 	border: 1px dotted #0000cc;
 }
 
-.mceNonEditable .mw-parser-output {
+.mceNonEditable {
 	display: inline-block;
 	/* Image created at http://www.patternify.com, with a 2-pixel width
 	 * of color #d9f7db on a 10x10 "canvas". */
