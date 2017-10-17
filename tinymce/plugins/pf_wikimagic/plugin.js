@@ -233,7 +233,7 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 	// Add option to double-click on non-editable sections to get
 	// "wikimagic" popup.
         editor.on('dblclick', function(e) {
-            if (e.target.className == 'mw-parser-output') {
+            if (e.target.className == 'mceNonEditable wikimagic template' || e.target.className == 'mw-parser-output') {
                 tinyMCE.activeEditor.execCommand('mceWikimagic');
             }
         });
