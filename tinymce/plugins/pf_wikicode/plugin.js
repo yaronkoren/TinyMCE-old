@@ -2132,6 +2132,7 @@ var BsWikiCode = function() {
 							'contenteditable': "false"
 						};
 
+						templateHTML += '<div class="mceNonEditableOverlay" />';
 						var el = ed.dom.create('span', codeAttrs, templateHTML);
 						templateWikiText = templateWikiText.replace(/[^A-Za-z0-9_]/g, '\\$&');
 						var searchText = new RegExp(templateWikiText, 'g');

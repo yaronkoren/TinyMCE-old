@@ -38,6 +38,15 @@ img {
 	border: #90c693 1px solid;
 	padding: 8px;
 	opacity: 0.7 !important;
+	position: relative;
+}
+
+.mceNonEditableOverlay {
+	position: absolute;
+	height: 100%;
+	width: 100%;
+	top: 0;
+	left: 0;
 }
 
 .single_linebreak{
