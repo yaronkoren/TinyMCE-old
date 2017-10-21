@@ -6,10 +6,6 @@
  * @author     Markus Glaser <glaser@hallowelt.com>
  * @author     Sebastian Ulbricht
  * @author     Duncan Crane <duncan.crane@aoxomoxoa.co.uk>
- * @version    2.22.0
-
- * @package    Bluespice_Extensions
- * @subpackage VisualEditor - adapted and extended for use with PageForms extension of Mediawiki by Duncan Crane
  * @copyright  Copyright (C) 2016 Hallo Welt! GmbH, All rights reserved.
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License v2 or later
  * @filesource
@@ -1410,6 +1406,9 @@ var BsWikiCode = function() {
 
                         //Special Line --
 			if (line && line !== '') {
+// DC Next
+				emptyLineCount = 0;
+//DC
 				lines[i] = lines[i].replace(/^(\*|#|:|;)*\s*(.*?)$/gmi, "$2");
 				if (line[0].indexOf(':') === 0) {
 					if (line[0].length === lastList.length) {
@@ -1426,7 +1425,7 @@ var BsWikiCode = function() {
 						lines[i] = _continueList(lastList, line[0]) + lines[i];
 					}
 					if (line[0].length > lastList.length) {
-						lines[i] = _openList(lastList, line[0]) + lines[i];
+						lines[i] = '<div>' + _openList(lastList, line[0]) + lines[i];
 					}
 					if (line[0].length < lastList.length) {
 						lines[i] = _closeList(lastList, line[0]) + '<li>' + lines[i];
@@ -1435,7 +1434,7 @@ var BsWikiCode = function() {
 				lastList = line[0];
 
 				if (inParagraph) {
-					lines[i] = '</p>' + lines[i];
+					lines[i] = '</div>' + lines[i];
 					inParagraph = false;
 				}
 
@@ -1453,11 +1452,14 @@ var BsWikiCode = function() {
 				}
 
 				if (lastList.length > 0) {
-					lines[i - 1] = lines[i - 1] + _closeList(lastList, '');
+//DC Next
+					lines[i - 1] = lines[i - 1] + _closeList(lastList, '') + '</div>';
+//DC
 					lastList = '';
 					if (emptyLine) {
 						emptyLineBefore = true;
-						continue;
+//DC Next
+//DC						continue;
 					}
 				}
 
@@ -1493,62 +1495,76 @@ var BsWikiCode = function() {
 					inBlock = false;
 				}
 
+//DC Next
+				if ((emptyLineCount % 2 === 0) && inParagraph) {
+					if (!emptyLine) {
+						lines[i] = '<div>' + lines[i] + '</div>' ;
+					}
+					lines[i] = '</div>' + lines[i];
+					inParagraph = false;
+				}
+//DC
 				if (emptyLine) {
 					emptyLineBefore = true;
-
-					if (inParagraph) {
-						lines[i] = lines[i] + '</p>';
-						inParagraph = false;
-					} else {
+//DC Next moved out of if clause as also applies if line not empty
+//					if (inParagraph) {
+//DC
+//					} else {
 						//this is experimental (09.07.2009 MRG)
 						if (emptyLineCount === 1 && (emptyLineAfter || specialClosematchBefore)) {
+//DC next
+							lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_first"/>';
+							inParagraph = true;
+//							emptyLineCount = 2;
 							continue;
 						}
 
 						if ((emptyLineCount % 2 === 0) && (emptyLineAfter || beforeBlock || specialClosematchTwoBefore)) {
-							lines[i] = lines[i] + '<p class="bs_emptyline_first"><br class="bs_emptyline_first"/>';
+//							lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_first"/>';
+							inParagraph = false;
 						} else {
 							if (!lastLine) {
-								lines[i] = lines[i] + '<p class="bs_emptyline"><br class="bs_emptyline"/>';
+								lines[i] = lines[i] + '<div class="bs_emptyline"><br class="bs_emptyline"/>';
+//DC Next
+								inParagraph = true;
 							}
 						}
-						inParagraph = true;
-					}
+//						inParagraph = true;
+//					}
 					continue;
 
 				}
 
 				if (!matchStartTags && !inParagraph && !inBlock && !matchEndTags) {
-					lines[i] = '<p>' + lines[i];
+					lines[i] = '<div>' + lines[i];
 					inParagraph = true;
 				} else if (!matchStartTags && emptyLineBefore && !inBlock && !matchEndTags && inParagraph) {
-					lines[i] = '</p><p>' + lines[i];
+					lines[i] = '</div><div>' + lines[i];
 					inParagraph = true;
 				}
 
 				if (matchStartTags && inParagraph) {
-					lines[i] = '</p>' + lines[i];
+					lines[i] = '</div>' + lines[i];
 					inParagraph = false;
 				}
 
 				// 090929-- MRG. this was deactivated. Highly experimental!!
 				// @todo Plays anybody still with that or can it go to trash?
 				if (false && matchEndTags && !inParagraph && !inBlock) {
-					lines[i] = lines[i] + '<p>';
+					lines[i] = lines[i] + '<div>';
 					inParagraph = true;
 				}
 
 				if (i === (lines.length - 1)) {
 					if (inParagraph) {
+						lines[i] = lines[i] + '</div>';
 						inParagraph = false;
-						lines[i] = lines[i] + '</p>';
 					}
 				}
 
 				emptyLineBefore = false;
 			}
 		}
-
 		return lines.join("\n");
 	}
 
@@ -1672,11 +1688,11 @@ var BsWikiCode = function() {
 		else {
 			//<p> is neccessary to fix Ticket#2010111510000021. do not use <p>
 			//in the complementary line in html2wiki
-			text = text + '<p><br class="bs_lastline" /></p>';
+			text = text + '<div><br class="bs_lastline" /></div>';
 		}
 
 		// this reverts the line above. otherwise undo/redo will not work
-		text = text.replace(/<p><br [^>]*bs_lastline[^>]*><\/p>/gmi, '');
+		text = text.replace(/<div><br [^>]*bs_lastline[^>]*><\/div>/gmi, '');
 		text = text.replace(/<br data-attributes="" \/>/gmi, '<br/>');
 		text = text.replace(/<br data-attributes="[^>]*data-mce-bogus[^>]*" \/>/gmi, '');
 		text = text.replace(/<br [^>]*data-mce-bogus="1"[^>]*>/gmi, '');
@@ -1728,18 +1744,17 @@ var BsWikiCode = function() {
 /*		text = text.replace(/<span style="text-decoration: line-through;">(.*?)<\/span>/gi, "<s>$1</s>");
 		text = text.replace(/<span style="text-decoration: underline;">(.*?)<\/span>/gi, "<u>$1</u>");*/
 		//sub and sup need no conversion
-
 		text = text.replace(/<br class="bs_emptyline_first"[^>]*>/gmi, "@@br_emptyline_first@@");
 
 		// if emptyline_first is no longer empty, change it to a normal p
-		text = text.replace(/<p class="bs_emptyline_first"[^>]*>&nbsp;<\/p>/gmi, '<p>@@br_emptyline_first@@</p>'); // TinyMCE 4
-		text = text.replace(/<p class="bs_emptyline_first"[^>]*>(.*?\S+.*?)<\/p>/gmi, "<p>$1</p>");
-		text = text.replace(/<p class="bs_emptyline_first"[^>]*>.*?<\/p>/gmi, "<p>@@br_emptyline_first@@</p>");
+		text = text.replace(/<div class="bs_emptyline_first"[^>]*>&nbsp;<\/div>/gmi, '<div>@@br_emptyline_first@@</div>'); // TinyMCE 4
+		text = text.replace(/<div class="bs_emptyline_first"[^>]*>(.*?\S+.*?)<\/div>/gmi, "<div>$1</div>");
+		text = text.replace(/<div class="bs_emptyline_first"[^>]*>.*?<\/div>/gmi, "<div>@@br_emptyline_first@@</div>");
 		text = text.replace(/<br class="bs_emptyline"[^>]*>/gmi, "@@br_emptyline@@");
 		// if emptyline is no longer empty, change it to a normal p
-		text = text.replace(/<p class="bs_emptyline"[^>]*>&nbsp;<\/p>/gmi, '<p>@@br_emptyline@@</p>'); // TinyMCE 4
-		text = text.replace(/<p class="bs_emptyline"[^>]*>(.*?\S+.*?)<\/p>/gmi, "<p>$1</p>");
-		text = text.replace(/<p class="bs_emptyline"[^>]*>(.*?)<\/p>/gmi, "<p>@@br_emptyline@@</p>");
+		text = text.replace(/<div class="bs_emptyline"[^>]*>&nbsp;<\/div>/gmi, '<div>@@br_emptyline@@</div>'); // TinyMCE 4
+		text = text.replace(/<div class="bs_emptyline"[^>]*>(.*?\S+.*?)<\/div>/gmi, "<div>$1</div>"); //doesn't replace 2nd occurence
+		text = text.replace(/<div class="bs_emptyline"[^>]*>(.*?)<\/div>/gmi, "<div>@@br_emptyline@@</div>");
 		text = text.replace(/<br mce_bogus="1"\/>/gmi, "");
 
 		text = text.replace(/<br.*?>/gi, function(match, offset, string) {
@@ -1772,7 +1787,7 @@ var BsWikiCode = function() {
 		text = text.replace(/\n?<div style=('|")padding-left: 30px;('|")>([\S\s]*?)<\/div>/gmi, "<blockquote>$3</blockquote>");
 		text = text.replace(/\n?<div style=('|")padding-left: 60px;('|")>([\S\s]*?)<\/div>/gmi, "<blockquote><blockquote>$3</blockquote>");
 		text = text.replace(/\n?<div style=('|")padding-left: 90px;('|")>([\S\s]*?)<\/div>/gmi, "<blockquote><blockquote><blockquote>$3</blockquote>");
-
+//DIVREPLACE DC
 		//replace simple divs by p
 		text = text.replace(/<div>(.*?)<\/div>/gmi, "<p>$1</p>");
 
@@ -1800,9 +1815,11 @@ var BsWikiCode = function() {
 						text = text.replace(/\n?<p(\s+[^>]*?)?>(\s| |&nbsp;)*?<\/p>/mi, "\n\n");
 					}
 					//THIS IS EXPERIMENTAL: If anything breaks, put in a second \n at the end
+					//DC Seems to insert spurious \n so taken these out
 					currentPos = text.search(/<p(\s+[^>]*?)?>([\s\S]*?)<\/p>/mi);
 					if (currentPos === nextPos) {
-						text = text.replace(/\n?<p(\s+[^>]*?)?>([\s\S]*?)<\/p>/mi, "\n$2\n\n");
+//DC						text = text.replace(/\n?<p(\s+[^>]*?)?>([\s\S]*?)<\/p>/mi, "\n$2\n\n");
+						text = text.replace(/\n?<p(\s+[^>]*?)?>([\s\S]*?)<\/p>/mi, "$2");
 					}
 					break;
 			}
@@ -1811,22 +1828,22 @@ var BsWikiCode = function() {
 					text = text.replace(/<\/p>/, "");
 					break;
 				case '<h1' :
-					text = text.replace(/\n?<h1.*?>(.*?)<\/h1>\n?/mi, "\n=$1=\n");
+					text = text.replace(/\n?<h1.*?>(.*?)<\/h1>\n?/mi, "\n=$1=\n\n");
 					break;
 				case '<h2' :
-					text = text.replace(/\n?<h2.*?>(.*?)<\/h2>\n?/mi, "\n==$1==\n");
+					text = text.replace(/\n?<h2.*?>(.*?)<\/h2>\n?/mi, "\n==$1==\n\n");
 					break;
 				case '<h3' :
-					text = text.replace(/\n?<h3.*?>(.*?)<\/h3>\n?/mi, "\n===$1===\n");
+					text = text.replace(/\n?<h3.*?>(.*?)<\/h3>\n?/mi, "\n===$1===\n\n");
 					break;
 				case '<h4' :
-					text = text.replace(/\n?<h4.*?>(.*?)<\/h4>\n?/mi, "\n====$1====\n");
+					text = text.replace(/\n?<h4.*?>(.*?)<\/h4>\n?/mi, "\n====$1====\n\n");
 					break;
 				case '<h5' :
-					text = text.replace(/\n?<h5.*?>(.*?)<\/h5>\n?/mi, "\n=====$1=====\n");
+					text = text.replace(/\n?<h5.*?>(.*?)<\/h5>\n?/mi, "\n=====$1=====\n\n");
 					break;
 				case '<h6' :
-					text = text.replace(/\n?<h6.*?>(.*?)<\/h6>\n?/mi, "\n======$1======\n");
+					text = text.replace(/\n?<h6.*?>(.*?)<\/h6>\n?/mi, "\n======$1======\n\n");
 					break;
 				case '<hr' :
 					text = text.replace(/\n?<hr.*?>/mi, "\n----");
@@ -1855,7 +1872,6 @@ var BsWikiCode = function() {
 					}
 					break;
 			}
-
 			switch (text.substr(nextPos, 4)) {
 				case '<blo' :
 					listTag = listTag + ':';
@@ -1870,7 +1886,8 @@ var BsWikiCode = function() {
 					if (listTag.length > 0) {
 						text = text.replace(/<\/ul>/, "");
 					} else {
-						text = text.replace(/<\/ul>/, "\n");
+//						text = text.replace(/<\/ul>/, "\n");
+						text = text.replace(/<\/ul>/, "");
 					}
 					break;
 				case '</ol' :
@@ -1879,7 +1896,8 @@ var BsWikiCode = function() {
 					if (listTag.length > 0) {
 						text = text.replace(/<\/ol>/, "");
 					} else {
-						text = text.replace(/<\/ol>/, "\n");
+//						text = text.replace(/<\/ol>/, "\n");
+						text = text.replace(/<\/ol>/, "");
 					}
 					break;
 				case '</dl' :
@@ -1888,7 +1906,8 @@ var BsWikiCode = function() {
 					if (listTag.length > 0) {
 						text = text.replace(/<\/dl>/, "");
 					} else {
-						text = text.replace(/<\/dl>/, "\n");
+//						text = text.replace(/<\/dl>/, "\n");
+						text = text.replace(/<\/dl>/, "");
 					}
 					break;
 				case '</dt' :
@@ -1896,7 +1915,8 @@ var BsWikiCode = function() {
 					text = text.replace(/<\/dt>/, "");
 					break;
 				case '</li' :
-					text = text.replace(/\n?<\/li>/mi, "\n");
+//					text = text.replace(/\n?<\/li>/mi, "\n");
+					text = text.replace(/\n?<\/li>/mi, "");
 					break;
 				case '</bl' :
 					listTag = listTag.substr(0, listTag.length - 1);
@@ -1928,9 +1948,8 @@ var BsWikiCode = function() {
 			}
 		}
 		text = _tables2wiki(text);
-
-		text = text.replace(/\n?@@br_emptyline_first@@/gmi, "\n");
-		text = text.replace(/\n?@@br_emptyline@@/gmi, "");
+		text = text.replace(/\n?@@br_emptyline_first@@/gmi, "\n\n");
+		text = text.replace(/\n?@@br_emptyline@@/gmi, "\n\n");
 		// Cleanup von falschen Image-URLs
 		// TODO MRG (02.11.10 23:44): i18n
 		text = text.replace(/\/Image:/g, "Image:");
@@ -2102,6 +2121,7 @@ var BsWikiCode = function() {
 					async: false, 
 					success: function(data) {
 						var templateHTML = data.parse.text["*"];
+
 						// DC remove leading and trailing <p>
 						templateHTML = $.trim(templateHTML);
 						templateHTML = templateHTML.replace(/<\/?p[^>]*>/g, "");
@@ -2135,11 +2155,12 @@ var BsWikiCode = function() {
 							'data-bs-wikitext': displayTemplateWikiText,
 							'contenteditable': "false"
 						};
-
+						templateHTML += '<div class="mceNonEditableOverlay" />';
 						var el = ed.dom.create('span', codeAttrs, templateHTML);
 						templateWikiText = templateWikiText.replace(/[^A-Za-z0-9_]/g, '\\$&');
 						var searchText = new RegExp(templateWikiText, 'g');
 						var replaceText = el.outerHTML;
+
 						text = text.replace(
 							searchText,
 							replaceText
@@ -2153,7 +2174,7 @@ var BsWikiCode = function() {
 		if (!_specialtags) {
 			_specialtags = new Array();
 		}
-		specialTagsList = mw.config.get('wgPageFormsTinyTagList');
+		specialTagsList = mw.config.get('wgTinyMCETagList');
 		// Tags without innerHTML need /> as end marker. Maybe this should be task of a preprocessor, in order to allow mw style tags without /.
 		regex = '<(' + specialTagsList + ')[\\S\\s]*?((/>)|(>([\\S\\s]*?<\\/\\1>)))';
 		matcher = new RegExp(regex, 'gmi');
@@ -2268,7 +2289,6 @@ var BsWikiCode = function() {
 				templateText = templateText.replace(/[^A-Za-z0-9_]/g, '\\$&');
 				var searchText = new RegExp(templateText, 'g');
 				var templateWikiText = decodeURIComponent(templates[i].attributes["data-bs-wikitext"].value);
-
 				var replaceText = templateWikiText;
 				text = text.replace(
 					searchText,
@@ -2565,13 +2585,14 @@ var BsWikiCode = function() {
 				function( data ) {
 					if ( data.query && data.query.pages ) {
 						var pages = data.query.pages;	
-						for ( var p in pages ) { 														if (p == -1) {
+						for ( var p in pages ) {
+							if (p == -1) {
 								//error in lookup
 								// Todo: i18n
 								var response = pages["-1"];
 								var reason = response["invalidreason"];
 								var title = response["title"]
-								alert('Sorry there was an error looking up ' + title + '. ' + reason);
+								alert('Error looking up ' + title + '. ' + reason);
 							} else {
 								var info = pages[p].imageinfo;
 								var imageurl = info[0].url;
@@ -2744,7 +2765,6 @@ var BsWikiCode = function() {
 	 * @param {tinymce.ContentEvent} e
 	 */
 	function _onSubmit(e) {
-debugger;
 		// if raw format is requested, this is usually for internal issues like
 		// undo/redo. So no additional processing should occur. Default is 'html'
 //		if (e.format == 'raw' ) return;
@@ -2763,7 +2783,7 @@ e.format = 'raw';
 		// DC changed to assume content is  now 'raw'
 		// if raw format is requested, this is usually for internal issues like
 		// undo/redo. So no additional processing should occur. Default is 'html'
-//		if (e.format == 'raw' ) return;
+		if (e.format == 'raw' ) return;
 		var ed = tinymce.get(e.target.id);
 		e.content= ed.getContent({source_view: true, no_events: true, format: 'raw'});
 		e.format = 'raw';
@@ -2864,7 +2884,7 @@ e.format = 'raw';
 
 	this.getInfo = function() {
 		var info = {
-			longname: 'BlueSpice WikiCode Parser adapted for PageForms',
+			longname: 'TinyMCE WikiCode Parser',
 			author: 'Hallo Welt! GmbH & Duncan Crane at Aoxomoxoa Limited',
 			authorurl: 'http://www.hallowelt.biz, https://www.aoxomoxoa.co.uk',
 			infourl: 'http://www.hallowelt.biz, https://www.aoxomoxoa.co.uk'
