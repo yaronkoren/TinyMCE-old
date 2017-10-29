@@ -815,7 +815,7 @@ var BsWikiCode = function() {
 				}
 
 				linkHtml = anchorFormat.format(
-					encodeURI( 'bs://' + linkTarget ),//escape(linkTarget),	// href
+					encodeURI( linkTarget ),//escape(linkTarget),	// href
 					linkLabel,					// <a>linkLabel</a>
 					'internal_link',				// data-bs-type
 					'internal bs-internal-link mceNonEditable',	// class
