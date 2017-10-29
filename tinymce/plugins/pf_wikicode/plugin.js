@@ -1420,9 +1420,12 @@ var BsWikiCode = function() {
 						lines[i] = _continueList(lastList, line[0]) + lines[i];
 					}
 					//DC if this is the start of the list add opening <div> as list will be enclosed in <div>s
-					//TODO: test this works if this is start of a sub list within a list?
 					if (line[0].length > lastList.length) {
-						lines[i] = '<div>' +  _openList(lastList, line[0]) + lines[i];
+						if (line[0].length == 1) { // if first line of list place in a <div>
+							lines[i] = '<div>' +  _openList(lastList, line[0]) + lines[i];
+						} else {
+							lines[i] = _openList(lastList, line[0]) + lines[i];
+						}
 					}
 					if (line[0].length < lastList.length) {
 						lines[i] = _closeList(lastList, line[0]) + lines[i];
