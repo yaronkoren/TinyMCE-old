@@ -2821,8 +2821,12 @@ e.format = 'raw';
 		// if raw format is requested, this is usually for internal issues like
 		// undo/redo. So no additional processing should occur. Default is 'html'
 		if (e.format == 'raw' ) return;
-		var ed = tinymce.get(e.target.id);
-		e.content= ed.getContent({source_view: true, no_events: true, format: 'raw'});
+
+		// If content has already been selected by the user, use that.
+		if ( !e.selection ) {
+			var ed = tinymce.get(e.target.id);
+			e.content= ed.getContent({source_view: true, no_events: true, format: 'raw'});
+		}
 		e.format = 'raw';
 
 /* DC moved recover special tags up front from lower down */
