@@ -12,9 +12,17 @@ index 3cdf39c4..bb6e86da 100644
 +			$this->mOtherArgs['editor'] == 'tinymce'
 +		) {
 +			$this->mEditor = 'tinymce';
-+			global $wgTinyMCEEnabled, $wgTinyMCEMinimizeOnBlur;
++			global $wgTinyMCEEnabled;
 +			$wgTinyMCEEnabled = true;
-+			$wgTinyMCEMinimizeOnBlur = true;
++			$newClasses = 'mceMinimizeOnBlur';
++			if ( $input_name != 'pf_free_text' && !array_key_exists( 'isSection', $this->mOtherArgs ) ) {
++				$newClasses .= ' mcePartOfTemplate';
++			}
++			if ( array_key_exists( 'class', $this->mOtherArgs ) ) {
++				$this->mOtherArgs['class'] .= ' ' . $newClasses;
++			} else {
++				$this->mOtherArgs['class'] = $newClasses;
++			}
 +		}
  	}
  

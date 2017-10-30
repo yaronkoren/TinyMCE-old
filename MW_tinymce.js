@@ -1,5 +1,4 @@
 var scriptPath = mw.config.get( 'wgScriptPath' );
-var minimizeOnBlur = mw.config.get( 'wgTinyMCEMinimizeOnBlur' );
 
 var tinyMCELanguage = mw.config.get( 'wgTinyMCELanguage' );
 var tinyMCELangURL = null;
@@ -11,6 +10,7 @@ var tinyMCEDirectionality = mw.config.get( 'wgTinyMCEDirectionality' );
 var tinyMCEMacros = mw.config.get( 'wgTinyMCEMacros' );
 
 function tinyMCEInitInstance(instance) {
+	var minimizeOnBlur = $("textarea#" + instance.id).hasClass( 'mceMinimizeOnBlur' );
 	if ( minimizeOnBlur ) {
 		var mcePane = $("textarea#" + instance.id).prev();
 		// Keep a little sliver of the toolbar so that users see it.
@@ -233,6 +233,7 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 			});
 		}
 
+		var minimizeOnBlur = $(editor.getElement()).hasClass( 'mceMinimizeOnBlur' );
 		if ( minimizeOnBlur ) {
 			editor.on('focus', function(e) {
 				var mcePane = $("textarea#" + e.target.id).prev();

@@ -1224,7 +1224,17 @@ var BsWikiCode = function() {
 		return text;
 	}
 
-	function _tables2wiki(text) {
+	function _tables2wiki(e) {
+		var text = e.content;
+		/* Use {{!}} instead of | if this will be a value passed to a template. */
+		//var editingTextarea = $(tinymce.activeEditor.getElement());
+		var editingTextarea = $(e.target.targetElm);
+		var pipeText;
+		if ( editingTextarea.hasClass('mcePartOfTemplate') ) {
+			pipeText = '{{!}}';
+		} else {
+			pipeText = '|';
+		}
 		//cleanup thead and tbody tags. Caution: Must be placed before th cleanup because of
 		//regex collision
 
@@ -1232,40 +1242,22 @@ var BsWikiCode = function() {
 		text = text.replace(/<(\/)?thead([^>]*)>/gmi, "");
 		text = text.replace(/<(\/)?tfoot([^>]*)>/gmi, "");
 
-/* DC use {{!}} instead of | since this will be a value passed to a template
-		text = text.replace(/\n?<table([^>]*)>/gmi, "\n{|$1");
-		text = text.replace(/\n?<\/table([^>]*)>/gi, "\n|}");
-		text = text.replace(/\n?<caption([^>]*)>/gmi, "\n|+$1");
+		text = text.replace(/\n?<table([^>]*)>/gmi, "\n{" + pipeText + "$1");
+		text = text.replace(/\n?<\/table([^>]*)>/gi, "\n" + pipeText + "}");
+		text = text.replace(/\n?<caption([^>]*)>/gmi, "\n" + pipeText + "+$1");
 		text = text.replace(/\n?<\/caption([^>]*)>/gmi, "");
 
-		text = text.replace(/\n?<tr([^>]*)>/gmi, "\n|-$1");
+		text = text.replace(/\n?<tr([^>]*)>/gmi, "\n" + pipeText + "-$1");
 		text = text.replace(/\n?<\/tr([^>]*)>/gmi, "");
 
-		text = text.replace(/\n?<th([^>]*)>/gmi, "\n!$1|");
+		text = text.replace(/\n?<th([^>]*)>/gmi, "\n!$1" + pipeText);
 		text = text.replace(/\n?<\/th([^>]*)>/gmi, "");
 
-		text = text.replace(/\n?<td([^>]*)>/gmi, "\n|$1|");
+		text = text.replace(/\n?<td([^>]*)>/gmi, "\n" + pipeText + "$1" + pipeText);
 		// @todo \n raus??
 		text = text.replace(/\n?<\/td([^>]*)>/gmi, "");
 
-		text = text.replace(/\|\|&nbsp;/gi, "||");*/
-/* DC use {{!}} instead of | since this will be a value passed to a template*/
-		text = text.replace(/\n?<table([^>]*)>/gmi, "\n{{{!}}$1");
-		text = text.replace(/\n?<\/table([^>]*)>/gi, "\n{{!}}}");
-		text = text.replace(/\n?<caption([^>]*)>/gmi, "\n{{!}}+$1");
-		text = text.replace(/\n?<\/caption([^>]*)>/gmi, "");
-
-		text = text.replace(/\n?<tr([^>]*)>/gmi, "\n{{!}}-$1");
-		text = text.replace(/\n?<\/tr([^>]*)>/gmi, "");
-
-		text = text.replace(/\n?<th([^>]*)>/gmi, "\n!$1{{!}}");
-		text = text.replace(/\n?<\/th([^>]*)>/gmi, "");
-
-		text = text.replace(/\n?<td([^>]*)>/gmi, "\n{{!}}$1{{!}}");
-		// @todo \n raus??
-		text = text.replace(/\n?<\/td([^>]*)>/gmi, "");
-
-		text = text.replace(/\|\|&nbsp;/gi, "{{!}}{{!}}");
+		text = text.replace(/\|\|&nbsp;/gi, pipeText + pipeText);
 
 		return text;
 	}
@@ -1624,7 +1616,8 @@ var BsWikiCode = function() {
 	 * @param {String} text
 	 * @returns {String}
 	 */
-	function _wiki2html(text) {
+	function _wiki2html(e) {
+		var text = e.content;
 
 		// save some work, if the text is empty
 		if (text === '') {
@@ -1752,7 +1745,8 @@ var BsWikiCode = function() {
 	 * @param {String} text
 	 * @returns {String}
 	 */
-	function _html2wiki(text) {
+	function _html2wiki(e) {
+		var text = e.content;
 		// save some work, if the text is empty
 		if (text === '') {
 			return text;
@@ -1984,7 +1978,8 @@ var BsWikiCode = function() {
 				break;
 			}
 		}
-		text = _tables2wiki(text);
+		e.content = text;
+		text = _tables2wiki(e);
 		text = text.replace(/\n?@@br_emptyline_first@@/gmi, "\n\n");
 		text = text.replace(/\n?@@br_emptyline@@/gmi, "\n");
 		// Cleanup von falschen Image-URLs
@@ -2660,13 +2655,17 @@ var BsWikiCode = function() {
 	 * @param {String} text
 	 * @returns {String}
 	 */
-	function _preprocessWiki2Html(text, e) {
+	function _preprocessWiki2Html(e) {
+		var text = e.content;
 		// normalize line endings to \n
 		text = text.replace(/\r\n/gmi, "\n");
 
-		/* DC because the table may be part of a template parameter {{!}} may
-		have been used instead of | so do this substitution first*/
-		text = text.replace(/{{!}}/gmi, "|");
+		var editingTextarea = $(e.target.targetElm);
+		if ( editingTextarea.hasClass('mcePartOfTemplate') ) {
+			// If the table is part of a template parameter, {{!}} should
+			// be used instead of |, so do this substitution first.
+			text = text.replace(/{{!}}/gmi, "|");
+		}
 
 		// cleanup tables
 		text = text.replace(/(\{\|[^\n]*?)\n+/gmi, "$1\n");
@@ -2788,10 +2787,10 @@ var BsWikiCode = function() {
 //		if (e.format == 'raw' ) return;
 		e.format = 'raw';
 		if (e.load) {
-			e.content = _preprocessWiki2Html(e.content, e);
+			e.content = _preprocessWiki2Html(e);
 		}
 		_images = []; //Reset the images "array"
-		e.content = _wiki2html(e.content, e);
+		e.content = _wiki2html(e);
 		_loadImageRealUrls();
 
 	}
@@ -2817,10 +2816,10 @@ e.format = 'raw';
 	 * @param {tinymce.ContentEvent} e
 	 */
 	function _onGetContent(e) {
-		// DC changed to assume content is  now 'raw'
+		// DC changed to assume content is now 'raw'
 		// if raw format is requested, this is usually for internal issues like
 		// undo/redo. So no additional processing should occur. Default is 'html'
-		if (e.format == 'raw' ) return;
+		if ( e.format == 'raw' ) return;
 
 		// If content has already been selected by the user, use that.
 		if ( !e.selection ) {
@@ -2835,7 +2834,7 @@ e.format = 'raw';
 		e.content = _preprocessHtml2Wiki( e.content );
 
 		// process the html to wikicode
-		e.content = _html2wiki(e.content);
+		e.content = _html2wiki(e);
 
 /* DC removed the if test as this breaks the code function saving the wiki code properly when using the wikicodeplugin
 		if (e.save) {*/
