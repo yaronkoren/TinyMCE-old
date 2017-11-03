@@ -15,6 +15,7 @@
  */
 
 /*global tinymce:true */
+/*global mw:true */
 
 tinymce.PluginManager.add('wikimagic', function(editor) {
 	var showDialog = function () {
@@ -33,7 +34,7 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 		}
 
 		editor.windowManager.open({
-			title: 'Wiki templates, parser functions and magic words',
+			title: mw.msg('tinymce-wikimagic-title'),
 			body: {type: 'textbox', name: 'code', size: 40, label: 'Code value', value: value},
 			onsubmit: function(e) {
 				var text = e.data.code;
@@ -64,6 +65,7 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 						'data-bs-wikitext': switchWikiText,
 						'contenteditable': "false"
 					};
+
 					htmlText = editor.dom.createHTML('span', codeAttrs, '&sect;');
 					el = editor.dom.create('span', codeAttrs, '&sect;');
 					var searchText = new RegExp(switchWikiText, 'g');
@@ -156,7 +158,11 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
   							async: false, 
   							success: function(data) {
 								var templateHTML = data.parse.text["*"];
+
 								// DC remove leading and trailing <p>
+								templateHTML = $.trim(templateHTML);
+								templateHTML = templateHTML.replace(/<\/?p[^>]*>/g, "");
+
 								templateHTML = $.trim(templateHTML);
 								templateHTML = templateHTML.replace(/<\/?p[^>]*>/g, "");
 
@@ -189,11 +195,12 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 									'data-bs-wikitext': displayTemplateWikiText,
 									'contenteditable': "false"
 								};
-
+								templateHTML += '<div class="mceNonEditableOverlay" />';
 								var el = editor.dom.create('span', codeAttrs, templateHTML);
 								templateWikiText = templateWikiText.replace(/[^A-Za-z0-9_]/g, '\\$&');
 								var searchText = new RegExp(templateWikiText, 'g');
 								var replaceText = el.outerHTML;
+
 								text = text.replace(
 									searchText,
 									replaceText
@@ -202,6 +209,7 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 						});
 					}
 				}
+
 				editor.undoManager.transact(function(){
 					editor.focus();
 					editor.selection.setContent(text);
@@ -216,7 +224,7 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 	editor.addButton('wikimagic', {
 		icon: 'codesample',
 		stateSelector: '.wikimagic',
-		tooltip: 'Add wiki templates, parser functions and magic words',
+		tooltip: mw.msg( 'tinymce-wikimagic' ),
 		onclick: showDialog/*,
 		stateSelector: 'a:not([href])'*/
 	});
@@ -224,13 +232,15 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 	editor.addMenuItem('wikimagic', {
 		icon: 'codesample',
 		text: 'Wikimagic',
-		tooltip: 'Add wiki templates, parser functions and magic words',
+		tooltip: mw.msg( 'tinymce-wikimagic' ),
 		context: 'insert',
 		onclick: showDialog
 	});
 
-        editor.on('DblClick', function(e) {
-            if (e.target.className == 'mceNonEditable wikimagic template') {
+	// Add option to double-click on non-editable sections to get
+	// "wikimagic" popup.
+        editor.on('dblclick', function(e) {
+            if (e.target.className == 'mceNonEditableOverlay' ) {
                 tinyMCE.activeEditor.execCommand('mceWikimagic');
             }
         });
