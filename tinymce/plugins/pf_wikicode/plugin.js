@@ -815,13 +815,13 @@ var BsWikiCode = function() {
 				}
 
 				linkHtml = anchorFormat.format(
-					encodeURI( 'bs://' + linkTarget ),//escape(linkTarget),	// href
+					encodeURI( linkTarget ),//escape(linkTarget),	// href
 					linkLabel,					// <a>linkLabel</a>
 					'internal_link',				// data-bs-type
 					'internal bs-internal-link mceNonEditable',	// class
 					encodeURI( $('<div/>').text(link).html() ),	// data-bs-wikitext
 					encodeURI( linkTarget ),			// data-mce-href
-					linkTarget,					// title
+					linkTarget					// title
 				);
 
 				targetParts = linkTarget.split(":");
@@ -1224,7 +1224,17 @@ var BsWikiCode = function() {
 		return text;
 	}
 
-	function _tables2wiki(text) {
+	function _tables2wiki(e) {
+		var text = e.content;
+		/* Use {{!}} instead of | if this will be a value passed to a template. */
+		//var editingTextarea = $(tinymce.activeEditor.getElement());
+		var editingTextarea = $(e.target.targetElm);
+		var pipeText;
+		if ( editingTextarea.hasClass('mcePartOfTemplate') ) {
+			pipeText = '{{!}}';
+		} else {
+			pipeText = '|';
+		}
 		//cleanup thead and tbody tags. Caution: Must be placed before th cleanup because of
 		//regex collision
 
@@ -1232,40 +1242,22 @@ var BsWikiCode = function() {
 		text = text.replace(/<(\/)?thead([^>]*)>/gmi, "");
 		text = text.replace(/<(\/)?tfoot([^>]*)>/gmi, "");
 
-/* DC use {{!}} instead of | since this will be a value passed to a template
-		text = text.replace(/\n?<table([^>]*)>/gmi, "\n{|$1");
-		text = text.replace(/\n?<\/table([^>]*)>/gi, "\n|}");
-		text = text.replace(/\n?<caption([^>]*)>/gmi, "\n|+$1");
+		text = text.replace(/\n?<table([^>]*)>/gmi, "\n{" + pipeText + "$1");
+		text = text.replace(/\n?<\/table([^>]*)>/gi, "\n" + pipeText + "}");
+		text = text.replace(/\n?<caption([^>]*)>/gmi, "\n" + pipeText + "+$1");
 		text = text.replace(/\n?<\/caption([^>]*)>/gmi, "");
 
-		text = text.replace(/\n?<tr([^>]*)>/gmi, "\n|-$1");
+		text = text.replace(/\n?<tr([^>]*)>/gmi, "\n" + pipeText + "-$1");
 		text = text.replace(/\n?<\/tr([^>]*)>/gmi, "");
 
-		text = text.replace(/\n?<th([^>]*)>/gmi, "\n!$1|");
+		text = text.replace(/\n?<th([^>]*)>/gmi, "\n!$1" + pipeText);
 		text = text.replace(/\n?<\/th([^>]*)>/gmi, "");
 
-		text = text.replace(/\n?<td([^>]*)>/gmi, "\n|$1|");
+		text = text.replace(/\n?<td([^>]*)>/gmi, "\n" + pipeText + "$1" + pipeText);
 		// @todo \n raus??
 		text = text.replace(/\n?<\/td([^>]*)>/gmi, "");
 
-		text = text.replace(/\|\|&nbsp;/gi, "||");*/
-/* DC use {{!}} instead of | since this will be a value passed to a template*/
-		text = text.replace(/\n?<table([^>]*)>/gmi, "\n{{{!}}$1");
-		text = text.replace(/\n?<\/table([^>]*)>/gi, "\n{{!}}}");
-		text = text.replace(/\n?<caption([^>]*)>/gmi, "\n{{!}}+$1");
-		text = text.replace(/\n?<\/caption([^>]*)>/gmi, "");
-
-		text = text.replace(/\n?<tr([^>]*)>/gmi, "\n{{!}}-$1");
-		text = text.replace(/\n?<\/tr([^>]*)>/gmi, "");
-
-		text = text.replace(/\n?<th([^>]*)>/gmi, "\n!$1{{!}}");
-		text = text.replace(/\n?<\/th([^>]*)>/gmi, "");
-
-		text = text.replace(/\n?<td([^>]*)>/gmi, "\n{{!}}$1{{!}}");
-		// @todo \n raus??
-		text = text.replace(/\n?<\/td([^>]*)>/gmi, "");
-
-		text = text.replace(/\|\|&nbsp;/gi, "{{!}}{{!}}");
+		text = text.replace(/\|\|&nbsp;/gi, pipeText + pipeText);
 
 		return text;
 	}
@@ -1387,7 +1379,7 @@ var BsWikiCode = function() {
 		var
 			lines = text.split("\n"),
 			//lastlist is set to the wikicode for the list item excluding its text content
-			//it is used to determine whether the list item is at a lower, same or higher level in 
+			//it is used to determine whether the list item is at a lower, same or higher level in the list
 			lastList = '',
 			//line is current line being processed.  It is '' unless the line is a list item
 			line = '',
@@ -1418,27 +1410,26 @@ var BsWikiCode = function() {
 				if (line[0].indexOf(':') === 0) {
 					if (line[0].length === lastList.length) {
 						lines[i] = _continueList(lastList, line[0]) + lines[i];
-					}
-					//DC if this is the start of the list add opening <div> as list will be enclosed in <div>s
-					//TODO: test this works if this is start of a sub list within a list?
-					if (line[0].length > lastList.length) {
-						lines[i] = '<div>' +  _openList(lastList, line[0]) + lines[i];
-					}
-					if (line[0].length < lastList.length) {
+					} else if (line[0].length > lastList.length) {//DC if this is the start of the list add opening <div> as list will be enclosed in <div>s
+						if (line[0].length == 1) { // if first line of list place in a <div>
+							lines[i] = '<div>' +  _openList(lastList, line[0]) + lines[i];
+						} else {
+							lines[i] = _openList(lastList, line[0]) + lines[i];
+						}
+					} else if (line[0].length < lastList.length) {//close list
 						lines[i] = _closeList(lastList, line[0]) + lines[i];
 					}
 				} else {//else if the line doesn't belong to a definition list starting with a ':' and follows
 					//the last line of a sub list, include <li> at start of line
 					if (line[0].length === lastList.length) {
 						lines[i] = _continueList(lastList, line[0]) + lines[i];
-					}
-					//DC if this is the start of the list add opening <div> as list will be enclosed in <div>s
-					//TODO: test this works if this is start of a sub list within a list?
-					if (line[0].length > lastList.length) {
-						lines[i] = '<div>' + _openList(lastList, line[0]) + lines[i];
-					}
-					//if moving back to higher level list from a sub list then precede line with a <li> tag
-					if (line[0].length < lastList.length) {
+					} else if (line[0].length > lastList.length) {//DC if this is the start of top level list add opening <div> as list will be enclosed in <div>s
+						if (line[0].length == 1) { // if first line of list place in a <div>
+							lines[i] = '<div>' +  _openList(lastList, line[0]) + lines[i];
+						} else {
+							lines[i] = _openList(lastList, line[0]) + lines[i];
+						}
+					} else if (line[0].length < lastList.length) {//if moving back to higher level list from a sub list then precede line with a <li> tag
 						lines[i] = _closeList(lastList, line[0]) + '<li>' + lines[i];
 					}
 				}
@@ -1467,7 +1458,7 @@ var BsWikiCode = function() {
 				if (i < lines.length - 1) {
 					emptyLineAfter = lines[i + 1].match(/^(\s|&nbsp;)*$/);
 				}
-
+//DC Move to end of processing as otherwise closing </div> may be enclosed in opening <div> for this line
 				//if the line before was the last line of a list then close the list
 				if (lastList.length > 0) {
 					lines[i - 1] = lines[i - 1] + _closeList(lastList, '');
@@ -1511,16 +1502,17 @@ var BsWikiCode = function() {
 					inBlock = false;
 				}
 
+//DC Move to end of processing as otherwise closing </div> may be enclosed in opening <div> for this line
 				//If we are in a block of empty lines and this is a non empty
 				//line then we need to close the block with a </div> and also 
 				//enclose the non empty line in <div> ... </div>
 				//TODO sheck whether enclosing the non-e,pty line in
 				//<div> ... </div> breaks anything?
-				if (!emptyLine && inParagraph) {
+/*				if (!emptyLine && inParagraph) {
 					lines[i] = '</div><div>' + lines[i] + '</div>' ;
 					inParagraph = false;
 					continue;
-				}
+				}*/
 
 				//process empty lines
 				if (emptyLine) {
@@ -1563,38 +1555,36 @@ var BsWikiCode = function() {
 							}
 						}
 					}
-					continue;
-				}
-				//DC adding the <div> to start of line has already been done.  Keeping the first part
-				//of the if then else clause below breakss the HTML now in some circumstances so removed
-				if (!matchStartTags && !inParagraph && !inBlock && !matchEndTags) {
-//					lines[i] = '<div>' + lines[i];
-//					inParagraph = true;
-				} else if (!matchStartTags && emptyLineBefore && !inBlock && !matchEndTags && inParagraph) {
-					lines[i] = '</div><div>' + lines[i];
-					inParagraph = true;
-				}
-
-				if (matchStartTags && inParagraph) {
-					lines[i] = '</div>' + lines[i];
-					inParagraph = false;
-				}
-
-				// 090929-- MRG. this was deactivated. Highly experimental!!
-				// @todo Plays anybody still with that or can it go to trash?
-				if (false && matchEndTags && !inParagraph && !inBlock) {
-					lines[i] = lines[i] + '<div>';
-					inParagraph = true;
-				}
-
-				if (i === (lines.length - 1)) {
+//					continue;
+				} else { // not an empty line
+					//DC adding the <div> to start of line has already been done.  Keeping the first part
+					//of the if then else clause below breakss the HTML now in some circumstances so removed
+	/*				if (!matchStartTags && !inParagraph && !inBlock && !matchEndTags) {
+	//					lines[i] = '<div>' + lines[i];
+	//					inParagraph = true;
+					} else if (!matchStartTags && emptyLineBefore && !inBlock && !matchEndTags && inParagraph) {
+						lines[i] = '</div><div>' + lines[i];
+						inParagraph = true;
+					}*/
+	
+	/*				if (i === (lines.length - 1)) {
+						if (inParagraph) {
+							lines[i] = lines[i] + '</div>';
+							inParagraph = false;
+						}
+					}*/
+					
 					if (inParagraph) {
-						lines[i] = lines[i] + '</div>';
+						if (matchStartTags) {
+							lines[i] = '</div>' + lines[i];
+						} else {
+							lines[i] = '</div><div>' + lines[i] + '</div>' ;
+						}
 						inParagraph = false;
 					}
+					
+					emptyLineBefore = false;
 				}
-
-				emptyLineBefore = false;
 			}
 		}
 		return lines.join("\n");
@@ -1621,7 +1611,8 @@ var BsWikiCode = function() {
 	 * @param {String} text
 	 * @returns {String}
 	 */
-	function _wiki2html(text) {
+	function _wiki2html(e) {
+		var text = e.content;
 
 		// save some work, if the text is empty
 		if (text === '') {
@@ -1683,7 +1674,7 @@ var BsWikiCode = function() {
 		text = _tables2html(text);
 
 		// We need this additional line in order to clean up the last blocklevel
-		text = text + "\n";
+//DC		text = text + "\n";
 
 		// process block levels
 		text = _blockLevels2html(text); //TODO: Fix missing break here, add <br /> for simple linebreaks
@@ -1724,7 +1715,6 @@ var BsWikiCode = function() {
 			//in the complementary line in html2wiki
 			text = text + '<div><br class="bs_lastline" /></div>';
 		}
-
 		// this reverts the line above. otherwise undo/redo will not work
 		text = text.replace(/<div><br [^>]*bs_lastline[^>]*><\/div>/gmi, '');
 		text = text.replace(/<br data-attributes="" \/>/gmi, '<br/>');
@@ -1749,7 +1739,8 @@ var BsWikiCode = function() {
 	 * @param {String} text
 	 * @returns {String}
 	 */
-	function _html2wiki(text) {
+	function _html2wiki(e) {
+		var text = e.content;
 		// save some work, if the text is empty
 		if (text === '') {
 			return text;
@@ -1779,7 +1770,6 @@ var BsWikiCode = function() {
 		text = text.replace(/<span style="text-decoration: underline;">(.*?)<\/span>/gi, "<u>$1</u>");*/
 		//sub and sup need no conversion
 		text = text.replace(/<br class="bs_emptyline_first"[^>]*>/gmi, "@@br_emptyline_first@@");
-
 		// if emptyline_first is no longer empty, change it to a normal p
 		text = text.replace(/<div class="bs_emptyline_first"[^>]*>&nbsp;<\/div>/gmi, '<div>@@br_emptyline_first@@</div>'); // TinyMCE 4
 		text = text.replace(/<div class="bs_emptyline_first"[^>]*>(.*?\S+.*?)<\/div>/gmi, "<div>$1</div>");
@@ -1790,6 +1780,8 @@ var BsWikiCode = function() {
 		text = text.replace(/<div class="bs_emptyline"[^>]*>(.*?\S+.*?)<\/div>/gmi, "<div>$1</div>"); //doesn't replace 2nd occurence
 		text = text.replace(/<div class="bs_emptyline"[^>]*>(.*?)<\/div>/gmi, "<div>@@br_emptyline@@</div>");
 		text = text.replace(/<br mce_bogus="1"\/>/gmi, "");
+		//DC added next line to remove stray bougs data placeholders
+		text = text.replace(/<br data-mce-bogus="1">/gmi, "");
 
 		text = text.replace(/<br.*?>/gi, function(match, offset, string) {
 			var attributes = $(match).attr('data-attributes');
@@ -1822,6 +1814,7 @@ var BsWikiCode = function() {
 		text = text.replace(/\n?<div style=('|")padding-left: 60px;('|")>([\S\s]*?)<\/div>/gmi, "<blockquote><blockquote>$3</blockquote>");
 		text = text.replace(/\n?<div style=('|")padding-left: 90px;('|")>([\S\s]*?)<\/div>/gmi, "<blockquote><blockquote><blockquote>$3</blockquote>");
 //DIVREPLACE DC
+//Doesn't deal with nested divs
 		//replace simple divs by p
 		text = text.replace(/<div>(.*?)<\/div>/gmi, "<p>$1</p>");
 
@@ -1981,7 +1974,8 @@ var BsWikiCode = function() {
 				break;
 			}
 		}
-		text = _tables2wiki(text);
+		e.content = text;
+		text = _tables2wiki(e);
 		text = text.replace(/\n?@@br_emptyline_first@@/gmi, "\n\n");
 		text = text.replace(/\n?@@br_emptyline@@/gmi, "\n");
 		// Cleanup von falschen Image-URLs
@@ -1994,7 +1988,6 @@ var BsWikiCode = function() {
 		text = _recoverPres(text);
 		// make sure pre starts in a separate line
 		text = text.replace(/([^^])?\n?<pre/gi, "$1\n<pre");
-
 		// Cleanup empty lines that exists if enter was pressed within an aligned paragraph
 		// However, leave empty divs with ids or classes
 		text = text.replace(/<div (?!(id|class))[^>]*?>(\s|&nbsp;)*<\/div>/gmi, "");
@@ -2035,7 +2028,6 @@ var BsWikiCode = function() {
 		if (!_switches) {
 			_switches = new Array();
 		}
-
 		mtext = text;
 		regex = "__(.*?)__";
 		matcher = new RegExp(regex, 'gmi');
@@ -2295,7 +2287,6 @@ var BsWikiCode = function() {
 	function _recoverSpecialTags(text, e) {
 		var matcher, nlBefore, nlAfter, i;
 		var ed = tinymce.get(e.target.id);
-
 		// this must be in inverse order as preserveSpecialTags
 		// in order to allow for nested constructions
 
@@ -2351,15 +2342,15 @@ var BsWikiCode = function() {
 		var switches = tinymce.util.Tools.grep(ed.dom.select('span'), function(elm) {
 			return elm && elm.className === "mceNonEditable wikimagic switch";
 		});
-
 		if (switches) {
 			for (i = 0; i < switches.length; i++) {
 				var switchText = switches[i].outerHTML;
 				switchText = switchText.replace(/\&amp\;/gmi,'&');
-				switchText = switchText.replace(/ contenteditable="false"/gmi,'')
+//				switchText = switchText.replace(/ contenteditable="false"/gmi,'')
 				switchText = switchText.replace(/<a.*\/a>/gmi,'');
 				switchText = switchText.replace(/"data-mce-href=".*"/gmi,'');
-				text = text.replace(switchText, switches[i].attributes["data-bs-wikitext"].value);
+//				text = text.replace(switchText, switches[i].attributes["data-bs-wikitext"].value);
+				text = text.replace(switchText, '<br class="bs_emptyline">' + switches[i].attributes["data-bs-wikitext"].value);
 			}
 		}
 		return text;
@@ -2657,13 +2648,17 @@ var BsWikiCode = function() {
 	 * @param {String} text
 	 * @returns {String}
 	 */
-	function _preprocessWiki2Html(text, e) {
+	function _preprocessWiki2Html(e) {
+		var text = e.content;
 		// normalize line endings to \n
 		text = text.replace(/\r\n/gmi, "\n");
 
-		/* DC because the table may be part of a template parameter {{!}} may
-		have been used instead of | so do this substitution first*/
-		text = text.replace(/{{!}}/gmi, "|");
+		var editingTextarea = $(e.target.targetElm);
+		if ( editingTextarea.hasClass('mcePartOfTemplate') ) {
+			// If the table is part of a template parameter, {{!}} should
+			// be used instead of |, so do this substitution first.
+			text = text.replace(/{{!}}/gmi, "|");
+		}
 
 		// cleanup tables
 		text = text.replace(/(\{\|[^\n]*?)\n+/gmi, "$1\n");
@@ -2785,10 +2780,10 @@ var BsWikiCode = function() {
 //		if (e.format == 'raw' ) return;
 		e.format = 'raw';
 		if (e.load) {
-			e.content = _preprocessWiki2Html(e.content, e);
+			e.content = _preprocessWiki2Html(e);
 		}
 		_images = []; //Reset the images "array"
-		e.content = _wiki2html(e.content, e);
+		e.content = _wiki2html(e);
 		_loadImageRealUrls();
 
 	}
@@ -2814,12 +2809,15 @@ e.format = 'raw';
 	 * @param {tinymce.ContentEvent} e
 	 */
 	function _onGetContent(e) {
-		// DC changed to assume content is  now 'raw'
+		// DC changed to assume content is now 'raw'
 		// if raw format is requested, this is usually for internal issues like
 		// undo/redo. So no additional processing should occur. Default is 'html'
-		if (e.format == 'raw' ) return;
-		var ed = tinymce.get(e.target.id);
-		e.content= ed.getContent({source_view: true, no_events: true, format: 'raw'});
+		if ( e.format == 'raw' ) return;
+		// If content has already been selected by the user, use that.
+		if ( !e.selection ) {
+			var ed = tinymce.get(e.target.id);
+			e.content= ed.getContent({source_view: true, no_events: true, format: 'raw'});
+		}
 		e.format = 'raw';
 
 /* DC moved recover special tags up front from lower down */
@@ -2828,7 +2826,7 @@ e.format = 'raw';
 		e.content = _preprocessHtml2Wiki( e.content );
 
 		// process the html to wikicode
-		e.content = _html2wiki(e.content);
+		e.content = _html2wiki(e);
 
 /* DC removed the if test as this breaks the code function saving the wiki code properly when using the wikicodeplugin
 		if (e.save) {*/
