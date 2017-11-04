@@ -1045,6 +1045,7 @@ var BsWikiCode = function() {
 		for (var i = 0; i < lines.length; i++) {
 			line = lines[i].match(/^\{\|(.*)/gi);
 			if (line && line !== '') {
+//debugger;
 				// nested table support, beware: recursive
 				if (inTable) {
 					innerLines = '';
@@ -1395,12 +1396,14 @@ var BsWikiCode = function() {
 
                 // Walk through text line by line
 		for (var i = 0; i < lines.length; i++) {
-			// Prevent REDIRECT from being rendered as list. Var line is only set if it is part of a wiki list
+//debugger;
+			// Prevent REDIRECT from being rendered as list. 
+			// Var line is only set if it is part of a wiki list
 			line = lines[i].match(/^(\*|#(?!REDIRECT)|:|;)+/);
 			lastLine = (i == lines.length - 1);
 
-                        //Process lines that are members of wiki lists.  
-			if (line && line !== '') {
+            //Process lines             
+			if (line && line !== '') { //Process lines that are members of wiki lists.
 				//DC reset the empty line count to zero as this line isn't empty
 				emptyLineCount = 0;
 				//Strip out the wiki code for the list element to leave just the text content
@@ -1445,22 +1448,18 @@ var BsWikiCode = function() {
 				}
 
 			} else {//else process lines that are not wiki list items
-				//test if current line is empty and increment emptyLineCount if it is
+				//set emptyLine if line is empty
 				emptyLine = lines[i].match(/^(\s|&nbsp;)*$/);
-				if (emptyLine) {
-					emptyLineCount++;
-				} else {
-					emptyLineCount = 0;
-				}
-
+/*				DC Don't think this is used anymore
 				//test if next line is empty and set emptyLineAfter flag if it is
 				emptyLineAfter = false;
 				if (i < lines.length - 1) {
 					emptyLineAfter = lines[i + 1].match(/^(\s|&nbsp;)*$/);
-				}
+				}*/
+				
 //DC Move to end of processing as otherwise closing </div> may be enclosed in opening <div> for this line
 				//if the line before was the last line of a list then close the list
-				if (lastList.length > 0) {
+/*				if (lastList.length > 0) {
 					lines[i - 1] = lines[i - 1] + _closeList(lastList, '');
 					//DC close the <div> that contains the list
 					lines[i] = '</div>' + lines[i];
@@ -1468,16 +1467,22 @@ var BsWikiCode = function() {
 					if (emptyLine) {
 						emptyLineBefore = true;
 					}
-				}
+				}*/
 
+				//Test to see if we are in tag block.  Treat empty lines differently if we are
 				matchStartTags = false;
 				matchEndTags = false;
 
+				//matchStartTags is not false if this line contains a start tag
 				matchStartTags = lines[i].match(/^(<table|<blockquote|<h1|<h2|<h3|<h4|<h5|<h6|<pre|@@@PRE|<tr|<td|<p|<div|<ul|<ol|<li|<\/tr|<\/td|<\/th|<hr)/gi);
 				// Achtung!! Habe gegenÃ¼ber MW-Parser hier td und th und /table rausgenommen. Wenn das mal gut geht... Nachtrag: ist mom. obsolet
+				//matchEndTags is not false if this line contains an end tag
 				matchEndTags = lines[i].match(/(<\/blockquote|<\/h1|<\/h2|<\/h3|<\/h4|<\/h5|<\/h6|<\/?div|<hr|<\/pre|@@@PRE|<\/p|<\/li|<\/ul|<\/ol|<\/?center|<td|<th|<\/table)/gi);
 
+/*				DC Don't think this is used anymore
+				//Test to see if there is a </div> in either of the preceding two lines.  Treat empty lines differently if there are
 				// hopefully temporary measure. divs with one or two empty lines in between are rendered correctly using these two variables
+				//DC TODO not sure if this will work now as we us <div> tags instead of <p> tags
 				var specialClosematchBefore = false;
 				var specialClosematchTwoBefore = false;
 				if (i > 0) {
@@ -1485,15 +1490,16 @@ var BsWikiCode = function() {
 				}
 				if (i > 1) {
 					specialClosematchTwoBefore = lines[i - 2].match(/(<\/div)/gi);
-				}
+				}*/
 
+/*				DC Don't think this is used anymore
 				// if a tag is in beforeBlock, an extra linebreak is inserted on second empty line.
 				// use this, if lines seem to vanish
 				// do not use hr here
 				var beforeBlock = false;
 				if (i < lines.length - 1) {
 					beforeBlock = lines[i + 1].match(/^(<blockquote|<ul|<ol|<h1|<h2|<h3|<h4|<h5|<h6|<pre|@@@PRE|<td|<table|<tr|<div|\*|#|:|\{\|)/gi);
-				}
+				}*/
 
 				if (matchStartTags) {
 					inBlock = true;
@@ -1514,35 +1520,31 @@ var BsWikiCode = function() {
 					continue;
 				}*/
 
-				//process empty lines
-				if (emptyLine) {
+				if (emptyLine) { // process empty lines
+					emptyLineCount++;
 					emptyLineBefore = true;
-					//If already in a pargarph (block of blank lines) just add another blank line
-					if (inParagraph) {
-						// if its the last line clode the <div>
-						if (!lastLine) {
-							lines[i] = lines[i] + '</div><div class="bs_emptyline"><br class="bs_emptyline"/>';
-						} else {
-							lines[i] = lines[i] + '</div><div class="bs_emptyline"><br class="bs_emptyline"/></div>';
-						}
-						continue;
-					} else {//else this is the first line of a paragraph (block of empty lines)
-						// the first line of the block is equivalnt to \n\n in wikicode subsequent lines are just \n
-						// however if it is a single empty line at the end of the text treat as \n
+					// If not already in a paragraph (block of blank lines).  Process first empty line differently
+					if (!inParagraph) {
+						// The first line of the block is equivalnt to \n\n in wikicode subsequent lines are just \n
 						//DC removed the additional tests below
 						//TODO check that removing the additional tests doesn't break anything
 						if (emptyLineCount === 1 /*&& (emptyLineAfter || specialClosematchBefore)*/) {
-							if (!lastLine) {
-								lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_first"/>';
+							if (inBlock) { // in blocks empty lines are no disp[layed
+								lines[i] = "<span class='single_linebreak' title='single linebreak'>&para;<\/span>" + lines[i] ;
+								emptyLineCount = 0;
+								inParagraph = false;
 							} else {
-								lines[i] = lines[i] + '<div class="bs_emptyline"><br class="bs_emptyline"/></div>';
+								if (!lastLine) {
+									lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_first"/>';
+								} else {
+									lines[i] = lines[i] + '<div class="bs_emptyline"><br class="bs_emptyline_first"/></div>';
+								}
+								inParagraph = true;
 							}
-							inParagraph = true;
-							continue;
-						}
+/*						} else
 						//DC removed the test as I believe it is no longer needed but...
 						//TODO test if following test is ever needed?
-						if ((emptyLineCount % 2 === 0) && (emptyLineAfter || beforeBlock || specialClosematchTwoBefore)) {
+						if ((emptyLineCount % 2 === 0) && (emptyLineAfter || beforeBlock || specialClosematchTwoBefore)) {//DC REINSTATE SKIP EMPTY LINE IIN BLOCK
 //							lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_first"/>';
 //							inParagraph = false;
 						} else {//DC shouldn't get executed I think because now caught by the first test above for empty lines?
@@ -1552,11 +1554,21 @@ var BsWikiCode = function() {
 							} else { // DC if empty and last line include closing </div>
 								lines[i] = lines[i] + '<div class="bs_emptyline"><br class="bs_emptyline"/></div>';
 								inParagraph = false;
-							}
+							}*/
 						}
+					} else {// this is already in a paragraph (block of empty lines)
+						// if its the last line clode the <div>
+						if (!lastLine) {
+							lines[i] = lines[i] + '</div><div class="bs_emptyline"><br class="bs_emptyline"/>';
+						} else {
+							lines[i] = lines[i] + '</div><div class="bs_emptyline"><br class="bs_emptyline"/></div>';
+						}
+//						continue;
 					}
 //					continue;
 				} else { // not an empty line
+					emptyLineCount = 0;
+					emptyLineBefore = false;
 					//DC adding the <div> to start of line has already been done.  Keeping the first part
 					//of the if then else clause below breakss the HTML now in some circumstances so removed
 	/*				if (!matchStartTags && !inParagraph && !inBlock && !matchEndTags) {
@@ -1573,17 +1585,45 @@ var BsWikiCode = function() {
 							inParagraph = false;
 						}
 					}*/
-					
-					if (inParagraph) {
-						if (matchStartTags) {
-							lines[i] = '</div>' + lines[i];
-						} else {
+
+					if (matchStartTags) {//first line in block so close <div> and switch off paragraph
+						lines[i] = '</div>' + lines[i];
+						inParagraph = false;
+//					} else if (inBlock && matchEndTags) {//last line in block
+//						lines[i] = "<span class='single_linebreak' title='single linebreak'>&para;<\/span>" + lines[i];
+//						inBlock = false;
+					} else { // line isn't the start of a block
+						if (inParagraph) { // line is in a paragraph so close paragraph and place line in <divs>
+							lines[i] = '</div><div>' + lines[i] + '</div>' ;
+							inParagraph = false;
+						} else if (inBlock) { // line is in a block
+							lines[i] = "<span class='single_linebreak' title='single linebreak'>&para;<\/span>" + lines[i] ;
+//						} else { // line is not in paragraph or block
+//							lines[i] = '</div>' + lines[i];		
+						}
+					}
+/*					if (inParagraph) { 
+						if (matchStartTags) {//first line in block so just close <div>
+						} else { 
 							lines[i] = '</div><div>' + lines[i] + '</div>' ;
 						}
 						inParagraph = false;
-					}
+					} else if (inBlock) {
+						if (matchStartTags) { //first line in block so just close <div>
+							lines[i] = '</div>' + lines[i];
+						} else {//not first line in block to new line not displayed
+							lines[i] = "<span class='single_linebreak' title='single linebreak'>&para;<\/span>" + lines[i] ;
+						}
+					}*/
 					
-					emptyLineBefore = false;
+				}
+				//Test if the previous line was in a list if so close the list
+				//and place closing </div> before this line
+				if (lastList.length > 0) {
+					lines[i - 1] = lines[i - 1] + _closeList(lastList, '');
+					//DC close the <div> that contains the list
+					lines[i] = '</div>' + lines[i];
+					lastList = '';
 				}
 			}
 		}
