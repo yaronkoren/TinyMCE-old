@@ -65,6 +65,7 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 						'data-bs-wikitext': switchWikiText,
 						'contenteditable': "false"
 					};
+
 					htmlText = editor.dom.createHTML('span', codeAttrs, '&sect;');
 					el = editor.dom.create('span', codeAttrs, '&sect;');
 					var searchText = new RegExp(switchWikiText, 'g');
@@ -157,7 +158,11 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
   							async: false, 
   							success: function(data) {
 								var templateHTML = data.parse.text["*"];
+
 								// DC remove leading and trailing <p>
+								templateHTML = $.trim(templateHTML);
+								templateHTML = templateHTML.replace(/<\/?p[^>]*>/g, "");
+
 								templateHTML = $.trim(templateHTML);
 								templateHTML = templateHTML.replace(/<\/?p[^>]*>/g, "");
 
@@ -190,11 +195,12 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 									'data-bs-wikitext': displayTemplateWikiText,
 									'contenteditable': "false"
 								};
-
+								templateHTML += '<div class="mceNonEditableOverlay" />';
 								var el = editor.dom.create('span', codeAttrs, templateHTML);
 								templateWikiText = templateWikiText.replace(/[^A-Za-z0-9_]/g, '\\$&');
 								var searchText = new RegExp(templateWikiText, 'g');
 								var replaceText = el.outerHTML;
+
 								text = text.replace(
 									searchText,
 									replaceText
@@ -203,6 +209,7 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 						});
 					}
 				}
+
 				editor.undoManager.transact(function(){
 					editor.focus();
 					editor.selection.setContent(text);
