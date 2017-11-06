@@ -223,7 +223,7 @@ var BsWikiCode = function() {
 	function print_r(printthis, returnoutput) {
 		var output = '';
 
- 		if ($.isArray(printthis) || typeof(printthis) == 'object') {
+		if ($.isArray(printthis) || typeof(printthis) == 'object') {
 			for(var i in printthis) {
 				output += i + ' : ' + print_r(printthis[i], true) + '\n';
 			}
@@ -477,7 +477,7 @@ var BsWikiCode = function() {
 		//We use $.attr instead of $.data because of issues with IE in older
 		//jQuery versions. This should be subject to further testing.
 
- 		htmlImageObject.attr(
+		htmlImageObject.attr(
 			_makeDataAttributeObject(wikiImageObject)
 		);
 
@@ -1028,12 +1028,6 @@ var BsWikiCode = function() {
 			inTh = false,
 			start = 0,
 			nestLevel = 0;
-		// there is an IE bug with split: split(\n) will not produce an extra element with \n\n.
-		// therefore, some blindtext is inserted which is removed at the end of this section
-		// in first pass, some double empty lines remain, therefore, a second pass is necessary
-		// DC removed IE bug processing as relates to very old version of IE and breaks other stuff
-//		text = text.replace(/\n\n/gmi, "\n@@blindline@@\n");
-//		text = text.replace(/\n\n/gmi, "\n@@blindline@@\n");
 
 		// images or links in tables may contain | in their attributes, esp. in bs-data-*. These
 		// need to be properly escaped in order not to interfere with table syntax
@@ -1545,7 +1539,7 @@ var BsWikiCode = function() {
 
 		// br preprocessing
 		text = text.replace(/<br(.*?)>/gi, function(match, p1, offset, string) {
-			return '<br data-attributes="' + encodeURI(p1) + '" />'; // @todo: Use JSON.stringify when dropping IE7 support
+			return '<br data-attributes="' + encodeURI(p1) + '" />'; // @todo: Use JSON.stringify
 		});
 
 		// simple formatting
@@ -2050,7 +2044,7 @@ var BsWikiCode = function() {
 				$.ajax({
 					dataType: "json",
 					url: script,
- 	 				data: data,
+					data: data,
 					async: false,
 					success: function(data) {
 						var templateHTML = data.parse.text["*"];
@@ -2311,19 +2305,12 @@ var BsWikiCode = function() {
 	 * @returns {String}
 	 */
 	function _recoverPres(text) {
-		var i, regex, replacer;
+		var i, regex;
 
 		if (_preTags) {
 			for (var i = 0; i < _preTags.length; i++) {
 				regex = '@@@PRE' + i + '@@@';
-				replacer = new RegExp(regex, 'gmi');
-
-				// \n works in IE. In FF, this is not neccessary.
-				if ( navigator.appName == 'Microsoft Internet Explorer' ) {
-					text = text.replace(replacer, "\n" + _preTags[i]);
-				} else {
-					text = text.replace(replacer, _preTags[i]);
-				}
+				text = text.replace(new RegExp(regex, 'gmi'), _preTags[i]);
 			}
 		}
 		_preTags = false;
@@ -2332,31 +2319,17 @@ var BsWikiCode = function() {
 		if (_preTagsSpace) {
 			for (i = 0; i < _preTagsSpace.length; i++) {
 				regex = '@@@PRE_SPACE' + i + '@@@';
-				replacer = new RegExp(regex, 'gmi');
-
-				// \n works in IE. In FF, this is not neccessary.
-				if ( navigator.appName == 'Microsoft Internet Explorer' ) {
-					text = text.replace(replacer, "\n" + _preTagsSpace[i]);
-				} else {
-					text = text.replace(replacer, _preTagsSpace[i]);
-				}
+				text = text.replace(new RegExp(regex, 'gmi'), _preTagsSpace[i]);
 			}
 		}
 		_preTagsSpace = false;
 
 		//this is experimental support for nowiki
 		if (_nowikiTags) {
-				for (i = 0; i < _nowikiTags.length; i++) {
-						regex = '@@@NOWIKI' + i + '@@@';
-						replacer = new RegExp(regex, 'gmi');
-
-						// \n works in IE. In FF, this is not neccessary.
-						if ( navigator.appName == 'Microsoft Internet Explorer' ) {
-								text = text.replace(replacer, "\n" + _nowikiTags[i]);
-						} else {
-								text = text.replace(replacer, _nowikiTags[i]);
-						}
-				}
+			for (i = 0; i < _nowikiTags.length; i++) {
+				regex = '@@@NOWIKI' + i + '@@@';
+				text = text.replace( new RegExp(regex, 'gmi'), _nowikiTags[i]);
+			}
 		}
 		_nowikiTags = false;
 
@@ -2397,13 +2370,12 @@ var BsWikiCode = function() {
 	 * @returns {String}
 	 */
 	function _recoverEntities(text) {
-		var i, regex, replacer;
+		var i, regex;
 
 		if (_entities) {
 			for (i = 0; i < _entities.length; i++) {
 				regex = '@@@ENTITY' + i + '@@@';
-				replacer = new RegExp(regex, 'gmi');
-				text = text.replace(replacer, _entities[i]);
+				text = text.replace(new RegExp(regex, 'gmi'), _entities[i]);
 			}
 		}
 		_entities = false;
