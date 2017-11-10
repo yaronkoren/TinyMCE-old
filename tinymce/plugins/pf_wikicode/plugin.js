@@ -199,13 +199,13 @@ var BsWikiCode = function() {
 	$(document).on( "BSVisualEditorClickSpecialTag", function( event, sender, ed, e, dataname ){
 		if ( dataname == 'bs:checklist' ) {
 			var cbtype = ed.dom.getAttrib( e.target.parentNode, 'data-bs-cbtype' );
-	
+
 			if ( !cbtype ) {
 				cbtype = 'checkbox';
 			}
 
 			var value = ed.dom.getAttrib( e.target.parentNode, 'data-bs-value' );
-	
+
 			if ( cbtype == 'checkbox' ) {
 				if ( value == 'checked' ) {
 					value = 'false';
@@ -223,7 +223,7 @@ var BsWikiCode = function() {
 	function print_r(printthis, returnoutput) {
 		var output = '';
 
- 		if ($.isArray(printthis) || typeof(printthis) == 'object') {
+		if ($.isArray(printthis) || typeof(printthis) == 'object') {
 			for(var i in printthis) {
 				output += i + ' : ' + print_r(printthis[i], true) + '\n';
 			}
@@ -477,7 +477,7 @@ var BsWikiCode = function() {
 		//We use $.attr instead of $.data because of issues with IE in older
 		//jQuery versions. This should be subject to further testing.
 
- 		htmlImageObject.attr(
+		htmlImageObject.attr(
 			_makeDataAttributeObject(wikiImageObject)
 		);
 
@@ -543,7 +543,7 @@ var BsWikiCode = function() {
 				if (attribute.startsWith('data-bs-') === false) {
 					property = attribute;
 				} else {
-					property = attribute.substr(8, attribute.length); 
+					property = attribute.substr(8, attribute.length);
 				}
 				if ( !( property == 'width' || !property == 'height' )) {
 					wikiImageObject[property] = attributes[j].value;
@@ -551,7 +551,7 @@ var BsWikiCode = function() {
 			}
 
 			//Update things that might have changed in markup but not in "data"
-			//Check if wikiImageObject.imagename is set, 
+			//Check if wikiImageObject.imagename is set,
 			//if not set it to the name of the source file
 			if (!wikiImageObject.imagename) {
 				var src = wikiImageObject.src;
@@ -604,14 +604,14 @@ var BsWikiCode = function() {
 			if (wikiImageObject.class) {
 				if (wikiImageObject.class.indexOf("thumbborder") >= 0) {
 					wikiImageObject.border = "true";
-				}	
+				}
 				if (wikiImageObject.class.indexOf("thumbimage") >= 0) {
 					wikiImageObject.frame = "true";
-				}	
+				}
 				if (wikiImageObject.class.indexOf("thumbthumb") >= 0) {
 					wikiImageObject.thumb = "true";
 				}
-			}	
+			}
 			if (htmlImageObject.css('display') === 'block' &&
 				htmlImageObject.css('margin-left') === 'auto' &&
 				htmlImageObject.css('margin-right') === 'auto') {
@@ -1028,12 +1028,6 @@ var BsWikiCode = function() {
 			inTh = false,
 			start = 0,
 			nestLevel = 0;
-		// there is an IE bug with split: split(\n) will not produce an extra element with \n\n.
-		// therefore, some blindtext is inserted which is removed at the end of this section
-		// in first pass, some double empty lines remain, therefore, a second pass is necessary
-		// DC removed IE bug processing as relates to very old version of IE and breaks other stuff
-//		text = text.replace(/\n\n/gmi, "\n@@blindline@@\n");
-//		text = text.replace(/\n\n/gmi, "\n@@blindline@@\n");
 
 		// images or links in tables may contain | in their attributes, esp. in bs-data-*. These
 		// need to be properly escaped in order not to interfere with table syntax
@@ -1396,12 +1390,12 @@ var BsWikiCode = function() {
 
                 // Walk through text line by line
 		for (var i = 0; i < lines.length; i++) {
-			// Prevent REDIRECT from being rendered as list. 
+			// Prevent REDIRECT from being rendered as list.
 			// Var line is only set if it is part of a wiki list
 			line = lines[i].match(/^(\*|#(?!REDIRECT)|:|;)+/);
 			lastLine = (i == lines.length - 1);
 
-            //Process lines             
+            		//Process lines
 			if (line && line !== '') { //Process lines that are members of wiki lists.
 				//DC reset the empty line count to zero as this line isn't empty
 				//Strip out the wiki code for the list element to leave just the text content
@@ -1451,7 +1445,7 @@ var BsWikiCode = function() {
 					startTags = startTags + matchStartTags.length;
 				}
 				// Get arrays of all the endTags in this line and keep running total
-				matchEndTags = lines[i].match(/(<\/blockquote|<\/h1|<\/h2|<\/h3|<\/h4|<\/h5|<\/h6|<\/div|<hr|<\/pre|@@@PRE|<\/p|<\/li|<\/ul|<\/ol|<\/center|<\/tbody|<\/td|<\/th|<\/tr|<\/table)/gi);
+				matchEndTags = lines[i].match(/(<\/blockquote|<\/h1|<\/h2|<\/h3|<\/h4|<\/h5|<\/h6|<\/div|<\hr|<\/pre|@@@PRE|<\/p|<\/li|<\/ul|<\/ol|<\/center|<\/tbody|<\/td|<\/th|<\/tr|<\/table)/gi);
 				if (matchEndTags) {
 					endTags = endTags + matchEndTags.length;
 				}
@@ -1463,7 +1457,7 @@ var BsWikiCode = function() {
 					inBlock = false ;
 					blockLineCount = 0;
 				}
-				
+
 				if (emptyLine) { // process empty lines
 					// If not already in a paragraph (block of blank lines).  Process first empty line differently
 					if (!inParagraph) {
@@ -1482,7 +1476,7 @@ var BsWikiCode = function() {
 						if (lines[i].match(/(^\<td\>)/i)) { //first line of data in a table cell
 							lines[i] = lines[i] + '<br class="bs_emptyline"/>';
 						}
-					}		
+					}
 				}
 				//Test if the previous line was in a list if so close the list
 				//and place closing </div> before this line
@@ -1545,7 +1539,7 @@ var BsWikiCode = function() {
 
 		// br preprocessing
 		text = text.replace(/<br(.*?)>/gi, function(match, p1, offset, string) {
-			return '<br data-attributes="' + encodeURI(p1) + '" />'; // @todo: Use JSON.stringify when dropping IE7 support
+			return '<br data-attributes="' + encodeURI(p1) + '" />'; // @todo: Use JSON.stringify
 		});
 
 		// simple formatting
@@ -1563,7 +1557,6 @@ var BsWikiCode = function() {
 		 text = text.replace(/(^|\n)?==(.+?)==(\n+|$)/gmi, '$1<h2>$2</h2>\n');
 		 text = text.replace(/(^|\n)?=(.+?)=(\n+|$)/gmi, '$1<h1>$2</h1>\n');
 		 */
-
 		// faster replacement for header processing
 		// One regexp to rule them all, on regexp to find them,
 		// one regexp to bring them all and in html bind them!!!
@@ -1634,7 +1627,6 @@ var BsWikiCode = function() {
 		$(document).trigger('BSVisualEditorAfterWikiToHtml', [textObject]);
 		// get the text back
 		text = textObject.text;
-
 		return text;
 	}
 
@@ -1762,22 +1754,28 @@ var BsWikiCode = function() {
 					text = text.replace(/<\/p>/, "");
 					break;
 				case '<h1' :
-					text = text.replace(/\n?<h1.*?>(.*?)<\/h1>\n?/mi, "\n=$1=\n\n");
+//					text = text.replace(/\n?<h1.*?>(.*?)<\/h1>\n?/mi, "\n=$1=\n\n");
+					text = text.replace(/\n?<h1.*?>(.*?)<\/h1>\n?/mi, "\n=$1=\n");
 					break;
 				case '<h2' :
-					text = text.replace(/\n?<h2.*?>(.*?)<\/h2>\n?/mi, "\n==$1==\n\n");
+//					text = text.replace(/\n?<h2.*?>(.*?)<\/h2>\n?/mi, "\n==$1==\n\n");
+					text = text.replace(/\n?<h2.*?>(.*?)<\/h2>\n?/mi, "\n==$1==\n");
 					break;
 				case '<h3' :
-					text = text.replace(/\n?<h3.*?>(.*?)<\/h3>\n?/mi, "\n===$1===\n\n");
+//					text = text.replace(/\n?<h3.*?>(.*?)<\/h3>\n?/mi, "\n===$1===\n\n");
+					text = text.replace(/\n?<h3.*?>(.*?)<\/h3>\n?/mi, "\n===$1===\n");
 					break;
 				case '<h4' :
-					text = text.replace(/\n?<h4.*?>(.*?)<\/h4>\n?/mi, "\n====$1====\n\n");
+//					text = text.replace(/\n?<h4.*?>(.*?)<\/h4>\n?/mi, "\n====$1====\n\n");
+					text = text.replace(/\n?<h4.*?>(.*?)<\/h4>\n?/mi, "\n====$1====\n");
 					break;
 				case '<h5' :
-					text = text.replace(/\n?<h5.*?>(.*?)<\/h5>\n?/mi, "\n=====$1=====\n\n");
+//					text = text.replace(/\n?<h5.*?>(.*?)<\/h5>\n?/mi, "\n=====$1=====\n\n");
+					text = text.replace(/\n?<h5.*?>(.*?)<\/h5>\n?/mi, "\n=====$1=====\n");
 					break;
 				case '<h6' :
-					text = text.replace(/\n?<h6.*?>(.*?)<\/h6>\n?/mi, "\n======$1======\n\n");
+//					text = text.replace(/\n?<h6.*?>(.*?)<\/h6>\n?/mi, "\n======$1======\n\n");
+					text = text.replace(/\n?<h6.*?>(.*?)<\/h6>\n?/mi, "\n======$1======\n");
 					break;
 				case '<hr' :
 					text = text.replace(/\n?<hr.*?>/mi, "\n----");
@@ -1952,7 +1950,7 @@ var BsWikiCode = function() {
 				'title': switchWikiText,
 				'data-bs-type': "switch",
 				'data-bs-id': i,
-				'data-bs-name': aSwitch, 
+				'data-bs-name': aSwitch,
 				'data-bs-wikitext': switchWikiText,
 				'contenteditable': "false"
 			};
@@ -2034,7 +2032,7 @@ var BsWikiCode = function() {
 				if ( templateName.indexOf( "|" ) > 0 ) {
 					templateName = templateName.slice( 0, templateName.indexOf( "|" ));
 				}
-				/*DC now go and get parsed html for this template to insert into the edit window 
+				/*DC now go and get parsed html for this template to insert into the edit window
 				as not editable html (TODO addexclusions)*/
 				var server = mw.config.get( "wgServer" ) ;
 				var script = mw.config.get( 'wgScriptPath' ) + '/api.php';
@@ -2050,8 +2048,8 @@ var BsWikiCode = function() {
 				$.ajax({
 					dataType: "json",
 					url: script,
- 	 				data: data,
-					async: false, 
+					data: data,
+					async: false,
 					success: function(data) {
 						var templateHTML = data.parse.text["*"];
 
@@ -2311,19 +2309,12 @@ var BsWikiCode = function() {
 	 * @returns {String}
 	 */
 	function _recoverPres(text) {
-		var i, regex, replacer;
+		var i, regex;
 
 		if (_preTags) {
 			for (var i = 0; i < _preTags.length; i++) {
 				regex = '@@@PRE' + i + '@@@';
-				replacer = new RegExp(regex, 'gmi');
-
-				// \n works in IE. In FF, this is not neccessary.
-				if ( navigator.appName == 'Microsoft Internet Explorer' ) {
-					text = text.replace(replacer, "\n" + _preTags[i]);
-				} else {
-					text = text.replace(replacer, _preTags[i]);
-				}
+				text = text.replace(new RegExp(regex, 'gmi'), _preTags[i]);
 			}
 		}
 		_preTags = false;
@@ -2332,31 +2323,17 @@ var BsWikiCode = function() {
 		if (_preTagsSpace) {
 			for (i = 0; i < _preTagsSpace.length; i++) {
 				regex = '@@@PRE_SPACE' + i + '@@@';
-				replacer = new RegExp(regex, 'gmi');
-
-				// \n works in IE. In FF, this is not neccessary.
-				if ( navigator.appName == 'Microsoft Internet Explorer' ) {
-					text = text.replace(replacer, "\n" + _preTagsSpace[i]);
-				} else {
-					text = text.replace(replacer, _preTagsSpace[i]);
-				}
+				text = text.replace(new RegExp(regex, 'gmi'), _preTagsSpace[i]);
 			}
 		}
 		_preTagsSpace = false;
 
 		//this is experimental support for nowiki
 		if (_nowikiTags) {
-				for (i = 0; i < _nowikiTags.length; i++) {
-						regex = '@@@NOWIKI' + i + '@@@';
-						replacer = new RegExp(regex, 'gmi');
-
-						// \n works in IE. In FF, this is not neccessary.
-						if ( navigator.appName == 'Microsoft Internet Explorer' ) {
-								text = text.replace(replacer, "\n" + _nowikiTags[i]);
-						} else {
-								text = text.replace(replacer, _nowikiTags[i]);
-						}
-				}
+			for (i = 0; i < _nowikiTags.length; i++) {
+				regex = '@@@NOWIKI' + i + '@@@';
+				text = text.replace( new RegExp(regex, 'gmi'), _nowikiTags[i]);
+			}
 		}
 		_nowikiTags = false;
 
@@ -2397,13 +2374,12 @@ var BsWikiCode = function() {
 	 * @returns {String}
 	 */
 	function _recoverEntities(text) {
-		var i, regex, replacer;
+		var i, regex;
 
 		if (_entities) {
 			for (i = 0; i < _entities.length; i++) {
 				regex = '@@@ENTITY' + i + '@@@';
-				replacer = new RegExp(regex, 'gmi');
-				text = text.replace(replacer, _entities[i]);
+				text = text.replace(new RegExp(regex, 'gmi'), _entities[i]);
 			}
 		}
 		_entities = false;
@@ -2516,7 +2492,7 @@ var BsWikiCode = function() {
 				},
 				function( data ) {
 					if ( data.query && data.query.pages ) {
-						var pages = data.query.pages;	
+						var pages = data.query.pages;
 						for ( var p in pages ) {
 							if (p == -1) {
 								//error in lookup
@@ -2797,7 +2773,7 @@ e.format = 'raw';
 			dataType: "json",
 			url: script,
 			data: data,
-			async: false, 
+			async: false,
 			success: function(data) {
 				if (typeof data.query.pages == "undefined") {
 					for( var i = 0; i < internalLinksTitles.length; i++ ) {
