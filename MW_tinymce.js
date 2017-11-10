@@ -1,5 +1,4 @@
 var scriptPath = mw.config.get( 'wgScriptPath' );
-var minimizeOnBlur = mw.config.get( 'wgTinyMCEMinimizeOnBlur' );
 
 var tinyMCELanguage = mw.config.get( 'wgTinyMCELanguage' );
 var tinyMCELangURL = null;
@@ -10,14 +9,15 @@ if ( tinyMCELanguage !== 'en' ) {
 var tinyMCEDirectionality = mw.config.get( 'wgTinyMCEDirectionality' );
 var tinyMCEMacros = mw.config.get( 'wgTinyMCEMacros' );
 
-function tinyMCEInitInstance(instance) {
+/*function tinyMCEInitInstance(instance) {
+	var minimizeOnBlur = $("textarea#" + instance.id).hasClass( 'mceMinimizeOnBlur' );
 	if ( minimizeOnBlur ) {
 		var mcePane = $("textarea#" + instance.id).prev();
 		// Keep a little sliver of the toolbar so that users see it.
 		mcePane.find(".mce-toolbar-grp").css("height", "10px");
 		mcePane.find(".mce-toolbar-grp .mce-flow-layout").hide("medium");
 	}
-}
+}*/
 
 jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
   function() {
@@ -46,7 +46,7 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 	  relative_urls: false,
 	  remove_script_host: false,
 	  document_base_url: mw.config.get( "wgServer" ),
-  	  automatic_uploads: true,
+	  automatic_uploads: true,
           paste_data_images: true,
 	  content_css: scriptPath + '/extensions/TinyMCE/MW_tinymce.css',
           theme_url: scriptPath + '/extensions/TinyMCE/tinymce/themes/modern/theme.js',
@@ -57,11 +57,11 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 	  wikimagic_context_toolbar: true,
           contextmenu: "undo redo | cut copy paste insert | link wikiimageupload wikimagic inserttable | styleselect removeformat ",
           convert_fonts_to_spans: true,
-  	  link_title: false,
+	  link_title: false,
 	  link_assume_external_targets: true,
 	  link_class_list: [
-    		{title: 'External', value: 'external bs-external-link mceNonEditable'},
-    		{title: 'Internal', value: 'internal bs-internal-link mceNonEditable'},
+ 		{title: 'External', value: 'external bs-external-link mceNonEditable'},
+ 		{title: 'Internal', value: 'internal bs-internal-link mceNonEditable'},
 	  ],
           table_default_attributes: {
               class: 'wikitable'
@@ -80,7 +80,7 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 	  // the html mode for tag creation (we need xhtml)
 	  element_format: 'xhtml',
 	  // define the element what all inline elements needs to be wrapped in
-	  forced_root_block: 'P',
+	  forced_root_block: 'div',
 	  // keep current style on pressing return
 	  keep_styles: true,
 	  // save plugin
@@ -107,15 +107,15 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
              'table': scriptPath + '/extensions/TinyMCE/tinymce/plugins/table/plugin.js',
              'textcolor': scriptPath + '/extensions/TinyMCE/tinymce/plugins/textcolor/plugin.js',
              'visualblocks': scriptPath + '/extensions/TinyMCE/tinymce/plugins/visualblocks/plugin.js',
-             'wikicode': scriptPath + '/extensions/TinyMCE/tinymce/plugins/pf_wikicode/plugin.js',
-             'wikilink': scriptPath + '/extensions/TinyMCE/tinymce/plugins/pf_link/plugin.js',
-             'wikimagic': scriptPath + '/extensions/TinyMCE/tinymce/plugins/pf_wikimagic/plugin.js',
-             'wikipaste': scriptPath + '/extensions/TinyMCE/tinymce/plugins/pf_paste/plugin.js',
-             'wikisourcecode': scriptPath + '/extensions/TinyMCE/tinymce/plugins/pf_code/plugin.js'
+             'wikicode': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_wikicode/plugin.js',
+             'wikilink': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_link/plugin.js',
+             'wikimagic': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_wikimagic/plugin.js',
+             'wikipaste': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_paste/plugin.js',
+             'wikisourcecode': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_code/plugin.js'
           },
           menubar: false, //'edit insert view format table tools',
           removed_menuitems: 'media',
-          toolbar1: 'undo redo | cut copy paste insert | bold italic underline strikethrough forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | charmap singlelinebreak wikilink unlink table wikiimageupload wikimagic wikisourcecode | styleselect removeformat | searchreplace ',
+          toolbar1: 'undo redo | cut copy paste insert | bold italic underline strikethrough forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | charmap singlelinebreak wikilink unlink table wikiimageupload wikimagic wikisourcecode | formatselect removeformat | searchreplace ',
           style_formats_merge: true,
           style_formats: [
             {title: "Table", items: [
@@ -140,13 +140,13 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 
              	function insertImage() {
                 	var editorid = editor.id;
-		 	var node = editor.selection.getNode();
-		 	var nodeID = node.id;
-		 	if (node.nodeName == 'IMG') {
+			var node = editor.selection.getNode();
+			var nodeID = node.id;
+			if (node.nodeName == 'IMG') {
 				var upLoadType = "local";
-		 	} else {
+			} else {
 				var upLoadType = "file";
-		 	}
+			}
 
                  	var uploadform = scriptPath + '/index.php?title=Special:TinyMCEUploadWindow&pfInputID=' + editorid + 
 				'&pfEditor=tinymce' + 
@@ -178,23 +178,23 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 			});
             	}
 
-             	editor.addButton('wikiimageupload', {
+        	editor.addButton('wikiimageupload', {
                 	icon: 'image',
 			stateSelector: 'img',
-                	tooltip: "Upload/insert wiki image",
+                	tooltip: mw.msg("tinymce-upload"),
                 	onclick:  insertImage
-             	});
+        	});
 
-            	editor.addButton('singlelinebreak', {
+		editor.addButton('singlelinebreak', {
                  	icon: 'visualchars',
-                 	tooltip: "Insert single linebreak and current position",
+                 	tooltip: mw.msg("tinymce-insert-linebreak"),
                  	onclick:  insertSingleLinebreak
-             	});
+		});
 
 		editor.addMenuItem('singlelinebreak', {
 			icon: 'visualchars',
 			text: 'Single linebreak',
-			tooltip: 'Insert single linebreak at current position',
+			tooltip: mw.msg("tinymce-insert-linebreak"),
 			context: 'insert',
 			onclick: insertSingleLinebreak
 		});
@@ -232,7 +232,7 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 				}
 			});
 		}
-
+		var minimizeOnBlur = $(editor.getElement()).hasClass( 'mceMinimizeOnBlur' );
 		if ( minimizeOnBlur ) {
 			editor.on('focus', function(e) {
 				var mcePane = $("textarea#" + e.target.id).prev();
@@ -247,6 +247,14 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 			});
 		}
           },
-//          init_instance_callback: "tinyMCEInitInstance"
+          init_instance_callback: function (instance) {
+		var minimizeOnBlur = $("textarea#" + instance.id).hasClass( 'mceMinimizeOnBlur' );
+		if ( minimizeOnBlur ) {
+			var mcePane = $("textarea#" + instance.id).prev();
+			// Keep a little sliver of the toolbar so that users see it.
+			mcePane.find(".mce-toolbar-grp").css("height", "10px");
+			mcePane.find(".mce-toolbar-grp .mce-flow-layout").hide("medium");
+		}
+	  }
       });
 });
