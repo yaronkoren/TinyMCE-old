@@ -1237,18 +1237,18 @@ var BsWikiCode = function() {
 		text = text.replace(/<(\/)?thead([^>]*)>/gmi, "");
 		text = text.replace(/<(\/)?tfoot([^>]*)>/gmi, "");
 
-		text = text.replace(/\n?<table([^>]*)>/gmi, "\n{" + pipeText + "$1");
-		text = text.replace(/\n?<\/table([^>]*)>/gi, "\n" + pipeText + "}");
-		text = text.replace(/\n?<caption([^>]*)>/gmi, "\n" + pipeText + "+$1");
+		text = text.replace(/\n?<table([^>]*)>/gmi, "<@@tnl@@>{" + pipeText + "$1");
+		text = text.replace(/\n?<\/table([^>]*)>/gi, "<@@tnl@@>" + pipeText + "}");
+		text = text.replace(/\n?<caption([^>]*)>/gmi, "<@@tnl@@>" + pipeText + "+$1");
 		text = text.replace(/\n?<\/caption([^>]*)>/gmi, "");
 
-		text = text.replace(/\n?<tr([^>]*)>/gmi, "\n" + pipeText + "-$1");
+		text = text.replace(/\n?<tr([^>]*)>/gmi, "<@@tnl@@>" + pipeText + "-$1");
 		text = text.replace(/\n?<\/tr([^>]*)>/gmi, "");
 
-		text = text.replace(/\n?<th([^>]*)>/gmi, "\n!$1" + pipeText);
+		text = text.replace(/\n?<th([^>]*)>/gmi, "<@@tnl@@>!$1" + pipeText);
 		text = text.replace(/\n?<\/th([^>]*)>/gmi, "");
 
-		text = text.replace(/\n?<td([^>]*)>/gmi, "\n" + pipeText + "$1" + pipeText);
+		text = text.replace(/\n?<td([^>]*)>/gmi, "<@@tnl@@>" + pipeText + "$1" + pipeText);
 		// @todo \n raus??
 		text = text.replace(/\n?<\/td([^>]*)>/gmi, "");
 
@@ -1395,7 +1395,7 @@ var BsWikiCode = function() {
 			line = lines[i].match(/^(\*|#(?!REDIRECT)|:|;)+/);
 			lastLine = (i == lines.length - 1);
 
-            //Process lines
+            		//Process lines
 			if (line && line !== '') { //Process lines that are members of wiki lists.
 				//DC reset the empty line count to zero as this line isn't empty
 				//Strip out the wiki code for the list element to leave just the text content
@@ -1445,7 +1445,7 @@ var BsWikiCode = function() {
 					startTags = startTags + matchStartTags.length;
 				}
 				// Get arrays of all the endTags in this line and keep running total
-				matchEndTags = lines[i].match(/(<\/blockquote|<\/h1|<\/h2|<\/h3|<\/h4|<\/h5|<\/h6|<\/div|<hr|<\/pre|@@@PRE|<\/p|<\/li|<\/ul|<\/ol|<\/center|<\/tbody|<\/td|<\/th|<\/tr|<\/table)/gi);
+				matchEndTags = lines[i].match(/(<\/blockquote|<\/h1|<\/h2|<\/h3|<\/h4|<\/h5|<\/h6|<\/div|<\hr|<\/pre|@@@PRE|<\/p|<\/li|<\/ul|<\/ol|<\/center|<\/tbody|<\/td|<\/th|<\/tr|<\/table)/gi);
 				if (matchEndTags) {
 					endTags = endTags + matchEndTags.length;
 				}
@@ -1461,11 +1461,13 @@ var BsWikiCode = function() {
 				if (emptyLine) { // process empty lines
 					// If not already in a paragraph (block of blank lines).  Process first empty line differently
 					if (!inParagraph) {
-						if (inBlock) { // in block single new lines are displayed .
+/*						if (inBlock) { // in block single new lines are displayed .
 							lines[i] = lines[i] + '<div class="bs_emptyline"><br class="bs_emptyline"/></div>';
 						} else {
 							lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_first"/></div>';
-						}
+						}*/
+//DC experimental
+lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_first"/></div>';
 						inParagraph = true;
 					} else {// this is already in a paragraph
 						lines[i] = lines[i] + '<div class="bs_emptyline"><br class="bs_emptyline"/></div>';
@@ -1481,9 +1483,9 @@ var BsWikiCode = function() {
 				//Test if the previous line was in a list if so close the list
 				//and place closing </div> before this line
 				if (lastList.length > 0) {
-					lines[i - 1] = lines[i - 1] + _closeList(lastList, '');
-					//DC close the <div> that contains the list
-					lines[i] = '</div>' + lines[i];
+					lines[i - 1] = lines[i - 1] + _closeList(lastList, '') + '</div>';
+					//DC close the <div> that contains the list 
+//					lines[i] = '</div>' + lines[i];
 					lastList = '';
 				}
 			}
@@ -1504,7 +1506,8 @@ var BsWikiCode = function() {
 		if( typeof lineStart == 'undefined' ) {
 			lineStart = '';
 		}
-		return lineStart + "<h" + level.length + ">" + content + "</h" + level.length + ">\n";
+//		return lineStart + "<h" + level.length + ">" + content + "</h" + level.length + ">\n";
+		return lineStart + "<div><h" + level.length + ">" + content + "</h" + level.length + "></div>";
 	}
 
 	/**
@@ -1672,12 +1675,12 @@ var BsWikiCode = function() {
 		// if emptyline_first is no longer empty, change it to a normal p
 		text = text.replace(/<div class="bs_emptyline_first"[^>]*>&nbsp;<\/div>/gmi, '<div>@@br_emptyline_first@@</div>'); // TinyMCE 4
 		text = text.replace(/<div class="bs_emptyline_first"[^>]*>(.*?\S+.*?)<\/div>/gmi, "<div>$1</div>");
-		text = text.replace(/<div class="bs_emptyline_first"[^>]*>.*?<\/div>/gmi, "<div>@@br_emptyline_first@@</div>");
+		text = text.replace(/<div class="bs_emptyline_first"[^>]*>.*?<\/div>/gmi, "<div>@@br_emptyline_first@@</div>"); 
 		text = text.replace(/<br class="bs_emptyline"[^>]*>/gmi, "@@br_emptyline@@");
 		// if emptyline is no longer empty, change it to a normal p
 		text = text.replace(/<div class="bs_emptyline"[^>]*>&nbsp;<\/div>/gmi, '<div>@@br_emptyline@@</div>'); // TinyMCE 4
 		text = text.replace(/<div class="bs_emptyline"[^>]*>(.*?\S+.*?)<\/div>/gmi, "<div>$1</div>"); //doesn't replace 2nd occurence
-		text = text.replace(/<div class="bs_emptyline"[^>]*>(.*?)<\/div>/gmi, "<div>@@br_emptyline@@</div>");
+		text = text.replace(/<div class="bs_emptyline"[^>]*>(.*?)<\/div>/gmi, "<div>@@br_emptyline@@</div>");//file 10
 		text = text.replace(/<br mce_bogus="1"\/>/gmi, "");
 		//DC added next line to remove stray bougs data placeholders
 		text = text.replace(/<br data-mce-bogus="1">/gmi, "");
@@ -1697,11 +1700,11 @@ var BsWikiCode = function() {
 		text = _links2wiki(text);
 
 		// @todo this needs to be placed in front of the blocklevel or put within
-		text = text.replace(/\n?<p style="([^"]*?)">(.*?)<\/p>/gmi, "\n<div style='$1'>$2</div>\n");
-		text = text.replace(/\n?<p style="text-align:\s?left;?">(.*?)<\/p>/gmi, "\n<div style='text-align: left'>$1</div>\n");
-		text = text.replace(/\n?<p style="text-align:\s?right;?">(.*?)<\/p>/gmi, "\n<div style='text-align: right'>$1</div>\n");
-		text = text.replace(/\n?<p style="text-align:\s?center;?">(.*?)<\/p>/gmi, "\n<div style='text-align: center'>$1</div>\n");
-		text = text.replace(/\n?<p style="text-align:\s?justify;?">(.*?)<\/p>/gmi, "\n<div style='text-align: justify'>$1</div>\n");
+		text = text.replace(/\n?<p style="([^"]*?)">(.*?)<\/p>/gmi, "\n<div style='$1'>$2</div><@@nl@@>");
+		text = text.replace(/\n?<p style="text-align:\s?left;?">(.*?)<\/p>/gmi, "<@@nl@@><div style='text-align: left'>$1</div><@@nl@@>");
+		text = text.replace(/\n?<p style="text-align:\s?right;?">(.*?)<\/p>/gmi, "<@@nl@@><div style='text-align: right'>$1</div><@@nl@@>");
+		text = text.replace(/\n?<p style="text-align:\s?center;?">(.*?)<\/p>/gmi, "<@@nl@@><div style='text-align: center'>$1</div><@@nl@@>");
+		text = text.replace(/\n?<p style="text-align:\s?justify;?">(.*?)<\/p>/gmi, "<@@nl@@><div style='text-align: justify'>$1</div><@@nl@@>");
 
 		text = text.replace(/<\/div>\n?/gmi, "</div>\n");
 
@@ -1734,18 +1737,19 @@ var BsWikiCode = function() {
 					}
 					currentPos = text.search(/<p(\s+[^>]*?)?>\s*(\s|<br ?\/>)\s*<\/p>/mi);
 					if (currentPos === nextPos) {
-						text = text.replace(/\n?<p(\s+[^>]*?)?>\s*(\s|<br ?\/>)\s*<\/p>/mi, "\n\n");
+						text = text.replace(/\n?<p(\s+[^>]*?)?>\s*(\s|<br ?\/>)\s*<\/p>/mi, "<@@2nl@@>");
 					}
 					currentPos = text.search(/<p(\s+[^>]*?)?>(\s| |&nbsp;)*?<\/p>/mi);
 					if (currentPos === nextPos) {
-						text = text.replace(/\n?<p(\s+[^>]*?)?>(\s| |&nbsp;)*?<\/p>/mi, "\n\n");
+						text = text.replace(/\n?<p(\s+[^>]*?)?>(\s| |&nbsp;)*?<\/p>/mi, "<@@2nl@@>");
 					}
 					//THIS IS EXPERIMENTAL: If anything breaks, put in a second \n at the end
 					//DC Seems to insert spurious \n so taken these out
 					currentPos = text.search(/<p(\s+[^>]*?)?>([\s\S]*?)<\/p>/mi);
 					if (currentPos === nextPos) {
 //DC						text = text.replace(/\n?<p(\s+[^>]*?)?>([\s\S]*?)<\/p>/mi, "\n$2\n\n");
-						text = text.replace(/\n?<p(\s+[^>]*?)?>([\s\S]*?)<\/p>/mi, "$2");
+						text = text.replace(/\n?<p(\s+[^>]*?)?>([\s\S]*?)<\/p>/mi, "$2"); 
+						text = text.replace(/<p(\s+[^>]*?)?>([\s\S]*?)<\/p>/mi, "$2"); 
 					}
 					break;
 			}
@@ -1753,32 +1757,33 @@ var BsWikiCode = function() {
 				case '</p' :
 					text = text.replace(/<\/p>/, "");
 					break;
+//DC headers on consecutive lines will result in an extra new line being introduced so check for this and replace with a single new line
 				case '<h1' :
 //					text = text.replace(/\n?<h1.*?>(.*?)<\/h1>\n?/mi, "\n=$1=\n\n");
-					text = text.replace(/\n?<h1.*?>(.*?)<\/h1>\n?/mi, "\n=$1=\n");
+					text = text.replace(/\n?<h1.*?>(.*?)<\/h1>\n?/mi, "<@@hnl@@>=$1=<@@hnl@@>");
 					break;
 				case '<h2' :
 //					text = text.replace(/\n?<h2.*?>(.*?)<\/h2>\n?/mi, "\n==$1==\n\n");
-					text = text.replace(/\n?<h2.*?>(.*?)<\/h2>\n?/mi, "\n==$1==\n");
+					text = text.replace(/\n?<h2.*?>(.*?)<\/h2>\n?/mi, "<@@hnl@@>==$1==<@@hnl@@>");
 					break;
 				case '<h3' :
 //					text = text.replace(/\n?<h3.*?>(.*?)<\/h3>\n?/mi, "\n===$1===\n\n");
-					text = text.replace(/\n?<h3.*?>(.*?)<\/h3>\n?/mi, "\n===$1===\n");
+					text = text.replace(/\n?<h3.*?>(.*?)<\/h3>\n?/mi, "<@@hnl@@>===$1===<@@hnl@@>");
 					break;
 				case '<h4' :
 //					text = text.replace(/\n?<h4.*?>(.*?)<\/h4>\n?/mi, "\n====$1====\n\n");
-					text = text.replace(/\n?<h4.*?>(.*?)<\/h4>\n?/mi, "\n====$1====\n");
+					text = text.replace(/\n?<h4.*?>(.*?)<\/h4>\n?/mi, "<@@hnl@@>====$1====<@@hnl@@>");
 					break;
 				case '<h5' :
 //					text = text.replace(/\n?<h5.*?>(.*?)<\/h5>\n?/mi, "\n=====$1=====\n\n");
-					text = text.replace(/\n?<h5.*?>(.*?)<\/h5>\n?/mi, "\n=====$1=====\n");
+					text = text.replace(/\n?<h5.*?>(.*?)<\/h5>\n?/mi, "<@@hnl@@>=====$1=====<@@hnl@@>");
 					break;
 				case '<h6' :
 //					text = text.replace(/\n?<h6.*?>(.*?)<\/h6>\n?/mi, "\n======$1======\n\n");
-					text = text.replace(/\n?<h6.*?>(.*?)<\/h6>\n?/mi, "\n======$1======\n");
+					text = text.replace(/\n?<h6.*?>(.*?)<\/h6>\n?/mi, "<@@hnl@@>======$1======<@@hnl@@>");
 					break;
 				case '<hr' :
-					text = text.replace(/\n?<hr.*?>/mi, "\n----");
+					text = text.replace(/\n?<hr.*?>/mi, "<@@nl@@>----");
 					break;
 				case '<ul'	:
 					listTag = listTag + '*';
@@ -1794,13 +1799,13 @@ var BsWikiCode = function() {
 					break;
 				case '<dt' :
 					listTag = listTag + ';';
-					text = text.replace(/<dt[^>]*?>/, "\n" + listTag + " ");
+					text = text.replace(/<dt[^>]*?>/, "<@@nl@@>" + listTag + " ");
 					break;
 				case '<li' :
 					if (text.search(/<li[^>]*?>\s*(<ul[^>]*?>|<ol[^>]*?>)/) === nextPos) {
 						text = text.replace(/<li[^>]*?>/, "");
 					} else {
-						text = text.replace(/\n?<li[^>]*?>/mi, "\n" + listTag + " ");
+						text = text.replace(/\n?<li[^>]*?>/mi, "<@@nl@@>" + listTag + " ");
 					}
 					break;
 			}
@@ -1810,7 +1815,8 @@ var BsWikiCode = function() {
 					if (text.search(/(<blockquote[^>]*?>\s*(<ul>|<ol>))|(<blockquote[^>]*?>\s*<blockquote[^>]*?>)/) === nextPos) {
 						text = text.replace(/<blockquote[^>]*?>/, "");
 					} else {
-						text = text.replace(/\n?<blockquote[^>]*?>/mi, "\n" + listTag + " ");
+//DC						text = text.replace(/\n?<blockquote[^>]*?>/mi, "\n" + listTag + " ");
+						text = text.replace(/\n?<blockquote[^>]*?>/mi, "" + listTag + " ");
 					}
 					break;
 				case '</ul'	:
@@ -1818,7 +1824,7 @@ var BsWikiCode = function() {
 					if (listTag.length > 0) {
 						text = text.replace(/<\/ul>/, "");
 					} else {
-//						text = text.replace(/<\/ul>/, "\n");
+//DC						text = text.replace(/<\/ul>/, "\n");
 						text = text.replace(/<\/ul>/, "");
 					}
 					break;
@@ -1828,7 +1834,7 @@ var BsWikiCode = function() {
 					if (listTag.length > 0) {
 						text = text.replace(/<\/ol>/, "");
 					} else {
-//						text = text.replace(/<\/ol>/, "\n");
+//DC						text = text.replace(/<\/ol>/, "\n");
 						text = text.replace(/<\/ol>/, "");
 					}
 					break;
@@ -1838,7 +1844,7 @@ var BsWikiCode = function() {
 					if (listTag.length > 0) {
 						text = text.replace(/<\/dl>/, "");
 					} else {
-//						text = text.replace(/<\/dl>/, "\n");
+//DC						text = text.replace(/<\/dl>/, "\n");
 						text = text.replace(/<\/dl>/, "");
 					}
 					break;
@@ -1847,13 +1853,15 @@ var BsWikiCode = function() {
 					text = text.replace(/<\/dt>/, "");
 					break;
 				case '</li' :
-//					text = text.replace(/\n?<\/li>/mi, "\n");
+//DC					text = text.replace(/\n?<\/li>/mi, "\n");
 					text = text.replace(/\n?<\/li>/mi, "");
 					break;
+//DC TODO text procesing of block quotes
 				case '</bl' :
 					listTag = listTag.substr(0, listTag.length - 1);
 					if (text.search(/<\/blockquote>\s*<blockquote[^>]*?>/) === nextPos) {
-						text = text.replace(/\n?<\/blockquote>\s*<blockquote[^>]*?>/, "\n<blockquote>");
+//DC						text = text.replace(/\n?<\/blockquote>\s*<blockquote[^>]*?>/, "\n<blockquote>");
+						text = text.replace(/\n?<\/blockquote>\s*<blockquote[^>]*?>/, "<blockquote>");
 					} else if (text.search(/<\/blockquote>\s*<\/blockquote>/) === nextPos) {
 						text = text.replace(/<\/blockquote>/, "");
 					} else if (text.search(/<\/blockquote>\s*<\/li>/) === nextPos) {
@@ -1861,9 +1869,11 @@ var BsWikiCode = function() {
 					} else {
 						//prevent newline after last blockquote //if no * or # is present
 						if (listTag.length > 0) {
-							text = text.replace(/<\/blockquote>/, "\n" + listTag + " ");
+//DC							text = text.replace(/<\/blockquote>/, "\n" + listTag + " ");
+							text = text.replace(/<\/blockquote>/, "" + listTag + " ");
 						} else {
-							text = text.replace(/<\/blockquote>/, "\n");
+//DC							text = text.replace(/<\/blockquote>/, "\n");
+							text = text.replace(/<\/blockquote>/, "");
 						}
 					}
 					break;
@@ -1881,8 +1891,18 @@ var BsWikiCode = function() {
 		}
 		e.content = text;
 		text = _tables2wiki(e);
-		text = text.replace(/\n?@@br_emptyline_first@@/gmi, "\n\n");
-		text = text.replace(/\n?@@br_emptyline@@/gmi, "\n");
+
+//DC if the br_emptyline was preceded by abr_emptyline_first then replacing the br_emptyline before the br_emptyline_first
+		text = text.replace(/\n?@@br_emptyline_first@@/gmi, "<@@2nl@@>");
+		text = text.replace(/\n?@@br_emptyline@@/gmi, "<@@nl@@>");
+//DC clean up new lines associated with headers
+		text = text.replace(/<@@hnl@@><@@hnl@@>/gmi, "<@@nl@@>");
+		text = text.replace(/<@@hnl@@><@@2nl@@>/gmi, "<@@2nl@@>");
+		text = text.replace(/<@@hnl@@><@@nl@@>/gmi, "<@@nl@@>");
+		text = text.replace(/<@@hnl@@>/gmi, "<@@nl@@>");
+//DC clean up new lines associated with tables
+		text = text.replace(/<@@tnl@@>/gmi, "<@@nl@@>");
+
 		// Cleanup von falschen Image-URLs
 		// TODO MRG (02.11.10 23:44): i18n
 		text = text.replace(/\/Image:/g, "Image:");
@@ -1892,7 +1912,7 @@ var BsWikiCode = function() {
 		// Write back content of <pre> tags.
 		text = _recoverPres(text);
 		// make sure pre starts in a separate line
-		text = text.replace(/([^^])?\n?<pre/gi, "$1\n<pre");
+		text = text.replace(/([^^])?\n?<pre/gi, "$1<@@nl@@><pre");
 		// Cleanup empty lines that exists if enter was pressed within an aligned paragraph
 		// However, leave empty divs with ids or classes
 		text = text.replace(/<div (?!(id|class))[^>]*?>(\s|&nbsp;)*<\/div>/gmi, "");
@@ -1904,7 +1924,16 @@ var BsWikiCode = function() {
 		text = text.replace(/<br data-attributes="[^>]*data-mce-bogus[^>]*" ?\/?>/gmi, '');
 		text = text.replace(/<br data-attributes="[^>]*data-attributes[^>]*" ?\/?>/gmi, '<br/>');
 		text = text.replace(/<br [^>]*data-mce-bogus="1"[^>]*>/gmi, '');
-		text = text.replace(/^\n*/gi, '');
+
+//DC clean up single new lines from _onGetContent
+//		text = text.replace(/<@@snl@@>/gmi, "<@@nl@@>");
+		text = text.replace(/ ?<span[^>]*class="single_linebreak" title="single linebreak"[^>]*>(&nbsp;|.|&para;)<\/span> ?/g, "<@@nl@@>");
+
+//DC replace all new line codes as all valid ones now have place holders
+//		text = text.replace(/^\n*/gi, '');
+		text = text.replace(/\n*/gi, '');
+		text = text.replace(/<@@2nl@@>/gmi, "\n\n");
+		text = text.replace(/<@@nl@@>/gmi, "\n");
 
 		// wrap the text in an object to send it to event listeners
 		textObject = {text: text};
@@ -2716,7 +2745,8 @@ e.format = 'raw';
 			e.content = _convertTinyMceToPreWithSpaces(e.content);
 			// recover linebreaks
 			// use . here: blank would not match in IE
-			e.content = e.content.replace(/ ?<span[^>]*class="single_linebreak" title="single linebreak"[^>]*>(&nbsp;|.|&para;)<\/span> ?/g, "\n");
+//DC now clean up single line breaks in _html2wiki
+//			e.content = e.content.replace(/ ?<span[^>]*class="single_linebreak" title="single linebreak"[^>]*>(&nbsp;|.|&para;)<\/span> ?/g, "<@@snl@@>");
 
 			e.content = _preserveEntities(e.content);
 
