@@ -9,16 +9,6 @@ if ( tinyMCELanguage !== 'en' ) {
 var tinyMCEDirectionality = mw.config.get( 'wgTinyMCEDirectionality' );
 var tinyMCEMacros = mw.config.get( 'wgTinyMCEMacros' );
 
-function tinyMCEInitInstance(instance) {
-	var minimizeOnBlur = $("textarea#" + instance.id).hasClass( 'mceMinimizeOnBlur' );
-	if ( minimizeOnBlur ) {
-		var mcePane = $("textarea#" + instance.id).prev();
-		// Keep a little sliver of the toolbar so that users see it.
-		mcePane.find(".mce-toolbar-grp").css("height", "10px");
-		mcePane.find(".mce-toolbar-grp .mce-flow-layout").hide("medium");
-	}
-}
-
 jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
   function() {
 	$('#wpTextbox1, .tinymce').each( function() {
@@ -247,7 +237,17 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 				mcePane.find(".mce-toolbar-grp .mce-flow-layout").hide("medium");
 			});
 		}
-          },
-          init_instance_callback: "tinyMCEInitInstance"
-      });
+	},
+	init_instance_callback: function (instance) {
+		// For some reason, in some installations this only works as an inline function,
+		// instead of a named function defined elsewhere.
+		var minimizeOnBlur = $("textarea#" + instance.id).hasClass( 'mceMinimizeOnBlur' );
+		if ( minimizeOnBlur ) {
+			var mcePane = $("textarea#" + instance.id).prev();
+			// Keep a little sliver of the toolbar so that users see it.
+			mcePane.find(".mce-toolbar-grp").css("height", "10px");
+			mcePane.find(".mce-toolbar-grp .mce-flow-layout").hide("medium");
+		}
+	}
+    });
 });
