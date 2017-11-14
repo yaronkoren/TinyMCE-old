@@ -1,0 +1,19 @@
+# The following change is pending for the main WikiEditor code, at
+# https://gerrit.wikimedia.org/r/#/c/389499/
+
+diff --git a/WikiEditor.hooks.php b/WikiEditor.hooks.php
+index 8bf742b..4409523 100644
+--- a/WikiEditor.hooks.php
++++ b/WikiEditor.hooks.php
+@@ -168,6 +168,11 @@ class WikiEditorHooks {
+                        return true;
+                }
+
++               // Give other extensions a chance to disable WikiEditor for this page.
++               if ( !Hooks::run( 'WikiEditorDisable', [ $editPage ] ) ) {
++                       return;
++               }
++
+                // Add modules for enabled features
+                foreach ( self::$features as $name => $feature ) {
+                        if ( !self::isEnabled( $name ) ) {

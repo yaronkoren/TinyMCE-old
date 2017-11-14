@@ -239,6 +239,15 @@ class TinyMCEHooks {
 		return true;
 	}
 
+	public static function disableWikiEditor( $editPage ) {
+		global $wgTinyMCEEnabled;
+
+		if ( $wgTinyMCEEnabled ) {
+			return false;
+		}
+		return true;
+	}
+
 	public static function addPreference( $user, &$preferences ) {
 		$preferences['tinymce-use'] = array(
 			'type' => 'toggle',

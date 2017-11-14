@@ -58,6 +58,7 @@
 		"MakeGlobalVariablesScript": "TinyMCEHooks::setGlobalJSVariables",
 		"EditPageBeforeEditToolbar": "TinyMCEHooks::removeDefaultToolbar",
 		"EditPage::showEditForm:initial": "TinyMCEHooks::addToEditPage",
+		"WikiEditorDisable": "TinyMCEHooks::disableWikiEditor",
 		"GetPreferences": "TinyMCEHooks::addPreference"
 	},
 	"SpecialPages": {
