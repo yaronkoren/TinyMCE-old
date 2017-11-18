@@ -515,6 +515,7 @@ var BsWikiCode = function() {
 	}
 
 	function _image2wiki(text) {
+//DC TODO check to see if this function can be simplified
 		var images = text.match(/(<a([^>]*?)>)?<img([^>]*?)\/?>(<\/a>)?/gi);
 		if (!images)
 			return text;
@@ -555,8 +556,8 @@ var BsWikiCode = function() {
 			//if not set it to the name of the source file
 			if (!wikiImageObject.imagename) {
 				var src = wikiImageObject.src;
-				var pos = src.lastIndexOf("/");
-				var srcfile = "File:" + src.slice(pos+1);
+				var dstName = src.split('/').pop().split('#')[0].split('?')[0];
+				var srcfile = "File:" + dstName;
 				wikiImageObject.imagename = srcfile;
 			}
 			//Check if wikiImageObject.style is set
@@ -1435,7 +1436,7 @@ var BsWikiCode = function() {
 				//set emptyLine if line is empty
 				emptyLine = lines[i].match(/^(\s|&nbsp;)*$/);
 
-				// Test to see if we are in tag block.  Treat empty lines differently if we are.
+/*				// Test to see if we are in tag block.  Treat empty lines differently if we are.
 				// Inside a tag block a single/n generates a new line but outside the block it doesn't
 				matchStartTags = new Array(0);
 				matchEndTags = new Array(0);
@@ -1445,7 +1446,7 @@ var BsWikiCode = function() {
 					startTags = startTags + matchStartTags.length;
 				}
 				// Get arrays of all the endTags in this line and keep running total
-				matchEndTags = lines[i].match(/(<\/blockquote|<\/h1|<\/h2|<\/h3|<\/h4|<\/h5|<\/h6|<\/div|<\hr|<\/pre|@@@PRE|<\/p|<\/li|<\/ul|<\/ol|<\/center|<\/tbody|<\/td|<\/th|<\/tr|<\/table)/gi);
+				matchEndTags = lines[i].match(/(<\/blockquote|<\/h1|<\/h2|<\/h3|<\/h4|<\/h5|<\/h6|<\/div|<hr|<\/pre|@@@PRE|<\/p|<\/li|<\/ul|<\/ol|<\/center|<\/tbody|<\/td|<\/th|<\/tr|<\/table)/gi);
 				if (matchEndTags) {
 					endTags = endTags + matchEndTags.length;
 				}
@@ -1456,7 +1457,7 @@ var BsWikiCode = function() {
 				} else {
 					inBlock = false ;
 					blockLineCount = 0;
-				}
+				}*/
 
 				if (emptyLine) { // process empty lines
 					// If not already in a paragraph (block of blank lines).  Process first empty line differently
@@ -1474,11 +1475,11 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 					}
 				} else { // not an empty line
 					inParagraph = false;
-					if (inBlock) {
+//					if (inBlock) {
 						if (lines[i].match(/(^\<td\>)/i)) { //first line of data in a table cell
 							lines[i] = lines[i] + '<br class="bs_emptyline"/>';
 						}
-					}
+//					}
 				}
 				//Test if the previous line was in a list if so close the list
 				//and place closing </div> before this line
@@ -1517,7 +1518,6 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 	 */
 	function _wiki2html(e) {
 		var text = e.content;
-
 		// save some work, if the text is empty
 		if (text === '') {
 			return text;
@@ -1834,8 +1834,8 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 					if (listTag.length > 0) {
 						text = text.replace(/<\/ol>/, "");
 					} else {
-//DC						text = text.replace(/<\/ol>/, "\n");
-						text = text.replace(/<\/ol>/, "");
+						text = text.replace(/<\/ol>/, "<@@nl@@>");
+//DC						text = text.replace(/<\/ol>/, "");
 					}
 					break;
 				case '</dl' :
@@ -2490,7 +2490,10 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 			return $0;
 		}
 		// careful: only considers the first 5 characters in a line
-		if ($3.match(/(^(----|\||!|\{\||#|\*|:|;|=|<\!--|<div|<pre|@@@PR)|(^\s*$))/i)) {
+		// DC add in html tags that are allowed in wikicode eg <ol, <ul, <li, </ol>, </ul>, </li> so far
+		// DC TODO are there any others?
+//		if ($3.match(/(^(----|\||!|\{\||#|\*|:|;|=|<\!--|<div|<pre|@@@PR)|(^\s*$))/i)) {
+		if ($3.match(/(^(----|\||!|\{\||#|\*|:|;|=|<\!--|<div|<pre|@@@PR)|<ol|<ul|<li|<\/ol>|<\/ul>|<\/li>|(^\s*$))/i)) {
 			return $0;
 		}
 		_processFlag = true;
@@ -2621,10 +2624,10 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 
 		//special tags before pres prevents spaces in special tags like GeSHi to take effect
 		text = _preserveSpecialTags(text, e);
-
 		//cleanup linebreaks in tags except comments
 		text = text.replace(/(<[^!][^>]+?)(\n)([^<]+?>)/gi, "$1$3");
 
+//DC TODO check what next clause does, but didn't work for html list entities!
 		//preserve entities that were orignially html entities
 		text = text.replace(/(&[^\s;]+;)/gmi, '<span class="bs_htmlentity">$1</span>');
 
