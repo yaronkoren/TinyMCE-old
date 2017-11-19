@@ -81,7 +81,7 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 	  //apply in a correct manner. This may be dangerous.
 	  body_id: 'bodyContent',
           external_plugins: {
-             'advlist': scriptPath + '/extensions/TinyMCE/tinymce/plugins/advlist/plugin.js',
+//             'advlist': scriptPath + '/extensions/TinyMCE/tinymce/plugins/advlist/plugin.js',
              'anchor': scriptPath + '/extensions/TinyMCE/tinymce/plugins/anchor/plugin.js',
              'autolink': scriptPath + '/extensions/TinyMCE/tinymce/plugins/autolink/plugin.js',
              'autoresize': scriptPath + '/extensions/TinyMCE/tinymce/plugins/autoresize/plugin.js',
