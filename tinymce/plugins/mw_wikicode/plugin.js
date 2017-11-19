@@ -1508,7 +1508,8 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 			lineStart = '';
 		}
 //		return lineStart + "<h" + level.length + ">" + content + "</h" + level.length + ">\n";
-		return lineStart + "<div><h" + level.length + ">" + content + "</h" + level.length + "></div>";
+//		return lineStart + "<div><h" + level.length + ">" + content + "</h" + level.length + "></div>";
+		return lineStart + "<h" + level.length + ">" + content + "</h" + level.length + ">";
 	}
 
 	/**
@@ -1799,13 +1800,13 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 					break;
 				case '<dt' :
 					listTag = listTag + ';';
-					text = text.replace(/<dt[^>]*?>/, "<@@nl@@>" + listTag + " ");
+					text = text.replace(/<dt[^>]*?>/, "<@@bnl@@>" + listTag + " ");
 					break;
 				case '<li' :
 					if (text.search(/<li[^>]*?>\s*(<ul[^>]*?>|<ol[^>]*?>)/) === nextPos) {
 						text = text.replace(/<li[^>]*?>/, "");
 					} else {
-						text = text.replace(/\n?<li[^>]*?>/mi, "<@@nl@@>" + listTag + " ");
+						text = text.replace(/\n?<li[^>]*?>/mi, "<@@bnl@@>" + listTag + " ");
 					}
 					break;
 			}
@@ -1824,8 +1825,8 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 					if (listTag.length > 0) {
 						text = text.replace(/<\/ul>/, "");
 					} else {
-//DC						text = text.replace(/<\/ul>/, "\n");
-						text = text.replace(/<\/ul>/, "");
+						text = text.replace(/<\/ul>/, "<@@bnl@@>");
+ 						text = text.replace(/<\/ul>/, "");
 					}
 					break;
 				case '</ol' :
@@ -1834,7 +1835,7 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 					if (listTag.length > 0) {
 						text = text.replace(/<\/ol>/, "");
 					} else {
-						text = text.replace(/<\/ol>/, "<@@nl@@>");
+						text = text.replace(/<\/ol>/, "<@@bnl@@>");
 //DC						text = text.replace(/<\/ol>/, "");
 					}
 					break;
@@ -1891,15 +1892,18 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 		}
 		e.content = text;
 		text = _tables2wiki(e);
-
 //DC if the br_emptyline was preceded by abr_emptyline_first then replacing the br_emptyline before the br_emptyline_first
 		text = text.replace(/\n?@@br_emptyline_first@@/gmi, "<@@2nl@@>");
 		text = text.replace(/\n?@@br_emptyline@@/gmi, "<@@nl@@>");
-//DC clean up new lines associated with headers
+//DC clean up new lines associated with blocks and or headers
+//		text = text.replace(/<@@[bh]nl@@><@@[bh]nl@@>/gmi, "<@@nl@@>");
+		text = text.replace(/<@@bnl@@><@@bnl@@>/gmi, "<@@nl@@>");
 		text = text.replace(/<@@hnl@@><@@hnl@@>/gmi, "<@@nl@@>");
-		text = text.replace(/<@@hnl@@><@@2nl@@>/gmi, "<@@2nl@@>");
+		text = text.replace(/<@@2nl@@><@@[bh]nl@@>/gmi, "<@@2nl@@>");
+		text = text.replace(/<@@[bh]nl@@><@@2nl@@>/gmi, "<@@2nl@@>");
 		text = text.replace(/<@@hnl@@><@@nl@@>/gmi, "<@@nl@@>");
-		text = text.replace(/<@@hnl@@>/gmi, "<@@nl@@>");
+		text = text.replace(/<@@nl@@><@@[bh]nl@@>/gmi, "<@@nl@@>");
+		text = text.replace(/<@@[bh]nl@@>/gmi, "<@@nl@@>");
 //DC clean up new lines associated with tables
 		text = text.replace(/<@@tnl@@>/gmi, "<@@nl@@>");
 
@@ -2486,7 +2490,8 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 	function __preserveSingleLinebreaks($0, $1, $2, $3) {
 		// hr table heading comment div end-table | ol ul dl dt comment cell row
 		// there was bs_comment:@@@ in there: |@@@PRE.*?@@@$|\|$|bs_comment:@@@|^
-		if ($2.match(/(----$|\|\}$|=$|-->$|<\/div>$|<\/pre>$|@@@PRE.*?@@@$|\|$|^(#|\*|:|;|<\!--|\|\||\|-)|(^\s*$))/i)) {
+		// DC add in html tags that are allowed in wikicode eg </ol>, </ul>, </li> so far
+		if ($2.match(/(----$|\|\}$|=$|-->$|<\/div>$|<\/pre>$|@@@PRE.*?@@@$|\|$|^(#|\*|:|;|<\!--|\|\||\|-)|<\/ol>|<\/ul>|<\/li>|(^\s*$))/i)) {
 			return $0;
 		}
 		// careful: only considers the first 5 characters in a line
