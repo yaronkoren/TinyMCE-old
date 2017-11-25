@@ -1479,7 +1479,7 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 						lines[i] = lines[i] + '<div class="bs_emptyline"><br class="bs_emptyline"/></div>';
 					}
 				} else { // not an empty line
-					if (!inParagraph && lines[i].match(/(^\<@@@TAG)/i)) { // if the line starts with <@@@TAG then precede it with a blank line
+					if (!inParagraph && lines[i].match(/(^\<@@@TAG)/i) && i>0 ) { // if the line starts with <@@@TAG then precede it with a blank line
 							lines[i] = '<br class="bs_emptyline"/>' + lines[i];
 					}
 					inParagraph = false;
@@ -1687,6 +1687,7 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 		text = text.replace(/<div class="bs_emptyline_first"[^>]*>&nbsp;<\/div>/gmi, '<div>@@br_emptyline_first@@</div>'); // TinyMCE 4
 		text = text.replace(/<div class="bs_emptyline_first"[^>]*>(.*?\S+.*?)<\/div>/gmi, "<div>$1</div>");
 		text = text.replace(/<div class="bs_emptyline_first"[^>]*>.*?<\/div>/gmi, "<div>@@br_emptyline_first@@</div>"); 
+		text = text.replace(/<div>@@br_emptyline_first@@<\/div>/gmi, "@@br_emptyline_first@@"); 
 		text = text.replace(/<br class="bs_emptyline"[^>]*>/gmi, "@@br_emptyline@@");
 		// if emptyline is no longer empty, change it to a normal p
 		text = text.replace(/<div class="bs_emptyline"[^>]*>&nbsp;<\/div>/gmi, '<div>@@br_emptyline@@</div>'); // TinyMCE 4
@@ -2819,7 +2820,7 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 		// DC changes so that we always use 'raw' format
 		// if raw format is requested, this is usually for internal issues like
 		// undo/redo. So no additional processing should occur. Default is 'html'
-//		if (e.format == 'raw' ) return;
+		if (e.format == 'raw' ) return;
 		e.format = 'raw';
 		if (e.load) {
 			e.content = _preprocessWiki2Html(e);
@@ -2840,8 +2841,8 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 		// undo/redo. So no additional processing should occur. Default is 'html'
 //		if (e.format == 'raw' ) return;
 //DC Experimental
-e.format = 'raw';
-//DC end
+//e.format = 'raw';
+//DC end*/
 
 	}
 
@@ -2861,7 +2862,6 @@ e.format = 'raw';
 			e.content= ed.getContent({source_view: true, no_events: true, format: 'raw'});
 		}
 		e.format = 'raw';
-
 /* DC moved recover special tags up front from lower down */
 		e.content = _recoverSpecialTags(e.content, e);
 
