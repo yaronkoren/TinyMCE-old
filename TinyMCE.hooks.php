@@ -221,7 +221,11 @@ class TinyMCEHooks {
 		$namespace = $title->getNamespace();
 
 		// @TODO - this should not be hardcoded.
-		$wgTinyMCEEnabled = $namespace != NS_TEMPLATE && $namespace != PF_NS_FORM;
+		$wgTinyMCEEnabled = $namespace != NS_TEMPLATE;
+		if ( defined( PF_NS_FORM ) && $namespace == PF_NS_FORM ) {
+			$wgTinyMCEEnabled = false;
+		}
+
 		if ( $context->getRequest()->getCheck('undo') ) {
 			$wgTinyMCEEnabled = false;
 		}
