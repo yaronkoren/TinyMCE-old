@@ -222,7 +222,7 @@ class TinyMCEHooks {
 
 		// @TODO - this should not be hardcoded.
 		$wgTinyMCEEnabled = $namespace != NS_TEMPLATE;
-		if ( defined( PF_NS_FORM ) && $namespace == PF_NS_FORM ) {
+		if ( defined( 'PF_NS_FORM' ) && $namespace == PF_NS_FORM ) {
 			$wgTinyMCEEnabled = false;
 		}
 
