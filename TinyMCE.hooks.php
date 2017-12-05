@@ -152,7 +152,7 @@ class TinyMCEHooks {
 
 		$context = $out->getContext();
 
-		$extensionTags = $wgParser->getTags(); 
+		$extensionTags = $wgParser->getTags();
 		$specialTags = '';
 		foreach ( $extensionTags as $tagName ) {
 			if ( ( $tagName == 'pre' ) || ($tagName == 'nowiki') ) {
@@ -180,7 +180,7 @@ class TinyMCEHooks {
 			if ( !array_key_exists( 'name', $macro ) || !array_key_exists( 'text', $macro ) ) {
 				continue;
 			}
- 
+
 			$imageURL = null;
 			if ( array_key_exists( 'image', $macro ) ) {
 				if ( strtolower( substr( $macro['image'], 0, 4 ) ) === 'http' ) {
@@ -220,17 +220,18 @@ class TinyMCEHooks {
 		$title = $editPage->getTitle();
 		$namespace = $title->getNamespace();
 
-		// @TODO - this should not be hardcoded.
 		$wgTinyMCEEnabled = $namespace != NS_TEMPLATE;
-		if ( defined( 'PF_NS_FORM' ) && $namespace == PF_NS_FORM ) {
-			$wgTinyMCEEnabled = false;
-		}
 
 		if ( $context->getRequest()->getCheck('undo') ) {
 			$wgTinyMCEEnabled = false;
 		}
 
 		if ( !$context->getUser()->getOption( 'tinymce-use' ) ) {
+			$wgTinyMCEEnabled = false;
+		}
+
+		// Give other extensions a chance to disable TinyMCE for this page.
+		if ( !Hooks::run( 'TinyMCEDisable', array( $editPage ) ) ) {
 			$wgTinyMCEEnabled = false;
 		}
 

@@ -1,7 +1,51 @@
-diff --git a/includes/forminputs/PF_TextAreaInput.php b/includes/forminputs/PF_TextAreaInput.php
-index 3cdf39c4..bb6e86da 100644
---- a/includes/forminputs/PF_TextAreaInput.php
-+++ b/includes/forminputs/PF_TextAreaInput.php
+== PageForms.php ==
+
+@@ -124,6 +124,7 @@ $GLOBALS['wgHooks']['ParserFirstCallInit'][] = 'PFHooks::registerFunctions';
+ $GLOBALS['wgHooks']['MakeGlobalVariablesScript'][] = 'PFHooks::setGlobalJSVariables';
+ $GLOBALS['wgHooks']['PageSchemasRegisterHandlers'][] = 'PFPageSchemas::registerClass';
+ $GLOBALS['wgHooks']['EditPage::importFormData'][] = 'PFHooks::showFormPreview';
++$GLOBALS['wgHooks']['TinyMCEDisable'][] = 'PFHooks::disableTinyMCE';
+ $GLOBALS['wgHooks']['CanonicalNamespaces'][] = 'PFHooks::registerNamespaces';
+ $GLOBALS['wgHooks']['UnitTestsList'][] = 'PFHooks::onUnitTestsList';
+ $GLOBALS['wgHooks']['ResourceLoaderRegisterModules'][] = 'PFHooks::registerModules';
+
+== extension.json ==
+
+@@ -425,6 +425,7 @@
+                "EditPage::importFormData": [
+                        "PFHooks::showFormPreview"
+                ],
++               "TinyMCEDisable": "PFHooks::disableTinyMCE",
+                "CanonicalNamespaces": [
+                        "PFHooks::registerNamespaces"
+                ],
+
+== includes/PF_Hooks.php ==
+
+@@ -231,6 +231,21 @@ class PFHooks {
+                return true;
+        }
+
++        public static function disableTinyMCE( $editPage ) {
++               $title = $editPage->getTitle();
++
++               if ( $title->getNamespace() == PF_NS_FORM ) {
++                       return false;
++               }
++
++               $defaultForms = PFFormLinker::getDefaultFormsForPage( $title );
++               if ( count( $defaultForms ) > 0 ) {
++                       return false;
++               }
++
++                return true;
++        }
++
+        public static function showFormPreview( EditPage $editpage, WebRequest $request ) {
+                global $wgOut, $wgParser, $wgPageFormsFormPrinter;
+
+== includes/forminputs/PF_TextAreaInput.php ==
+
 @@ -56,6 +56,16 @@ class PFTextAreaInput extends PFFormInput {
  			$this->mEditor = 'wikieditor';
  			$this->addJsInitFunctionData( 'window.ext.wikieditor.init' );
