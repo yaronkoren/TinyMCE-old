@@ -2198,16 +2198,18 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 				cmt[1] = '';
 			}
 
-			innerText = cmt[2] + cmt[3];
+			// "mceNonEditable comment" display removed by YK - this server printout doesn't seem
+			// necessary or useful to show.
+			//innerText = cmt[2] + cmt[3];
 			// @todo MRG (20.12.12 01:49): This is adapted to german needs. Other languages might want other characters
-			innerText = innerText.replace(/[^a-zA-Z0-9Ã¤Ã¶Ã¼Ã„Ã–ÃœÃŸ\(\)_]/gmi, " ");
+			//innerText = innerText.replace(/[^a-zA-Z0-9Ã¤Ã¶Ã¼Ã„Ã–ÃœÃŸ\(\)_]/gmi, " ");
 			text = text.replace(
 				cmt[0],
 				cmt[1]
-				+ '<span class="mceNonEditable comment" id="bs_comment:@@@CMT'
-				+ i + '@@@" data-bs-type="comment" data-bs-id="' + i + '">'
-				+ innerText
-				+ '</span>'
+				//+ '<span class="mceNonEditable comment" id="bs_comment:@@@CMT'
+				//+ i + '@@@" data-bs-type="comment" data-bs-id="' + i + '">'
+				//+ innerText
+				//+ '</span>'
 				+ cmt[3]
 				);
 
