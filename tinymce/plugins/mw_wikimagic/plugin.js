@@ -19,6 +19,7 @@
 
 tinymce.PluginManager.add('wikimagic', function(editor) {
 	var _tags;
+	var _comments;
 	var showDialog = function () {
 		var selectedNode = editor.selection.getNode();
 		var nodeType = '';
@@ -29,7 +30,8 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 			isWikimagic = 
 				nodeType == "template" || 
 				nodeType == "switch" || 
-				nodeType == "tag";
+				nodeType == "tag" ||
+				nodeType == "comment" ;	
 		}
 
 		if (isWikimagic) {
@@ -292,7 +294,6 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 							var searchText = new RegExp(tagWikiText, 'g');
 							var tagText = el.outerHTML;
 							var replaceText = '<@@@TAG' + i + '@@@>';
-//							var replaceText = el.outerHTML;
 							_tags[i] = tagText;
 							text = text.replace(
 								searchText,
@@ -302,8 +303,47 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 						}
 					});
 				}
+
+				//Now process comments
+				if (!_comments) {
+					_comments = new Array();
+				}
+				var commentText = '';
+				mtext = text;
+				regex = "<!--([\\S\\s]+?)-->";
+				matcher = new RegExp(regex, 'gmi');
+				i = 0;
+				cmt = '';
+				while ((cmt = matcher.exec(mtext)) !== null) {
+					var t = Math.floor((Math.random() * 100000) + 100000) + i;
+					id = "bs_switch:@@@CMT"+ t + "@@@";
+					var codeAttrs = {
+						'id': id,
+						'class': "mceNonEditable wikimagic comment",
+						'title': cmt[1],
+						'data-bs-type': "comment",
+						'data-bs-id': t,
+						'data-bs-name': commentText,
+						'data-bs-wikitext': cmt[0],
+						'contenteditable': "false"
+					};
+
+					htmlText = editor.dom.createHTML('span', codeAttrs, '&#8493' );
+					el = editor.dom.create('span', codeAttrs, '&#8493' );
+					var searchText = new RegExp(cmt[0], 'g');
+					var commentText = el.outerHTML;
+					var replaceText = '<@@@CMT' + i + '@@@>';
+					_comments[i] = commentText ;
+					text = text.replace(
+						searchText,
+						replaceText
+					);
+					i++;
+				}
+
 				text = _blockLevels2html(text);
 				text = _recoverTags(text);
+				text = _recoverComments(text);
 				editor.undoManager.transact(function(){
 					editor.focus();
 					editor.selection.setContent(text, {format: 'raw'});
@@ -385,6 +425,9 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 					if (!inParagraph && lines[i].match(/(^\<@@@TAG)/i)) { // if the line starts with <@@@TAG then precede it with a blank line
 							lines[i] = '<br class="bs_emptyline"/>' + lines[i];
 					}
+/*					if (!inParagraph && lines[i].match(/(^\<@@@CMT)/i)) { // if the line starts with <@@@CMT then precede it with a blank line
+							lines[i] = '<br class="bs_emptyline"/>' + lines[i];
+					}*/
 					inParagraph = false;
 					if (lines[i].match(/(^\<td\>)/i)) { //first line of data in a table cell
 						lines[i] = lines[i] + '<br class="bs_emptyline"/>';
@@ -412,6 +455,18 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 		}
 		_tags = false;
 
+		return text;
+	}
+
+	function _recoverComments(text) {
+		var i, regex;
+		if (_comments) {
+			for (i = 0; i < _comments.length; i++) {
+				regex = '<@@@CMT' + i + '@@@>';
+				text = text.replace(new RegExp(regex, 'gmi'), _comments[i]);
+			}
+		}
+		_comments = false;
 		return text;
 	}
 
