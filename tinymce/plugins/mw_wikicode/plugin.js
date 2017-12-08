@@ -1482,6 +1482,9 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 					if (!inParagraph && lines[i].match(/(^\<@@@TAG)/i) && i>0 ) { // if the line starts with <@@@TAG then precede it with a blank line
 							lines[i] = '<br class="bs_emptyline"/>' + lines[i];
 					}
+					if (!inParagraph && lines[i].match(/(^\<@@@CMT)/i) && i>0 ) { // if the line starts with <@@@CMT then precede it with a blank line
+							lines[i] = '<br class="bs_emptyline"/>' + lines[i];
+					}
 					inParagraph = false;
 //					if (inBlock) {
 						if (lines[i].match(/(^\<td\>)/i)) { //first line of data in a table cell
@@ -1618,6 +1621,7 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 		text = _recoverPres(text);
 //DCNT
 		text = _recoverTags(text);
+		text = _recoverComments(text);
 
 		//In some cases (i.e. Editor.insertContent('<img ... />') ) the content
 		//is not parsed. We do not want to append any stuff in this case.
@@ -1907,7 +1911,6 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 		text = text.replace(/\n?@@br_emptyline_first@@/gmi, "<@@2nl@@>");
 		text = text.replace(/\n?@@br_emptyline@@/gmi, "<@@nl@@>");
 //DC clean up new lines associated with blocks and or headers
-//		text = text.replace(/<@@[bh]nl@@><@@[bh]nl@@>/gmi, "<@@nl@@>");
 		text = text.replace(/<@@bnl@@><@@bnl@@>/gmi, "<@@nl@@>");
 		text = text.replace(/<@@hnl@@><@@hnl@@>/gmi, "<@@nl@@>");
 		text = text.replace(/<@@2nl@@><@@[bh]nl@@>/gmi, "<@@2nl@@>");
@@ -1941,11 +1944,9 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 		text = text.replace(/<br [^>]*data-mce-bogus="1"[^>]*>/gmi, '');
 
 //DC clean up single new lines from _onGetContent
-//		text = text.replace(/<@@snl@@>/gmi, "<@@nl@@>");
 		text = text.replace(/ ?<span[^>]*class="single_linebreak" title="single linebreak"[^>]*>(&nbsp;|.|&para;)<\/span> ?/g, "<@@nl@@>");
 
 //DC replace all new line codes as all valid ones now have place holders
-//		text = text.replace(/^\n*/gi, '');
 		text = text.replace(/\n*/gi, '');
 		text = text.replace(/<@@2nl@@>/gmi, "\n\n");
 		text = text.replace(/<@@nl@@>/gmi, "\n");
@@ -2150,7 +2151,6 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 		if (!_specialtags) {
 			_specialtags = new Array();
 		}
-//DC		specialTagsList = mw.config.get('wgTinyMCETagList');
 		specialTagsList = ed.getParam("wiki_tags_list");
 		specialTagsList += ed.getParam("additional_wiki_tags");
 		// Tags without innerHTML need /> as end marker. Maybe this should be task of a preprocessor, 
@@ -2188,18 +2188,6 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 				async: false,
 				success: function(data) {
 					var tagHTML = data.parse.text["*"];
-
-					// DC remove leading and trailing <p>
-/*					tagHTML = $.trim(tagHTML);
-					tagHTML = tagHTML.replace(/<\/?p[^>]*>/g, "");
-
-					tagHTML = $.trim(tagHTML);
-					tagHTML = tagHTML.replace(/\&amp\;/gmi,'&');
-					// DC remove href tags in returned html as links will screw up conversions
-					tagHTML = tagHTML.replace(/\shref="([^"]*)"/gmi,'');
-//					tagHTML = tagHTML.replace(/(\r\n|\n|\r|<p>)/gm,"");
-					tagHTML = tagHTML.replace(/(\r\n|\n|\r)/gm,'<br class="bs_emptyline"/>');*/
-
 					var tagWikiText = data.parse.wikitext["*"];
 					tagWikiText = $.trim(tagWikiText);
 					if (tagWikiText.substring(0, 3) == '<p>') {
@@ -2224,12 +2212,9 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 						'contenteditable': "false"
 					};
 					tagHTML += '<div class="mceNonEditableOverlay" />';
-//					tagHTML = $.trim(tagHTML);
-
 					var el = ed.dom.create('span', codeAttrs, tagHTML);
 					tagWikiText = tagWikiText.replace(/[^A-Za-z0-9_]/g, '\\$&');
 					var searchText = new RegExp(tagWikiText, 'g');
-//					var replaceText = el.outerHTML;
 					var tagText = el.outerHTML;
 					var replaceText = '<@@@TAG' + i + '@@@>';
 					_tags[i] = tagText;
@@ -2240,66 +2225,42 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 				}
 			});
 
-//DCNT remove old special tag processing
-/*			retValue = $(document).triggerHandler( 'BSVisualEditorRenderSpecialTag', [this, st[1], st] );
-			if ( retValue ) {
-				innerText = retValue.innerText;
-				moreAttribs = retValue.moreAttribs;
-			} else {
-				innerText = '&lt; ' + st[1] + ' &gt;';
-			}
-			text = text.replace(
-				st[0],
-				'<span class="mceNonEditable tag" id="bs_specialtag:@@@ST' + i + '@@@" data-bs-name="' + st[1] + '" data-bs-type="tag" data-bs-id="' + i + '" ' + moreAttribs + '>'
-				//+ '&lt; ' + st[1] + ' &gt;'
-				+ innerText
-				+ '</span>'
-				);*/
 			_specialtags[i] = st[0];
 			i++;
 		}
-
+		//Now process comments
 		if (!_comments) {
 			_comments = new Array();
 		}
-
+		var commentText = '';
 		mtext = text;
-		regex = "(^|\\n)?<!--([\\S\\s]+?)-->(\\n|$)?";
+		regex = "<!--([\\S\\s]+?)-->";
 		matcher = new RegExp(regex, 'gmi');
 		i = 0;
 		cmt = '';
 		while ((cmt = matcher.exec(mtext)) !== null) {
-			_comments[i] = cmt[0];
+			id = "bs_switch:@@@CMT"+ i + "@@@";
+			var codeAttrs = {
+				'id': id,
+				'class': "mceNonEditable wikimagic comment",
+				'title': cmt[1],
+				'data-bs-type': "comment",
+				'data-bs-id': i,
+				'data-bs-name': commentText,
+				'data-bs-wikitext': cmt[0],
+				'contenteditable': "false"
+			};
 
-			if (cmt[3]) {
-				if (cmt[3].charCodeAt(0) === 10) {
-					cmt[3] = "\n";
-				}
-			} else {
-				cmt[3] = '';
-			}
-
-			if (cmt[1]) {
-				if (cmt[1].charCodeAt(0) === 10) {
-					cmt[1] = "\n";
-				}
-			} else {
-				cmt[1] = '';
-			}
-
-			innerText = cmt[2] + cmt[3];
-			// @todo MRG (20.12.12 01:49): This is adapted to german needs. Other languages might want other characters
-			innerText = innerText.replace(/[^a-zA-Z0-9Ã¤Ã¶Ã¼Ã„Ã–ÃœÃŸ\(\)_]/gmi, " ");
+			htmlText = ed.dom.createHTML('span', codeAttrs, '&#8493' );
+			el = ed.dom.create('span', codeAttrs, '&#8493' );
+			var searchText = new RegExp(cmt[0], 'g');
+			var commentText = el.outerHTML;
+			var replaceText = '<@@@CMT' + i + '@@@>';
+			_comments[i] = commentText ;
 			text = text.replace(
-				cmt[0],
-				cmt[1]
-				+ '<span class="mceNonEditable comment" id="bs_comment:@@@CMT'
-				+ i + '@@@" data-bs-type="comment" data-bs-id="' + i + '">'
-				+ innerText
-				+ '</span>'
-				+ cmt[3]
-				);
-
+				searchText,
+				replaceText
+			);
 			i++;
 		}
 
@@ -2362,20 +2323,21 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 		}
 
 		// Recover comments
-		if (_comments) {
-			for (i = 0; i < _comments.length; i++) {
-				nlBefore = '';
-				nlAfter = '';
-				if (_comments[i].charAt(0) === "\n") {
-					nlBefore = "\\n?";
-				}
+		var comments = tinymce.util.Tools.grep(ed.dom.select('span'), function(elm) {
+			return elm && elm.className === "mceNonEditable wikimagic comment";
+		});
 
-				if (_comments[i].charAt(_comments[i].length - 1) === "\n") {
-					nlAfter = "\\n?"; //Otherwise line feeds would be eaten up. Nom, nom...
-				}
-
-				matcher = new RegExp(nlBefore + '<span[^>]*?id=(\'|")bs_comment:@@@CMT' + i + '@@@(\'|")[^>]*?>([\\S\\s]*?)<\\/\\s*?span\\s*?>' + nlAfter, 'gi');
-				text = text.replace(matcher, _comments[i]);
+		if (comments) {
+			for (i = 0; i < comments.length; i++) {
+				var commentText = comments[i].outerHTML;
+				commentText = commentText.replace(/[^A-Za-z0-9_]/g, '\\$&');
+				var searchText = new RegExp(commentText, 'g');
+				var commentWikiText = decodeURIComponent(comments[i].attributes["data-bs-wikitext"].value);
+				var replaceText = commentWikiText;
+				text = text.replace(
+					searchText,
+					replaceText
+				);
 			}
 		}
 
@@ -2518,7 +2480,6 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 			}
 		}
 		_tags = false;
-
 		return text;
 	}
 
@@ -2529,7 +2490,6 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 	 */
 	function _recoverEntities(text) {
 		var i, regex;
-
 		if (_entities) {
 			for (i = 0; i < _entities.length; i++) {
 				regex = '<@@@ENTITY' + i + '@@@>';
@@ -2537,9 +2497,26 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 			}
 		}
 		_entities = false;
-
 		return text;
 	}
+
+	/**
+	 *
+	 * @param {String} text
+	 * @returns {String}
+	 */
+	function _recoverComments(text) {
+		var i, regex;
+		if (_comments) {
+			for (i = 0; i < _comments.length; i++) {
+				regex = '<@@@CMT' + i + '@@@>';
+				text = text.replace(new RegExp(regex, 'gmi'), _comments[i]);
+			}
+		}
+		_comments = false;
+		return text;
+	}
+
 
 	/**
 	 *
@@ -2612,7 +2589,7 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 		// hr table heading comment div end-table | ol ul dl dt comment cell row
 		// there was bs_comment:@@@ in there: |@@@PRE.*?@@@$|\|$|bs_comment:@@@|^
 		// DC add in html tags that are allowed in wikicode eg </ol>, </ul>, </li> so far
-//		if ($2.match(/(----$|\|\}$|=$|-->$|<\/div>$|<\/pre>$|<@@@PRE.*?@@@>$|<@@@TAG.*?@@@>$|\|$|^(#|\*|:|;|<\!--|\|\||\|-)|<\/ol>|<\/ul>|<\/li>|(^\s*$))/i)) {
+//		if ($2.match(/(----$|\|\}$|=$|-->$|<\/div>$|<\/pre>$|<@@@PRE.*?@@@>$|<@@@TAG.*?@@@>$|<@@@CMT.*?@@@>$|\|$|^(#|\*|:|;|<\!--|\|\||\|-)|<\/ol>|<\/ul>|<\/li>|(^\s*$))/i)) {
 		if ($2.match(/(----$|\|\}$|=$|-->$|<\/div>$|<\/pre>$|<@@@PRE.*?@@@>$|\|$|^(#|\*|:|;|<\!--|\|\||\|-)|(^\s*$))/i)) {
 			return $0;
 		}
@@ -2621,7 +2598,7 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 		// DC TODO are there any others?
 //		if ($3.match(/(^(----|\||!|\{\||#|\*|:|;|=|<\!--|<div|<pre|@@@PR)|(^\s*$))/i)) {
 //		if ($3.match(/(^(----|\||!|\{\||#|\*|:|;|=|<\!--|<div|<pre|<@@@P|<ol>|<ul|<li|<\/ol>|<\/ul>|<\/li>)|(^\s*$))/i)) {
-		if ($3.match(/(^(----|\||!|\{\||#|\*|:|;|=|<\!--|<div|<pre|<@@@P|<@@@T)|(^\s*$))/i)) {
+		if ($3.match(/(^(----|\||!|\{\||#|\*|:|;|=|<\!--|<div|<pre|<@@@P|<@@@T|<@@@C)|(^\s*$))/i)) {
 			return $0;
 		}
 		_processFlag = true;
