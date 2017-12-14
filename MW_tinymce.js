@@ -55,6 +55,7 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
  		{title: 'External', value: 'external bs-external-link mceNonEditable'},
  		{title: 'Internal', value: 'internal bs-internal-link mceNonEditable'},
 	  ],
+	  visual_table_class : "",
           table_default_attributes: {
               class: 'wikitable'
           },
