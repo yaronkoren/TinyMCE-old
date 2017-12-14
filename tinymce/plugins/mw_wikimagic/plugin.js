@@ -19,6 +19,7 @@
 
 tinymce.PluginManager.add('wikimagic', function(editor) {
 	var _tags;
+	var _templates;
 	var _comments;
 	var showDialog = function () {
 		var selectedNode = editor.selection.getNode();
@@ -63,6 +64,7 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 				var switches = new Array;
 				var switchWikiText;
 				var swt;
+
 				//DC processes switches in returned code first
 				mtext = text;
 				regex = "__(.*?)__";
@@ -97,8 +99,89 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 					);
 					i++;
 				}
+
+				// now process special tags
+				var _specialtags = new Array();	
+				_tags = new Array();			
+				var specialTagsList;
+				specialTagsList = editor.getParam("wiki_tags_list");
+				specialTagsList += editor.getParam("additional_wiki_tags");
+				// Tags without innerHTML need /> as end marker. Maybe this should be task of a preprocessor, 
+				// in order to allow mw style tags without /.
+				regex = '<(' + specialTagsList + ')[\\S\\s]*?((/>)|(>([\\S\\s]*?<\\/\\1>)))';
+				matcher = new RegExp(regex, 'gmi');
+				mtext = text;
+				i = 0;
+				st = '';
+		
+				var innerText = '';
+				var retValue = false;
+				var moreAttribs = '';
+
+				while ((st = matcher.exec(mtext)) !== null) {
+					/*DC now go and get parsed html for this special tag to insert into the edit window
+						as not editable html (TODO addexclusions)*/
+					tagName = st[1];
+					var data = {'action': 'parse',
+						'title': title,
+						'text': st[0],
+						'prop': 'text|wikitext',
+						'disablelimitreport': '',
+						'disableeditsection': '',
+						'disabletoc': '',
+						'format': 'json',};
+					$.ajax({
+						dataType: "json",
+						url: script,
+						data: data,
+						async: false,
+						success: function(data) {
+							var tagHTML = data.parse.text["*"];
+							var tagWikiText = data.parse.wikitext["*"];
+							tagWikiText = $.trim(tagWikiText);
+							if (tagWikiText.substring(0, 3) == '<p>') {
+								tagWikiText = tagWikiText.substring(3, tagWikiText.length);
+							}
+							if (tagWikiText.substring(tagWikiText.length-4,tagWikiText.length) == '</p>') {
+								tagWikiText = tagWikiText.substring(0, tagWikiText.length-4);
+							}
+							tagWikiText = $.trim(tagWikiText);
+							var displayTagWikiText = encodeURIComponent(tagWikiText);
+
+							var t = Math.floor((Math.random() * 100000) + 100000) + i;
+							var id = "bs_specialtag:@@@ST"+ t + "@@@";
+							var codeAttrs = {
+								'id': id,
+								'class': "mceNonEditable wikimagic tag",
+								'title': tagWikiText,
+								'data-bs-type': "tag",
+								'data-bs-id': t,
+								'data-bs-name': tagName,
+								'data-bs-wikitext': displayTagWikiText,
+								'contenteditable': "false"
+							};
+							tagHTML += '<div class="mceNonEditableOverlay" />';
+
+							var el = editor.dom.create('span', codeAttrs, tagHTML);
+							tagWikiText = tagWikiText.replace(/[^A-Za-z0-9_]/g, '\\$&');
+							var searchText = new RegExp(tagWikiText, 'g');
+							var tagText = el.outerHTML;
+							var replaceText = '<@@@TAG' + i + '@@@>';
+							_tags[i] = tagText;
+							text = text.replace(
+								searchText,
+								replaceText
+							);
+							i++;
+						}
+					});
+				}
+
 				//DC now process templates and parser functions
 				var templates = new Array();
+				if (!_templates) {
+					_templates = new Array();
+				}
 				var checkedBraces = new Array();
 				var templateDepth = 0;
 				var curlyBraceDepth = 0;
@@ -142,6 +225,7 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 						}
 					}
 				}
+				i = 0;
 				if (Object.keys(templates).length > 0) {
 					for (var aTemplate in templates) {
 						templateText = templates[aTemplate];
@@ -206,7 +290,7 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 								var codeAttrs = {
 									'id': id,
 									'class': "mceNonEditable wikimagic template",
-									'title': "{{" + templateName + "}}",
+									'title': templateWikiText,
 									'data-bs-type': "template",
 									'data-bs-id': t,
 									'data-bs-name': templateName, 
@@ -217,91 +301,18 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 								var el = editor.dom.create('span', codeAttrs, templateHTML);
 								templateWikiText = templateWikiText.replace(/[^A-Za-z0-9_]/g, '\\$&');
 								var searchText = new RegExp(templateWikiText, 'g');
-								var replaceText = el.outerHTML;
+								var templateText = el.outerHTML;
+								var replaceText = '<@@@TPL' + i + '@@@>';
+								_templates[i] = templateText;
 
 								text = text.replace(
 									searchText,
 									replaceText
 								);
+								i++;
 							}
 						});
 					}
-				}
-				//quirky. Needs to be there for the occasional second pass of cleanup
-				var _specialtags = new Array();	
-				_tags = new Array();			
-				var specialTagsList;
-				specialTagsList = editor.getParam("wiki_tags_list");
-				specialTagsList += editor.getParam("additional_wiki_tags");
-				// Tags without innerHTML need /> as end marker. Maybe this should be task of a preprocessor, 
-				// in order to allow mw style tags without /.
-				regex = '<(' + specialTagsList + ')[\\S\\s]*?((/>)|(>([\\S\\s]*?<\\/\\1>)))';
-				matcher = new RegExp(regex, 'gmi');
-				mtext = text;
-				i = 0;
-				st = '';
-		
-				var innerText = '';
-				var retValue = false;
-				var moreAttribs = '';
-
-				while ((st = matcher.exec(mtext)) !== null) {
-					/*DC now go and get parsed html for this special tag to insert into the edit window
-						as not editable html (TODO addexclusions)*/
-					tagName = st[1];
-					var data = {'action': 'parse',
-						'title': title,
-						'text': st[0],
-						'prop': 'text|wikitext',
-						'disablelimitreport': '',
-						'disableeditsection': '',
-						'disabletoc': '',
-						'format': 'json',};
-					$.ajax({
-						dataType: "json",
-						url: script,
-						data: data,
-						async: false,
-						success: function(data) {
-							var tagHTML = data.parse.text["*"];
-							var tagWikiText = data.parse.wikitext["*"];
-							tagWikiText = $.trim(tagWikiText);
-							if (tagWikiText.substring(0, 3) == '<p>') {
-								tagWikiText = tagWikiText.substring(3, tagWikiText.length);
-							}
-							if (tagWikiText.substring(tagWikiText.length-4,tagWikiText.length) == '</p>') {
-								tagWikiText = tagWikiText.substring(0, tagWikiText.length-4);
-							}
-							tagWikiText = $.trim(tagWikiText);
-							var displayTagWikiText = encodeURIComponent(tagWikiText);
-
-							var t = Math.floor((Math.random() * 100000) + 100000) + i;
-							var id = "bs_specialtag:@@@ST"+ t + "@@@";
-							var codeAttrs = {
-								'id': id,
-								'class': "mceNonEditable wikimagic tag",
-								'title': "<" + tagName + ">",
-								'data-bs-type': "tag",
-								'data-bs-id': t,
-								'data-bs-name': tagName,
-								'data-bs-wikitext': displayTagWikiText,
-								'contenteditable': "false"
-							};
-							tagHTML += '<div class="mceNonEditableOverlay" />';
-
-							var el = editor.dom.create('span', codeAttrs, tagHTML);
-							tagWikiText = tagWikiText.replace(/[^A-Za-z0-9_]/g, '\\$&');
-							var searchText = new RegExp(tagWikiText, 'g');
-							var tagText = el.outerHTML;
-							var replaceText = '<@@@TAG' + i + '@@@>';
-							_tags[i] = tagText;
-							text = text.replace(
-								searchText,
-								replaceText
-							);
-							i++;
-						}
-					});
 				}
 
 				//Now process comments
@@ -343,6 +354,7 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 
 				text = _blockLevels2html(text);
 				text = _recoverTags(text);
+				text = _recoverTemplates(text);
 				text = _recoverComments(text);
 				editor.undoManager.transact(function(){
 					editor.focus();
@@ -454,6 +466,19 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 			}
 		}
 		_tags = false;
+
+		return text;
+	}
+
+	function _recoverTemplates(text) {
+		var i, regex;
+		if (_templates) {
+			for (i = 0; i < _templates.length; i++) {
+				regex = '<@@@TPL' + i + '@@@>';
+				text = text.replace(new RegExp(regex, 'gmi'), _templates[i]);
+			}
+		}
+		_templates = false;
 
 		return text;
 	}
