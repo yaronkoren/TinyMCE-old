@@ -70,6 +70,16 @@ var BsWikiCode = function() {
 		 *
 		 * @type Array
 		 */
+		_tagEntities,
+		/**
+		 *
+		 * @type Array
+		 */
+		_templateEntities,
+		/**
+		 *
+		 * @type Array
+		 */
 		_entities,
 		/**
 		 * List of available thumbnail sizes
@@ -1619,7 +1629,6 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 
 		//Write back content of <pre> tags.
 		text = _recoverPres(text);
-//DCNT
 		text = _recoverTags(text);
 		text = _recoverTemplates(text);
 		text = _recoverComments(text);
@@ -2294,8 +2303,8 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 		var specialtags = tinymce.util.Tools.grep(ed.dom.select('span'), function(elm) {
 			return elm && elm.className === "mceNonEditable wikimagic tag";
 		});
-		if (!_entities) {
-			_entities = new Array();
+		if (!_tagEntities) {
+			_tagEntities = new Array();
 		}
 
 		if (specialtags) {
@@ -2304,8 +2313,8 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 				tagText = tagText.replace(/[^A-Za-z0-9_]/g, '\\$&');
 				searchText = new RegExp(tagText, 'g');
 				tagWikiText = decodeURIComponent(specialtags[i].attributes["data-bs-wikitext"].value);
-				replaceText = "<@@@ENTITY" + i + "@@@>";
-				_entities[i] = tagWikiText;
+				replaceText = "<@@@TAGENT" + i + "@@@>";
+				_tagEntities[i] = tagWikiText;
 				text = text.replace(
 					searchText,
 					replaceText
@@ -2317,6 +2326,9 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 		var templates = tinymce.util.Tools.grep(ed.dom.select('span'), function(elm) {
 			return elm && elm.className === "mceNonEditable wikimagic template";
 		});
+		if (!_templateEntities) {
+			_templateEntities = new Array();
+		}
 
 		if (templates) {
 			for (i = 0; i < templates.length; i++) {
@@ -2324,7 +2336,8 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 				templateText = templateText.replace(/[^A-Za-z0-9_]/g, '\\$&');
 				var searchText = new RegExp(templateText, 'g');
 				var templateWikiText = decodeURIComponent(templates[i].attributes["data-bs-wikitext"].value);
-				var replaceText = templateWikiText;
+				replaceText = "<@@@TMPENT" + i + "@@@>";
+				_templateEntities[i] = templateWikiText;
 				text = text.replace(
 					searchText,
 					replaceText
@@ -2526,6 +2539,41 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 		_entities = false;
 		return text;
 	}
+
+	/**
+	 *
+	 * @param {String} text
+	 * @returns {String}
+	 */
+	function _recoverTagEntities(text) {
+		var i, regex;
+		if (_tagEntities) {
+			for (i = 0; i < _tagEntities.length; i++) {
+				regex = '<@@@TAGENT' + i + '@@@>';
+				text = text.replace(new RegExp(regex, 'gmi'), _tagEntities[i]);
+			}
+		}
+		_tagEntities = false;
+		return text;
+	}
+
+	/**
+	 *
+	 * @param {String} text
+	 * @returns {String}
+	 */
+	function _recoverTemplateEntities(text) {
+		var i, regex;
+		if (_templateEntities) {
+			for (i = 0; i < _templateEntities.length; i++) {
+				regex = '<@@@TMPENT' + i + '@@@>';
+				text = text.replace(new RegExp(regex, 'gmi'), _templateEntities[i]);
+			}
+		}
+		_templateEntities = false;
+		return text;
+	}
+
 
 	/**
 	 *
@@ -2890,6 +2938,8 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 			//do not use o.content = ed.dom.decode(o.content);
 			// it breaks conversion from html to wiki
 			e.content = _recoverEntities(e.content);
+			e.content = _recoverTagEntities(e.content);
+			e.content = _recoverTemplateEntities(e.content);
 
 			//cleanup entity markers
 			while (e.content.match(/<span class="bs_htmlentity">.+?<\/span>/gmi)) {
