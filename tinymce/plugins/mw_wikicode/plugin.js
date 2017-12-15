@@ -1741,8 +1741,6 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 		text = text.replace(/\n?<div style=('|")padding-left: 30px;('|")>([\S\s]*?)<\/div>/gmi, "<blockquote>$3</blockquote>");
 		text = text.replace(/\n?<div style=('|")padding-left: 60px;('|")>([\S\s]*?)<\/div>/gmi, "<blockquote><blockquote>$3</blockquote>");
 		text = text.replace(/\n?<div style=('|")padding-left: 90px;('|")>([\S\s]*?)<\/div>/gmi, "<blockquote><blockquote><blockquote>$3</blockquote>");
-//DIVREPLACE DC
-//Doesn't deal with nested divs
 		//replace simple divs by p
 		text = text.replace(/<div>(.*?)<\/div>/gmi, "<p>$1</p>");
 
@@ -1753,6 +1751,7 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 		nextPos = _htmlFindList(text);
 		while (nextPos !== -1) {
 			oldText = text;
+debugger;
 			switch (text.substr(nextPos, 2).toLowerCase()) {
 				case '<p' :
 
@@ -1851,7 +1850,7 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 						text = text.replace(/<\/ul>/, "");
 					} else {
 						text = text.replace(/<\/ul>/, "<@@bnl@@>");
- 						text = text.replace(/<\/ul>/, "");
+						//text = text.replace(/<\/ul>/, "");
 					}
 					break;
 				case '</ol' :
