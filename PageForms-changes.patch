@@ -26,9 +26,7 @@
                 return true;
         }
 
-+        public static function disableTinyMCE( $editPage ) {
-+               $title = $editPage->getTitle();
-+
++        public static function disableTinyMCE( $title ) {
 +               if ( $title->getNamespace() == PF_NS_FORM ) {
 +                       return false;
 +               }

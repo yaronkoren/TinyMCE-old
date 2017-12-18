@@ -213,26 +213,43 @@ class TinyMCEHooks {
 		return true;
 	}
 
-	public static function addToEditPage( EditPage &$editPage, OutputPage &$output ) {
-		global $wgTinyMCEEnabled;
-
-		$context = $editPage->getArticle()->getContext();
-		$title = $editPage->getTitle();
-		$namespace = $title->getNamespace();
-
-		$wgTinyMCEEnabled = $namespace != NS_TEMPLATE;
+	public static function enableTinyMCE( $title, $context ) {
+		if ( $title->getNamespace() == NS_TEMPLATE ) {
+			return false;
+		}
 
 		if ( $context->getRequest()->getCheck('undo') ) {
-			$wgTinyMCEEnabled = false;
+			return false;
 		}
 
 		if ( !$context->getUser()->getOption( 'tinymce-use' ) ) {
-			$wgTinyMCEEnabled = false;
+			return false;
 		}
 
 		// Give other extensions a chance to disable TinyMCE for this page.
-		if ( !Hooks::run( 'TinyMCEDisable', array( $editPage ) ) ) {
-			$wgTinyMCEEnabled = false;
+		if ( !Hooks::run( 'TinyMCEDisable', array( $title ) ) ) {
+			return false;
+		}
+
+		return true;
+	}
+
+	public static function addToEditPage( EditPage &$editPage, OutputPage &$output ) {
+		global $wgTinyMCEEnabled;
+
+		$wgTinyMCEEnabled = false;
+
+		$context = $editPage->getArticle()->getContext();
+		$title = $editPage->getTitle();
+
+		$action = Action::getActionName( $context );
+		if ( $action == 'edit' ) {
+			return true;
+		}
+
+		if ( self::enableTinyMCE( $title, $context ) ) {
+			$wgTinyMCEEnabled = true;
+			$output->addModules( 'ext.tinymce' );
 		}
 
 		if ( !$wgTinyMCEEnabled ) {

@@ -11,7 +11,7 @@ var tinyMCEMacros = mw.config.get( 'wgTinyMCEMacros' );
 
 jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
   function() {
-	$('#wpTextbox1, .tinymce').each( function() {
+	$('.tinymce').each( function() {
 		$(this).before("<p><a class=\"toggleMCE\" data-current-state=\"enabled\" data-input-id=\"" +
 			$(this).attr('id') + "\" href=\"javascript:void(0)\">Switch to basic editor</a></p>");
 	});

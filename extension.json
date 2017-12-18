@@ -22,6 +22,7 @@
 	},
 	"AutoloadClasses": {
 		"TinyMCEHooks": "TinyMCE.hooks.php",
+		"TinyMCEAction": "TinyMCEAction.php",
 		"TinyMCEUploadForm": "upload/TinyMCEUploadForm.php",
 		"TinyMCEUploadSourceField": "upload/TinyMCEUploadSourceField.php",
 		"TinyMCEUploadWindow": "upload/TinyMCEUploadWindow.php"
@@ -56,10 +57,15 @@
 	},
 	"Hooks": {
 		"MakeGlobalVariablesScript": "TinyMCEHooks::setGlobalJSVariables",
+		"SkinTemplateTabs": "TinyMCEAction::displayTab",
+		"SkinTemplateNavigation": "TinyMCEAction::displayTab2",
 		"EditPageBeforeEditToolbar": "TinyMCEHooks::removeDefaultToolbar",
 		"EditPage::showEditForm:initial": "TinyMCEHooks::addToEditPage",
 		"WikiEditorDisable": "TinyMCEHooks::disableWikiEditor",
 		"GetPreferences": "TinyMCEHooks::addPreference"
+	},
+	"Actions": {
+		"tinymceedit": "TinyMCEAction"
 	},
 	"SpecialPages": {
 		"TinyMCEUploadWindow": "TinyMCEUploadWindow"
