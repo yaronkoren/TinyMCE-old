@@ -328,7 +328,7 @@ define("tinymce/pasteplugin/SmartPaste", [
 			var dstName = srcName.split('/').pop().split('#')[0].split('?')[0];
 			var scriptPath = mw.config.get( 'wgScriptPath' );
 
-	                var uploadform = scriptPath + '/index.php?title=Special:UploadWindow&pfInputID=' + editorid + '&pfEditor=tinymce' +'&pfDropSrc=' + wikiImageObject["src"] + '&wpWidth=' + wikiImageObject["width"] + '&wpHeight=' + wikiImageObject["height"] + '&wpAltText=' + wikiImageObject["alt"] + '&wpTitle=' + wikiImageObject["title"] + '&wpUploadFileURL=' + wikiImageObject["src"] + '&wpDestFile=' + dstName + '&wpSourceType=Url';
+	                var uploadform = scriptPath + '/index.php?title=Special:TinyMCEUploadWindow&pfInputID=' + editorid + '&pfEditor=tinymce' +'&pfDropSrc=' + wikiImageObject["src"] + '&wpWidth=' + wikiImageObject["width"] + '&wpHeight=' + wikiImageObject["height"] + '&wpAltText=' + wikiImageObject["alt"] + '&wpTitle=' + wikiImageObject["title"] + '&wpUploadFileURL=' + wikiImageObject["src"] + '&wpDestFile=' + dstName + '&wpSourceType=Url';
 
  			var jqueryXHR = $.ajax({
                     		'type': 'POST',
