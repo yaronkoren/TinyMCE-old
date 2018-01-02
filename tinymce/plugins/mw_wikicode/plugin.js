@@ -1285,7 +1285,6 @@ var BsWikiCode = function() {
 		text = text.replace(/(&[^\s]*?;)/gmi, function($0) {
 			return tinymce.DOM.decode($0);
 		});
-
 		//cleanup thead and tbody tags. Caution: Must be placed before th cleanup because of
 		//regex collision
 		text = text.replace(/<(\/)?tbody([^>]*)>/gmi, "");
@@ -1298,12 +1297,14 @@ var BsWikiCode = function() {
 		// remove spurious new lines at start and end of tables 
 //		text = text.replace(/<td><@@tnl@@>\{\|/gmi, "<td>{|"); // before table in table
 //		text = text.replace(/<td><@@tnl@@>\{\{\{!\}\}/gmi, "<td>{{{!}}"); // before table in table
+		text = text.replace(/^(<@@tnl@@>{)/, "{");//before table at start of text
 		text = text.replace(/(@@br_emptyline@@)<@@tnl@@>\{\|/gmi, "<@@tnl@@>{|"); // before table
 		text = text.replace(/(@@br_emptyline@@)<@@tnl@@>\{\{\{!\}\}/gmi, "<@@tnl@@>{{{!}}"); // before table
 		text = text.replace(/\|\}<@@tnl@@><\/td>/gmi, "|}<\/td>"); // after table in table
 		text = text.replace(/\{\{!\}\}\}<@@tnl@@><\/td>/gmi, "{{!}}}<\/td>"); // after table in table
 		text = text.replace(/\|\}<@@tnl@@>@@br_emptyline@@/gmi, "|}<@@tnl@@>"); // after table
 		text = text.replace(/\{\{!\}\}\}<@@tnl@@>@@br_emptyline@@/gmi, "{{!}}}<@@tnl@@>"); // after table
+		text = text.replace(/<@@tnl@@><@@tnl@@>/gmi, "<@@tnl@@>");//between tables
 		
 		text = text.replace(/\n?<caption([^>]*)>/gmi, "<@@tnl@@>" + pipeText + "+$1");
 		text = text.replace(/\n?<\/caption([^>]*)>/gmi, "");
