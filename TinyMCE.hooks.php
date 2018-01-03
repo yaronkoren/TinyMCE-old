@@ -243,7 +243,7 @@ class TinyMCEHooks {
 		$title = $editPage->getTitle();
 
 		$action = Action::getActionName( $context );
-		if ( $action == 'edit' ) {
+		if ( $action == 'edit' || $action == 'submit' ) {
 			return true;
 		}
 

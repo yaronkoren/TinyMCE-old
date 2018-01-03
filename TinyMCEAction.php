@@ -29,6 +29,8 @@ class TinyMCEAction extends Action {
 		$title = $this->getTitle();
 		$article = new Article( $title );
 		$editPage = new EditPage( $article );
+		// Keep additional screens in this tab, instead of going to 'action=submit'.
+		$editPage->action = 'tinymceedit';
 		return $editPage->edit();
 	}
 
