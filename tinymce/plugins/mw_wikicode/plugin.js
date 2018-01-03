@@ -70,17 +70,17 @@ var BsWikiCode = function() {
 		 *
 		 * @type Array
 		 */
-		_tagEntities,
+		_tagEntities4Wiki,
 		/**
 		 *
 		 * @type Array
 		 */
-		_templateEntities,
+		_templateEntities4Wiki,
 		/**
 		 *
 		 * @type Array
 		 */
-		_entities,
+		_htmlEntities4Wiki,
 		/**
 		 * List of available thumbnail sizes
 		 * @type Array
@@ -1052,7 +1052,6 @@ var BsWikiCode = function() {
 		}
 
 		lines = text.split(/\n/);
-
 		for (var i = 0; i < lines.length; i++) {
 			line = lines[i].match(/^\{\|(.*)/gi);
 			if (line && line !== '') {
@@ -1063,12 +1062,12 @@ var BsWikiCode = function() {
 					for (; i < lines.length; i++) {
 						if (lines[i].match(/^\{\|(.*)/gi)) {
 							nestLevel++;
-							innerLines = innerLines + lines[i] + "\n";
+							innerLines = innerLines + lines[i] + '\n';
 							lines.splice(i, 1);
 							i--;
 						} else if (lines[i].match(/^\|\}/gi)) {
 							if (nestLevel > 1) {
-								innerLines = innerLines + lines[i] + "\n";
+								innerLines = innerLines + lines[i] + '\n';
 								lines.splice(i, 1);
 								i--;
 								nestLevel--;
@@ -1079,7 +1078,7 @@ var BsWikiCode = function() {
 								break;
 							}
 						} else {
-							innerLines = innerLines + lines[i] + "\n";
+							innerLines = innerLines + lines[i] + '\n';
 							lines.splice(i, 1);
 							i--;
 						}
@@ -1227,11 +1226,9 @@ var BsWikiCode = function() {
 				lines[i] = curLine;
 			}
 		}
-
 		text = lines.join("\n");
 		text = text.replace(/@@blindline@@/gmi, '');
 		text = text.replace(/@@pipe@@/gmi, '|');
-
 		return text;
 	}
 
@@ -1246,15 +1243,70 @@ var BsWikiCode = function() {
 		} else {
 			pipeText = '|';
 		}
+		//process newlines within table cells
+		var tableparser = new tinymce.html.DomParser({validate: true});
+		var emptyLine;
+		tableparser.addNodeFilter('td', function(nodes, name) {
+			function processText(text, block) {
+				if (text == "@@br_emptyline@@") return text; // cell is empty
+				text = text.replace(/@@br_emptyline_first@@/gmi, "@@br_emptyline@@");
+				var lines = text.split("@@br_emptyline@@");
+
+				// Walk through text line by line adjusting
+				// emptylines appropriately
+				for (var i = 0; i < lines.length; i++) {
+					//set emptyLine if line is empty
+					emptyLine = lines[i].match(/^(\s|&nbsp;)*$/);
+					if (!(emptyLine) && ((block > 0) || (i > 0 )) && (i < lines.length - 1 )) {
+						lines[i] = lines[i] + '@@br_emptyline@@';
+					} else if ((emptyLine) && (block == 0) && (i == 1 )) {
+						lines[i] = lines[i] + '@@br_emptyline@@';
+					} else if ((emptyLine) && (i == 0 )) {
+						lines[i] = lines[i] + '@@br_emptyline@@' + '@@br_emptyline@@';
+					}
+				}
+				return lines.join("@@br_emptyline@@");
+			}
+			for (var i = 0; i < nodes.length; i++) {
+				var child = nodes[i].firstChild;
+				var j=0;
+				while(child){
+					if ( child.name == '#text' ) {
+						child.value = processText(child.value,j);
+					}
+					child = child.next;
+					j++;
+				}
+			}
+		});
+		var tables = tableparser.parse(text);
+		text = new tinymce.html.Serializer().serialize(tables);
+		// decode html entities of form &xxx;
+		text = text.replace(/(&[^\s]*?;)/gmi, function($0) {
+			return tinymce.DOM.decode($0);
+		});
+
 		//cleanup thead and tbody tags. Caution: Must be placed before th cleanup because of
 		//regex collision
-
 		text = text.replace(/<(\/)?tbody([^>]*)>/gmi, "");
 		text = text.replace(/<(\/)?thead([^>]*)>/gmi, "");
 		text = text.replace(/<(\/)?tfoot([^>]*)>/gmi, "");
 
 		text = text.replace(/\n?<table([^>]*)>/gmi, "<@@tnl@@>{" + pipeText + "$1");
-		text = text.replace(/\n?<\/table([^>]*)>/gi, "<@@tnl@@>" + pipeText + "}");
+		text = text.replace(/\n?<\/table([^>]*)>/gi, "<@@tnl@@>" + pipeText + "}<@@tnl@@>");
+
+		// remove spurious new lines at start and end of tables
+//		text = text.replace(/<td><@@tnl@@>\{\|/gmi, "<td>{|"); // before table in table
+//		text = text.replace(/<td><@@tnl@@>\{\{\{!\}\}/gmi, "<td>{{{!}}"); // before table in table
+		text = text.replace(/^(<@@tnl@@>{)/, "{");//before table at start of text
+		text = text.replace(/(@@br_emptyline@@)<@@tnl@@>\{\|/gmi, "<@@tnl@@>{|"); // before table
+		text = text.replace(/(@@br_emptyline@@)<@@tnl@@>\{\{\{!\}\}/gmi, "<@@tnl@@>{{{!}}"); // before table
+		text = text.replace(/\|\}<@@tnl@@><\/td>/gmi, "|}<\/td>"); // after table in table
+		text = text.replace(/\{\{!\}\}\}<@@tnl@@><\/td>/gmi, "{{!}}}<\/td>"); // after table in table
+		text = text.replace(/\|\}<@@tnl@@>@@br_emptyline@@/gmi, "|}<@@tnl@@>"); // after table
+		text = text.replace(/\{\{!\}\}\}<@@tnl@@>@@br_emptyline@@/gmi, "{{!}}}<@@tnl@@>"); // after table
+		text = text.replace(/<@@tnl@@><@@tnl@@>/gmi, "<@@tnl@@>");//between tables
+
 		text = text.replace(/\n?<caption([^>]*)>/gmi, "<@@tnl@@>" + pipeText + "+$1");
 		text = text.replace(/\n?<\/caption([^>]*)>/gmi, "");
 
@@ -1265,10 +1317,14 @@ var BsWikiCode = function() {
 		text = text.replace(/\n?<\/th([^>]*)>/gmi, "");
 
 		text = text.replace(/\n?<td([^>]*)>/gmi, "<@@tnl@@>" + pipeText + "$1" + pipeText);
-		// @todo \n raus??
+
+		// remove extra new lines in tables
+		text = text.replace(/@@br_emptyline@@<\/td([^>]*)>/gmi, "");
+		text = text.replace(/<@@tnl@@><\/td([^>]*)>/gmi, "");
 		text = text.replace(/\n?<\/td([^>]*)>/gmi, "");
 
-		text = text.replace(/\|\|&nbsp;/gi, pipeText + pipeText);
+//		text = text.replace(/\|\|&nbsp;/gi, pipeText + pipeText);
+		text = text.replace(/\|&nbsp;/gi, pipeText);
 
 		return text;
 	}
@@ -1404,14 +1460,14 @@ var BsWikiCode = function() {
 			endTags = 0,
 			blockLineCount = 0;
 
-                // Walk through text line by line
+		//Walk through text line by line
 		for (var i = 0; i < lines.length; i++) {
 			// Prevent REDIRECT from being rendered as list.
 			// Var line is only set if it is part of a wiki list
 			line = lines[i].match(/^(\*|#(?!REDIRECT)|:|;)+/);
 			lastLine = (i == lines.length - 1);
 
-            		//Process lines
+			//Process lines
 			if (line && line !== '') { //Process lines that are members of wiki lists.
 				//DC reset the empty line count to zero as this line isn't empty
 				//Strip out the wiki code for the list element to leave just the text content
@@ -1421,7 +1477,8 @@ var BsWikiCode = function() {
 				if (line[0].indexOf(':') === 0) {
 					if (line[0].length === lastList.length) {
 						lines[i] = _continueList(lastList, line[0]) + lines[i];
-					} else if (line[0].length > lastList.length) {//DC if this is the start of the list add opening <div> as list will be enclosed in <div>s
+					} else if (line[0].length > lastList.length) {//DC if this is the start of the list add
+						//opening <div> as list will be enclosed in <div>s
 						if (line[0].length == 1) { // if first line of list place in a <div>
 							lines[i] = '<div>' +  _openList(lastList, line[0]) + lines[i];
 						} else {
@@ -1450,43 +1507,22 @@ var BsWikiCode = function() {
 			} else {//else process lines that are not wiki list items
 				//set emptyLine if line is empty
 				emptyLine = lines[i].match(/^(\s|&nbsp;)*$/);
-
-/*				// Test to see if we are in tag block.  Treat empty lines differently if we are.
-				// Inside a tag block a single/n generates a new line but outside the block it doesn't
-				matchStartTags = new Array(0);
-				matchEndTags = new Array(0);
-				// Get array of all the startTags in this line and keep running total
-				matchStartTags = lines[i].match(/(<table|<blockquote|<h1|<h2|<h3|<h4|<h5|<h6|<pre|@@@PRE|<tbody|<tr|<td|<th|<p|<div|<ul|<ol|<li|<hr)/gi);
-				if (matchStartTags) {
-					startTags = startTags + matchStartTags.length;
-				}
-				// Get arrays of all the endTags in this line and keep running total
-				matchEndTags = lines[i].match(/(<\/blockquote|<\/h1|<\/h2|<\/h3|<\/h4|<\/h5|<\/h6|<\/div|<hr|<\/pre|@@@PRE|<\/p|<\/li|<\/ul|<\/ol|<\/center|<\/tbody|<\/td|<\/th|<\/tr|<\/table)/gi);
-				if (matchEndTags) {
-					endTags = endTags + matchEndTags.length;
-				}
-				// In block if number of start tags exceeds number of end tags
-				if (startTags > endTags) {
-					inBlock = true ;
-					blockLineCount ++;
-				} else {
-					inBlock = false ;
-					blockLineCount = 0;
-				}*/
-
 				if (emptyLine) { // process empty lines
 					// If not already in a paragraph (block of blank lines).  Process first empty line differently
 					if (!inParagraph) {
-/*						if (inBlock) { // in block single new lines are displayed .
-							lines[i] = lines[i] + '<div class="bs_emptyline"><br class="bs_emptyline"/></div>';
+						if ((lines[i-1].match(/(<td>)(\s|&nbsp;)*$/))
+							|| (lines[i-1].match(/(<\/table>)(\s|&nbsp;)*$/))
+							) {
+							// if first line of data in a table cell
+							//do nothing
 						} else {
-							lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_first"/></div>';
-						}*/
-//DC experimental
-lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_first"/></div>';
+//dc 29122017				lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_first"/></div>';
+							lines[i] = lines[i] + '<br class="bs_emptyline_first"/>';
+						}
 						inParagraph = true;
 					} else {// this is already in a paragraph
-						lines[i] = lines[i] + '<div class="bs_emptyline"><br class="bs_emptyline"/></div>';
+//dc 29122017			lines[i] = lines[i] + '<div class="bs_emptyline"><br class="bs_emptyline"/></div>';
+						lines[i] = lines[i] + '<br class="bs_emptyline"/>';
 					}
 				} else { // not an empty line
 					if (!inParagraph && lines[i].match(/(^\<@@@TAG)/i) && i>0 ) { // if the line starts with <@@@TAG then precede it with a blank line
@@ -1496,18 +1532,20 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 							lines[i] = '<br class="bs_emptyline"/>' + lines[i];
 					}
 					inParagraph = false;
-//					if (inBlock) {
-						if (lines[i].match(/(^\<td\>)/i)) { //first line of data in a table cell
-							lines[i] = lines[i] + '<br class="bs_emptyline"/>';
+					if ((lines[i].match(/(^\<td\>)/i)) || (lines[i].match(/(^\<\/td\>\<td\>)/i))) {	// if first line of data in a table cell
+						if (!(lines[i+1].match(/(^\<\/td)/i))) { // and not a single line
+							if (!(lines[i+1].match(/^(\s|&nbsp;)*$/))) { // and not an empty line after
+								if (!(lines[i+1].match(/(^\<table)/))) { // and not a table after
+									lines[i] = lines[i] + '<br class="bs_emptyline"/>';
+								}
+							}
 						}
-//					}
+					}
 				}
 				//Test if the previous line was in a list if so close the list
 				//and place closing </div> before this line
 				if (lastList.length > 0) {
 					lines[i - 1] = lines[i - 1] + _closeList(lastList, '') + '</div>';
-					//DC close the <div> that contains the list 
-//					lines[i] = '</div>' + lines[i];
 					lastList = '';
 				}
 			}
@@ -1528,8 +1566,6 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 		if( typeof lineStart == 'undefined' ) {
 			lineStart = '';
 		}
-//		return lineStart + "<h" + level.length + ">" + content + "</h" + level.length + ">\n";
-//		return lineStart + "<div><h" + level.length + ">" + content + "</h" + level.length + "></div>";
 		return lineStart + "<h" + level.length + ">" + content + "</h" + level.length + ">";
 	}
 
@@ -1547,7 +1583,7 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 		// wrap the text in an object to send it to event listeners
 		var textObject = {text: text};
 		// call the event listeners
-		$(document).trigger('BsVisualEditorBeforeWikiToHtml', [textObject]);
+		$(document).trigger('TinyMCEBeforeWikiToHtml', [textObject]);
 		// get the text back
 		text = tinymce.util.Tools.trim(textObject.text);
 		// @todo it's done before in _preprocessWiki2Html, can we save this step?
@@ -1598,9 +1634,6 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 		// process tables
 		text = _tables2html(text);
 
-		// We need this additional line in order to clean up the last blocklevel
-//DC		text = text + "\n";
-
 		// process block levels
 		text = _blockLevels2html(text); //TODO: Fix missing break here, add <br /> for simple linebreaks
 
@@ -1612,16 +1645,6 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 
 		// delete additional line feeds
 		text = text.replace(/\n/gi, "");
-
-		// fill empty table cells
-		// @todo maybe in the _table2html method
-		text = text.replace(/<td([^>]*)>(\s|<br([^>]*)>)*<\/td>/gmi, '<td$1><br mce_bogus="1" /></td>');
-		text = text.replace(/<th([^>]*)>\s*<\/th>/gmi, '<th$1><br mce_bogus="1" /></th>');
-
-		//check if text ends with </table>, need to insert something after the table
-		//otherwise you won't be able to write after the table
-		if (text.indexOf("</table>", text.length - 8) !== -1)
-			text += "<br mce_bogus='1' />";
 
 		// clean up bogus code when spans are in a single line
 		text = text.replace(/<p>((<span([^>]*)>\s*)+)<\/p>/gmi, '$1');
@@ -1652,7 +1675,7 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 		// wrap the text in an object to send it to event listeners
 		textObject = {text: text};
 		// call the event listeners
-		$(document).trigger('BSVisualEditorAfterWikiToHtml', [textObject]);
+		$(document).trigger('TinyMCEAfterWikiToHtml', [textObject]);
 		// get the text back
 		text = textObject.text;
 		return text;
@@ -1677,7 +1700,7 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 		// wrap the text in an object to send it to event listeners
 		var textObject = {text: text};
 		// call the event listeners
-		$(document).trigger('BSVisualEditorBeforeHtmlToWiki', [textObject]);
+		$(document).trigger('TinyMCEBeforeHtmlToWiki', [textObject]);
 		// get the text back
 		text = textObject.text;
 		// Normalize UTF8 spaces as of TinyMCE 3.4.9
@@ -1700,9 +1723,10 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 		// if emptyline_first is no longer empty, change it to a normal p
 		text = text.replace(/<div class="bs_emptyline_first"[^>]*>&nbsp;<\/div>/gmi, '<div>@@br_emptyline_first@@</div>'); // TinyMCE 4
 		text = text.replace(/<div class="bs_emptyline_first"[^>]*>(.*?\S+.*?)<\/div>/gmi, "<div>$1</div>");
-		text = text.replace(/<div class="bs_emptyline_first"[^>]*>.*?<\/div>/gmi, "<div>@@br_emptyline_first@@</div>"); 
-		text = text.replace(/<div>@@br_emptyline_first@@<\/div>/gmi, "@@br_emptyline_first@@"); 
+		text = text.replace(/<div class="bs_emptyline_first"[^>]*>.*?<\/div>/gmi, "<div>@@br_emptyline_first@@</div>");
+		text = text.replace(/<div>@@br_emptyline_first@@<\/div>/gmi, "@@br_emptyline_first@@");
 		text = text.replace(/<br class="bs_emptyline"[^>]*>/gmi, "@@br_emptyline@@");
+		text = text.replace(/<br>/gmi, "@@br_emptyline@@");
 		// if emptyline is no longer empty, change it to a normal p
 		text = text.replace(/<div class="bs_emptyline"[^>]*>&nbsp;<\/div>/gmi, '<div>@@br_emptyline@@</div>'); // TinyMCE 4
 		text = text.replace(/<div class="bs_emptyline"[^>]*>(.*?\S+.*?)<\/div>/gmi, "<div>$1</div>"); //doesn't replace 2nd occurence
@@ -1741,8 +1765,10 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 		text = text.replace(/\n?<div style=('|")padding-left: 30px;('|")>([\S\s]*?)<\/div>/gmi, "<blockquote>$3</blockquote>");
 		text = text.replace(/\n?<div style=('|")padding-left: 60px;('|")>([\S\s]*?)<\/div>/gmi, "<blockquote><blockquote>$3</blockquote>");
 		text = text.replace(/\n?<div style=('|")padding-left: 90px;('|")>([\S\s]*?)<\/div>/gmi, "<blockquote><blockquote><blockquote>$3</blockquote>");
+
 		//replace simple divs by p
-		text = text.replace(/<div>(.*?)<\/div>/gmi, "<p>$1</p>");
+//		text = text.replace(/<div>(.*?)<\/div>/gmi, "<p>$1</p>");
+		text = text.replace(/<div>(.*?)<\/div>/gmi, "$1");
 
 		var listTag, currentPos, nextPos, oldText;
 		listTag = '';
@@ -1751,7 +1777,6 @@ lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_f
 		nextPos = _htmlFindList(text);
 		while (nextPos !== -1) {
 			oldText = text;
-debugger;
 			switch (text.substr(nextPos, 2).toLowerCase()) {
 				case '<p' :
 
@@ -1773,8 +1798,9 @@ debugger;
 					currentPos = text.search(/<p(\s+[^>]*?)?>([\s\S]*?)<\/p>/mi);
 					if (currentPos === nextPos) {
 //DC						text = text.replace(/\n?<p(\s+[^>]*?)?>([\s\S]*?)<\/p>/mi, "\n$2\n\n");
-						text = text.replace(/\n?<p(\s+[^>]*?)?>([\s\S]*?)<\/p>/mi, "$2"); 
-						text = text.replace(/<p(\s+[^>]*?)?>([\s\S]*?)<\/p>/mi, "$2"); 
+						text = text.replace(/\n?<p(\s+[^>]*?)?>([\s\S]*?)<\/p>/mi, "$2");
+//20171216						text = text.replace(/<p(\s+[^>]*?)?>([\s\S]*?)<\/p>/mi, "$2");
+						text = text.replace(/<p(\s+[^>]*?)+>([\s\S]*?)<\/p>/mi, "$2");
 					}
 					break;
 			}
@@ -1850,7 +1876,7 @@ debugger;
 						text = text.replace(/<\/ul>/, "");
 					} else {
 						text = text.replace(/<\/ul>/, "<@@bnl@@>");
-						//text = text.replace(/<\/ul>/, "");
+//						text = text.replace(/<\/ul>/, "");
 					}
 					break;
 				case '</ol' :
@@ -1915,6 +1941,7 @@ debugger;
 			}
 		}
 		e.content = text;
+
 		text = _tables2wiki(e);
 //DC if the br_emptyline was preceded by abr_emptyline_first then replacing the br_emptyline before the br_emptyline_first
 		text = text.replace(/\n?@@br_emptyline_first@@/gmi, "<@@2nl@@>");
@@ -1951,19 +1978,22 @@ debugger;
 		text = text.replace(/<br data-attributes="[^>]*data-mce-bogus[^>]*" ?\/?>/gmi, '');
 		text = text.replace(/<br data-attributes="[^>]*data-attributes[^>]*" ?\/?>/gmi, '<br/>');
 		text = text.replace(/<br [^>]*data-mce-bogus="1"[^>]*>/gmi, '');
+		text = text.replace(/<br [^>]*data-mce-fragment="1"[^>]*>/gmi, '');
 
 //DC clean up single new lines from _onGetContent
 		text = text.replace(/ ?<span[^>]*class="single_linebreak" title="single linebreak"[^>]*>(&nbsp;|.|&para;)<\/span> ?/g, "<@@nl@@>");
 
 //DC replace all new line codes as all valid ones now have place holders
 		text = text.replace(/\n*/gi, '');
+		text = text.replace(/<br \/><br \/>/gmi, "\n");
+		text = text.replace(/<br \/>/gmi, "");
 		text = text.replace(/<@@2nl@@>/gmi, "\n\n");
 		text = text.replace(/<@@nl@@>/gmi, "\n");
 
 		// wrap the text in an object to send it to event listeners
 		textObject = {text: text};
 		// call the event listeners
-		$(document).trigger('BSVisualEditorAfterHtmlToWiki', [textObject]);
+		$(document).trigger('TinyMCEAfterHtmlToWiki', [textObject]);
 		// get the text back
 		text = textObject.text;
 
@@ -1974,7 +2004,7 @@ debugger;
 	 * @param {String} text
 	 * @returns {String}
 	 */
-	function _preserveSpecialTags(text, e) {
+	function _preserveSpecialTags4Html(text, e) {
 		var mtext, regex, matcher, swt, i, pos, specialTagsList, st, cmt,
 			curlyBraceDepth, squareBraceDepth, templateDepth,
 			squareBraceFirst, tempTemplate, innerText, id, htmlText, el,
@@ -2033,7 +2063,7 @@ debugger;
 		}
 		specialTagsList = ed.getParam("wiki_tags_list");
 		specialTagsList += ed.getParam("additional_wiki_tags");
-		// Tags without innerHTML need /> as end marker. Maybe this should be task of a preprocessor, 
+		// Tags without innerHTML need /> as end marker. Maybe this should be task of a preprocessor,
 		// in order to allow mw style tags without /.
 		regex = '<(' + specialTagsList + ')[\\S\\s]*?((/>)|(>([\\S\\s]*?<\\/\\1>)))';
 		matcher = new RegExp(regex, 'gmi');
@@ -2287,23 +2317,23 @@ debugger;
 
 	/**
 	 *
-	 * @param {String} text
+	 * @param {e} editor object
 	 * @returns {String}
 	 */
-	function _recoverSpecialTags(text, e) {
+	function _preserveSpecialTags4Wiki(e) {
+		// this must be in inverse order as preserveSpecialTags4Html
+		// in order to allow for nested constructions
+		var text = e.content;
 		var matcher, nlBefore, nlAfter, i;
 		var ed = tinymce.get(e.target.id);
-		// this must be in inverse order as preserveSpecialTags
-		// in order to allow for nested constructions
-
 		// Recover tags  These may contain HTML code so placeholders are used initially.which are then
 		// replaced later with the original wikicode contained within the tags
 		var tagText, searchText, tagWikiText, replaceText ;
 		var specialtags = tinymce.util.Tools.grep(ed.dom.select('span'), function(elm) {
 			return elm && elm.className === "mceNonEditable wikimagic tag";
 		});
-		if (!_tagEntities) {
-			_tagEntities = new Array();
+		if (!_tagEntities4Wiki) {
+			_tagEntities4Wiki = new Array();
 		}
 
 		if (specialtags) {
@@ -2313,7 +2343,7 @@ debugger;
 				searchText = new RegExp(tagText, 'g');
 				tagWikiText = decodeURIComponent(specialtags[i].attributes["data-bs-wikitext"].value);
 				replaceText = "<@@@TAGENT" + i + "@@@>";
-				_tagEntities[i] = tagWikiText;
+				_tagEntities4Wiki[i] = tagWikiText;
 				text = text.replace(
 					searchText,
 					replaceText
@@ -2325,8 +2355,8 @@ debugger;
 		var templates = tinymce.util.Tools.grep(ed.dom.select('span'), function(elm) {
 			return elm && elm.className === "mceNonEditable wikimagic template";
 		});
-		if (!_templateEntities) {
-			_templateEntities = new Array();
+		if (!_templateEntities4Wiki) {
+			_templateEntities4Wiki = new Array();
 		}
 
 		if (templates) {
@@ -2336,7 +2366,7 @@ debugger;
 				var searchText = new RegExp(templateText, 'g');
 				var templateWikiText = decodeURIComponent(templates[i].attributes["data-bs-wikitext"].value);
 				replaceText = "<@@@TMPENT" + i + "@@@>";
-				_templateEntities[i] = templateWikiText;
+				_templateEntities4Wiki[i] = templateWikiText;
 				text = text.replace(
 					searchText,
 					replaceText
@@ -2465,11 +2495,12 @@ debugger;
 	 * @param {String} text
 	 * @returns {String}
 	 */
-	function _preserveEntities(text) {
+	function _convertHtmlEntities(e) {
 		var regex, matcher, mtext, i, ent;
+		var text = e.content;
 
-		if (!_entities) {
-			_entities = new Array();
+		if (!_htmlEntities4Wiki) {
+			_htmlEntities4Wiki = new Array();
 		}
 
 		// Tiny replaces &nbsp; by space, so we need to undo this
@@ -2481,10 +2512,30 @@ debugger;
 
 		i = 0;
 		while ((ent = matcher.exec(mtext)) !== null) {
-			text = text.replace(ent[0], "<@@@ENTITY" + i + "@@@>");
-			_entities[i] = ent[1];
+			text = text.replace(ent[0], "<@@@HTMLENT" + i + "@@@>");
+			_htmlEntities4Wiki[i] = ent[1];
 			i++;
 		}
+
+		// decode html entities of form &xxx;
+		text = text.replace(/(&[^\s]*?;)/gmi, function($0) {
+			return tinymce.DOM.decode($0);
+		});
+
+		// now recover ntml entities
+		if (_htmlEntities4Wiki) {
+			for (i = 0; i < _htmlEntities4Wiki.length; i++) {
+				regex = '<@@@HTMLENT' + i + '@@@>';
+				text = text.replace(new RegExp(regex, 'gmi'), _htmlEntities4Wiki[i]);
+			}
+		}
+		_htmlEntities4Wiki = false;
+
+		//cleanup entity markers
+		while (text.match(/<span class="bs_htmlentity">.+?<\/span>/gmi)) {
+				text = text.replace(/(<span class="bs_htmlentity">)(.+?)(<\/span>)/gmi, '$2');
+		}
+
 		return text;
 	}
 
@@ -2527,15 +2578,22 @@ debugger;
 	 * @param {String} text
 	 * @returns {String}
 	 */
-	function _recoverEntities(text) {
+	function _recoverHtmlEntities2Wiki(e) {
 		var i, regex;
-		if (_entities) {
-			for (i = 0; i < _entities.length; i++) {
-				regex = '<@@@ENTITY' + i + '@@@>';
-				text = text.replace(new RegExp(regex, 'gmi'), _entities[i]);
+		var text = e.content;
+
+		if (_htmlEntities4Wiki) {
+			for (i = 0; i < _htmlEntities4Wiki.length; i++) {
+				regex = '<@@@HTMLENT' + i + '@@@>';
+				text = text.replace(new RegExp(regex, 'gmi'), _htmlEntities4Wiki[i]);
 			}
 		}
-		_entities = false;
+		_htmlEntities4Wiki = false;
+
+		// decode html entities of form &xxx;
+		text = text.replace(/(&[^\s]*?;)/gmi, function($0) {
+				return tinymce.DOM.decode($0);
+			});
 		return text;
 	}
 
@@ -2544,15 +2602,27 @@ debugger;
 	 * @param {String} text
 	 * @returns {String}
 	 */
-	function _recoverTagEntities(text) {
+	function _recoverSpecialTags2Wiki(e) {
+		var text = e.content;
+			text = _recoverTagEntities2Wiki(text);
+			text = _recoverTemplateEntities2Wiki(text);
+		return text;
+	}
+
+	/**
+	 *
+	 * @param {String} text
+	 * @returns {String}
+	 */
+	function _recoverTagEntities2Wiki(text) {
 		var i, regex;
-		if (_tagEntities) {
-			for (i = 0; i < _tagEntities.length; i++) {
+		if (_tagEntities4Wiki) {
+			for (i = 0; i < _tagEntities4Wiki.length; i++) {
 				regex = '<@@@TAGENT' + i + '@@@>';
-				text = text.replace(new RegExp(regex, 'gmi'), _tagEntities[i]);
+				text = text.replace(new RegExp(regex, 'gmi'), _tagEntities4Wiki[i]);
 			}
 		}
-		_tagEntities = false;
+		_tagEntities4Wiki = false;
 		return text;
 	}
 
@@ -2561,15 +2631,19 @@ debugger;
 	 * @param {String} text
 	 * @returns {String}
 	 */
-	function _recoverTemplateEntities(text) {
+	function _recoverTemplateEntities2Wiki(text) {
 		var i, regex;
-		if (_templateEntities) {
-			for (i = 0; i < _templateEntities.length; i++) {
+		if (_templateEntities4Wiki) {
+			for (i = 0; i < _templateEntities4Wiki.length; i++) {
 				regex = '<@@@TMPENT' + i + '@@@>';
-				text = text.replace(new RegExp(regex, 'gmi'), _templateEntities[i]);
+				text = text.replace(new RegExp(regex, 'gmi'), _templateEntities4Wiki[i]);
 			}
 		}
-		_templateEntities = false;
+		_templateEntities4Wiki = false;
+
+		// cleanup templates in table markers
+		text = text.replace(/data-bs-t.*?-tpl.*?="(.*?)"/gmi, "{{$1}}");
+
 		return text;
 	}
 
@@ -2633,8 +2707,9 @@ debugger;
 	 * @param {String} text
 	 * @returns {String}
 	 */
-	function _convertTinyMceToPreWithSpaces(text) {
+	function _convertTinyMceToPreWithSpaces(e) {
 		var innerPre, innerPreLines;
+		var text = e.content;
 
 		_preTagsSpace = text.match(/<pre[^>]+bs_pre_from_space[^>]+>([\S\s]*?)<\/pre>/gmi);
 
@@ -2802,7 +2877,7 @@ debugger;
 		}
 
 		//special tags before pres prevents spaces in special tags like GeSHi to take effect
-		text = _preserveSpecialTags(text, e);
+		text = _preserveSpecialTags4Html(text, e);
 		//cleanup linebreaks in tags except comments
 		text = text.replace(/(<[^!][^>]+?)(\n)([^<]+?>)/gi, "$1$3");
 
@@ -2835,8 +2910,9 @@ debugger;
 	 * @param {String} text
 	 * @returns {String}
 	 */
-	function _preprocessHtml2Wiki( text ) {
+	function _preprocessHtml2Wiki( e ) {
 		// convert html text to DOM
+		var text = e.content;
 		var $dom = $( "<div id='tinywrapper'>" + text + "</div>" );
 
 		// perform the actual preprocessing
@@ -2857,10 +2933,13 @@ debugger;
 		while ( text.match( /(\="[^"]*?)(>)([^"]*?")/gmi ) ) {
 			text = text.replace( /(\="[^"]*?)(>)([^"]*?")/g, '$1&gt;$3' );
 		}
+		//remove &; encoding
+		text = text.replace(/(&[^\s]*?;)/gmi, function($0) {
+			return tinymce.DOM.decode($0);
+		});
 
 		return text;
 	}
-
 
 	/**
 	 * Event handler for "beforeSetContent"
@@ -2883,76 +2962,35 @@ debugger;
 	}
 
 	/**
-	 * Event handler for "submit"
-	 * This is used to save the content of the editor.
-	 * @param {tinymce.ContentEvent} e
-	 */
-	function _onSubmit(e) {
-		// if raw format is requested, this is usually for internal issues like
-		// undo/redo. So no additional processing should occur. Default is 'html'
-//		if (e.format == 'raw' ) return;
-//DC Experimental
-//e.format = 'raw';
-//DC end*/
-
-	}
-
-	/**
 	 * Event handler for "getContent".
 	 * This is used to process html into wiki code.
 	 * @param {tinymce.ContentEvent} e
 	 */
 	function _onGetContent(e) {
-		// DC changed to assume content is now 'raw'
 		// if raw format is requested, this is usually for internal issues like
 		// undo/redo. So no additional processing should occur. Default is 'html'
 		if ( e.format == 'raw' ) return;
+		e.format = 'raw';
 		// If content has already been selected by the user, use that.
 		if ( !e.selection ) {
 			var ed = tinymce.get(e.target.id);
 			e.content= ed.getContent({source_view: true, no_events: true, format: 'raw'});
 		}
-		e.format = 'raw';
-/* DC moved recover special tags up front from lower down */
-		e.content = _recoverSpecialTags(e.content, e);
-
-		e.content = _preprocessHtml2Wiki( e.content );
-
-		// process the html to wikicode
+		//preserve special tags eg nodes with wiki templates, tags, comments and switches
+		//these are preserved as placeholders and recovered to wiki code later
+		//these are replaced with placeholders which are replaced later on.  This is done
+		//now to avoid the inner html in the tags being incorrectly procesed by _Html2Wiki
+		e.content = _preserveSpecialTags4Wiki( e );
+		// convert underlines strikethroughs and entities within attributes to wiki code
+		e.content = _preprocessHtml2Wiki( e );
+		// convert the html to wikicode
 		e.content = _html2wiki(e);
-
-/* DC removed the if test as this breaks the code function saving the wiki code properly when using the wikicodeplugin
-		if (e.save) {*/
-			e.content = _convertTinyMceToPreWithSpaces(e.content);
-			// recover linebreaks
-			// use . here: blank would not match in IE
-//DC now clean up single line breaks in _html2wiki
-//			e.content = e.content.replace(/ ?<span[^>]*class="single_linebreak" title="single linebreak"[^>]*>(&nbsp;|.|&para;)<\/span> ?/g, "<@@snl@@>");
-
-			e.content = _preserveEntities(e.content);
-
-			e.content = e.content.replace(/(&[^\s]*?;)/gmi, function($0) {
-				return tinymce.DOM.decode($0);
-			});
-			//do not use o.content = ed.dom.decode(o.content);
-			// it breaks conversion from html to wiki
-			e.content = _recoverEntities(e.content);
-			e.content = _recoverTagEntities(e.content);
-			e.content = _recoverTemplateEntities(e.content);
-
-			//cleanup entity markers
-			while (e.content.match(/<span class="bs_htmlentity">.+?<\/span>/gmi)) {
-				e.content = e.content.replace(/(<span class="bs_htmlentity">)(.+?)(<\/span>)/gmi, '$2');
-			}
-
-//DC moved this up front
-//			e.content = _recoverSpecialTags(e.content, e);
-
-
-			// cleanup templates in table markers
-			e.content = e.content.replace(/data-bs-t.*?-tpl.*?="(.*?)"/gmi, "{{$1}}");
-/*		}*/
-
+		// convert <pre>s inserted in Tiny MCE to lines with spaces in front
+		e.content = _convertTinyMceToPreWithSpaces(e);
+		//preserve hrml entities in wiki code to recover later
+		e.content = _convertHtmlEntities(e);
+		//recover special tags to wiki code from placeholders
+		e.content = _recoverSpecialTags2Wiki( e );
 	}
 
 	function _onLoadContent(ed, o) {
@@ -2967,7 +3005,7 @@ debugger;
 			internalLinks.push($(this));
 		});
 
-		$(document).trigger( 'BSVisualEditorLoadContentBeforeCheckLinks', [
+		$(document).trigger( 'TinyMCErLoadContentBeforeCheckLinks', [
 			this,
 			internalLinksTitles,
 			internalLinks
@@ -3025,26 +3063,12 @@ debugger;
 		_imageDummyUrl = '/'/*dc removed this dependency on BS bs.em.paths.get('BlueSpiceFoundation')
 			+'/resources/bluespice/images/bs-ajax-loader-pik-blue.gif'*/;
 		_ed = ed;
+		var editClass = ed.getParam("noneditable_editable_class", "mceEditable"); // Currently unused
+		var nonEditClass = ed.getParam("noneditable_noneditable_class", "mceNonEditable");
 
 		ed.on('beforeSetContent', _onBeforeSetContent);
 		ed.on('getContent', _onGetContent);
 		ed.on('loadContent', _onLoadContent);
-
-		ed.on('click', function(e) {
-			var dataname = ed.dom.getAttrib(e.target.parentNode, 'data-bs-name');
-			if ( dataname ) {
-				$(document).triggerHandler( 'BSVisualEditorClickSpecialTag', [this, ed, e, dataname] );
-			}
-		});
-		ed.on('mouseDown', function(e){
-			var body = ed.getBody();
-			if(jQuery(e.target).hasClass('bsClickableElement')){
-				jQuery(body).attr({'contenteditable': false});
-			}else{
-				jQuery(body).attr({'contenteditable': true});
-			}
-		});
-
 	};
 
 	this.getSpecialTagList = function() {

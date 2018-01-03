@@ -73,7 +73,11 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 	  // the html mode for tag creation (we need xhtml)
 	  element_format: 'xhtml',
 	  // define the element what all inline elements needs to be wrapped in
-	  forced_root_block: 'div',
+	  //forced_root_block: 'div',
+	  forced_root_block: false,
+	  forced_root_block_attrs: {
+		'class': 'bs_emptyline'
+	  },
 	  // keep current style on pressing return
 	  keep_styles: true,
 	  // save plugin
