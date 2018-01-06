@@ -33,7 +33,7 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 //          selector: '.tinymce',
           selector: '#wpTextbox1, .tinymce',
 	  branding: false,
-//	  relative_urls: false,
+	  relative_urls: false,
 //	  remove_script_host: false,
 	  document_base_url: mw.config.get( "wgServer" ),
 	  automatic_uploads: true,
@@ -73,7 +73,7 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 	  // the html mode for tag creation (we need xhtml)
 	  element_format: 'xhtml',
 	  // define the element what all inline elements needs to be wrapped in
-	  //forced_root_block: 'div',
+//	  forced_root_block: 'div',
 	  forced_root_block: false,
 	  forced_root_block_attrs: {
 		'class': 'bs_emptyline'
@@ -145,12 +145,14 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 
              	function insertImage() {
                 	var editorid = editor.id;
+			var nodeID;
 			var node = editor.selection.getNode();
-			var nodeID = node.id;
 			if (node.nodeName == 'IMG') {
 				var upLoadType = "local";
+				nodeID = node.id;
 			} else {
 				var upLoadType = "file";
+				nodeID = "";
 			}
 
                  	var uploadform = scriptPath + '/index.php?title=Special:TinyMCEUploadWindow&pfInputID=' + editorid + 
