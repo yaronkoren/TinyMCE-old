@@ -33,7 +33,7 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 //          selector: '.tinymce',
           selector: '#wpTextbox1, .tinymce',
 	  branding: false,
-//	  relative_urls: false,
+	  relative_urls: false,
 //	  remove_script_host: false,
 	  document_base_url: mw.config.get( "wgServer" ),
 	  automatic_uploads: true,
@@ -146,18 +146,21 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
              	function insertImage() {
                 	var editorid = editor.id;
 			var node = editor.selection.getNode();
-			var nodeID = node.id;
+			var nodeID;
+			var uploadType;
 			if (node.nodeName == 'IMG') {
-				var upLoadType = "local";
+				uploadType = "local";
+				nodeID = node.id;
 			} else {
-				var upLoadType = "file";
+				uploadType = "file";
+				nodeID = '';
 			}
 
                  	var uploadform = scriptPath + '/index.php?title=Special:TinyMCEUploadWindow&pfInputID=' + editorid + 
 				'&pfEditor=tinymce' + 
 				'&pfSelect=' + editor.selection.getContent() + 
 				'&pfNode=' + nodeID + 
-				'&wpSourceType=' + upLoadType ;
+				'&wpSourceType=' + uploadType ;
                  	$.fancybox([
                       		uploadform
                       		], {
