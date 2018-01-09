@@ -2797,7 +2797,10 @@ var BsWikiCode = function() {
 									var part1 = decodeURI( images[i].src );
 									var part2 = decodeURI( server + _imageDummyUrl + '?' + imageparts[1]) ;
 									part2 = part2.replace(/ /g,"_");
-									if ( part1 !== part2 ) {
+									// If the image name in the wikitext starts with a lowercase letter, part1
+									// will have it in lowercase while part2 (usually) will not. Lowercase both
+									// strings entirely to make sure that this test gets passed.
+									if ( part1.toLowerCase() !== part2.toLowerCase() ) {
 										continue;
 									}
 									//Last but not least set the url to the correct image
