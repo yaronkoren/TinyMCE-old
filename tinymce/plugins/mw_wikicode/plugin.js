@@ -1234,6 +1234,13 @@ var BsWikiCode = function() {
 
 	function _tables2wiki(e) {
 		var text = e.content;
+		
+		// save some effort if no tables
+		if (!text.match(/\<table\>/g)) return text;
+
+		// protect new lines from being replaced by a space in the html domparser
+		text = text.replace(/\n/gmi, '@@NL@@');
+
 		/* Use {{!}} instead of | if this will be a value passed to a template. */
 		//var editingTextarea = $(tinymce.activeEditor.getElement());
 		var editingTextarea = $(e.target.targetElm);
@@ -1285,6 +1292,9 @@ var BsWikiCode = function() {
 		text = text.replace(/(&[^\s]*?;)/gmi, function($0) {
 			return tinymce.DOM.decode($0);
 		});
+		
+		//restore the new lines
+		text = text.replace(/@@NL@@/gm, '\n');
 
 		//cleanup thead and tbody tags. Caution: Must be placed before th cleanup because of
 		//regex collision
