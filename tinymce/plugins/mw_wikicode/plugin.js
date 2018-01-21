@@ -1482,9 +1482,13 @@ var BsWikiCode = function() {
 				//DC reset the empty line count to zero as this line isn't empty
 				//Strip out the wiki code for the list element to leave just the text content
 				lines[i] = lines[i].replace(/^(\*|#|:|;)*\s*(.*?)$/gmi, "$2");
-				//If the line belong to a definition list starting with a ':' and follows
-				//the last line of a sub, ommit <li> at start of line
-				if (line[0].indexOf(':') === 0) {
+				if (line[0].match(/^(\*|#)+:$/) ) {
+					// If the line starts with something like '*:' or '#:', it's not
+					// really a list item.
+					lines[i] = "<br />" + lines[i];
+				} else if (line[0].indexOf(':') === 0) {
+					// If the line belongs to a definition list starting with a ':' and
+					// follows the last line of a sub, omit <li> at start of line.
 					if (line[0].length === lastList.length) {
 						lines[i] = _continueList(lastList, line[0]) + lines[i];
 					} else if (line[0].length > lastList.length) {//DC if this is the start of the list add
@@ -1692,7 +1696,7 @@ var BsWikiCode = function() {
 	}
 
 	function _htmlFindList(text) {
-		return text.search(/(<ul|<ol|<li( |>)|<\/?dl|<\/?dt|<blockquote[^>]*?>|<\/li( |>)|<\/ul|<\/ol|<\/blockquote|<p( |>)|<\/p( |>)|<h[1-6]|<hr)/);
+		return text.search(/(<ul|<ol|<li( |>)|<\/?dl|<\/?dt|<blockquote[^>]*?>|<\/li( |>)|<\/ul|<\/ol|<\/blockquote|<p( |>)|<\/p( |>)|<h[1-6]|<hr|<br)/);
 	}
 	/**
 	 *
@@ -1736,7 +1740,7 @@ var BsWikiCode = function() {
 		text = text.replace(/<div class="bs_emptyline_first"[^>]*>.*?<\/div>/gmi, "<div>@@br_emptyline_first@@</div>");
 		text = text.replace(/<div>@@br_emptyline_first@@<\/div>/gmi, "@@br_emptyline_first@@");
 		text = text.replace(/<br class="bs_emptyline"[^>]*>/gmi, "@@br_emptyline@@");
-		text = text.replace(/<br>/gmi, "@@br_emptyline@@");
+		//text = text.replace(/<br>/gmi, "@@br_emptyline@@");
 		// if emptyline is no longer empty, change it to a normal p
 		text = text.replace(/<div class="bs_emptyline"[^>]*>&nbsp;<\/div>/gmi, '<div>@@br_emptyline@@</div>'); // TinyMCE 4
 		text = text.replace(/<div class="bs_emptyline"[^>]*>(.*?\S+.*?)<\/div>/gmi, "<div>$1</div>"); //doesn't replace 2nd occurence
@@ -1867,6 +1871,13 @@ var BsWikiCode = function() {
 						text = text.replace(/<li[^>]*?>/, "");
 					} else {
 						text = text.replace(/\n?<li[^>]*?>/mi, "<@@bnl@@>" + listTag + " ");
+					}
+					break;
+				case '<br' :
+					if (listTag.length > 0) {
+						text = text.replace(/<br \/>/, "@@br_emptyline@@" + listTag + ": ");
+					} else {
+						text = text.replace(/<br \/>/, "@@br_emptyline@@");
 					}
 					break;
 			}
