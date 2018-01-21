@@ -17,69 +17,36 @@
 
 /*TODO: dc Fix so images always retain their aspect ratio when constrained by width or height as they do in mediawiki */
 
-var BsWikiCode = function() {
+var TinyMCEWikiCode = function() {
 
 	"use strict";
+	
+	var 
+		/**
+		 *
+		 * Used for ajax call to mediawiki api
+		 * @type mediawiki.  ]
+		 */
+		_server = mw.config.get( "wgServer" ),
+		_script = mw.config.get( 'wgScriptPath' ) + '/api.php',
+		_title = mw.config.get( "wgCanonicalNamespace" ) + ':' + mw.config.get( "wgTitle" ) ;
+
 	var
 		/**
 		 *
 		 * @type Array
 		 */
 		_preTags,
-		/**
-		 *
-		 * @type Array
-		 */
 		_preTagsSpace,
-		/**
-		 *
-		 * @type Array
-		 */
 		_nowikiTags,
-		/**
-		 *
-		 * @type Array
-		 */
 		_templates,
-		/**
-		 *
-		 * @type Array
-		 */
 		_images,
-		/**
-		 *
-		 * @type Array
-		 */
 		_comments,
-		/**
-		 *
-		 * @type Array
-		 */
 		_specialtags,
-		/**
-		 *
-		 * @type Array
-		 */
 		_switches,
-		/**
-		 *
-		 * @type Array
-		 */
 		_tags,
-		/**
-		 *
-		 * @type Array
-		 */
 		_tagEntities4Wiki,
-		/**
-		 *
-		 * @type Array
-		 */
 		_templateEntities4Wiki,
-		/**
-		 *
-		 * @type Array
-		 */
 		_htmlEntities4Wiki,
 		/**
 		 * List of available thumbnail sizes
@@ -92,7 +59,7 @@ var BsWikiCode = function() {
 		 */
 		_imageDummyUrl = '',
 		/**
-		 * One of the thumbnail sizes, choosen by the user in Spezial:Preferences
+		 * One of the thumbnail sizes, choosen by the user in Special:Preferences
 		 * @default 3
 		 * @type Number
 		 */
@@ -144,7 +111,14 @@ var BsWikiCode = function() {
 			'border': 0,
 			//'width': _userThumbsize,
 			//HAD: display:inline-block; //Future: only CSS class
-			'style':"cursor:move;"
+			'style':"cursor:move;",
+			'alt': "",
+			'width': "",
+			'height': "",
+			'link': "",
+			'horizontalalignment': "",
+			'verticalalignment': "",
+			'format': ""
 		};
 	};
 
@@ -162,78 +136,6 @@ var BsWikiCode = function() {
 			return typeof args[ number ] !== 'undefined' ? args[number] : match;
 		});
 	};
-
-	$(document).on( "BSVisualEditorRenderSpecialTag", function( event, sender, type, st ){
-		if ( type != 'bs:checklist' ) return false;
-		var ed = tinymce.activeEditor;
-		var specialtag = ed.dom.createFragment( st[0] ).childNodes[0];
-
-		var cbt = ed.dom.getAttrib( specialtag, 'type', 'checkbox' );
-		var valueText = ed.dom.getAttrib( specialtag, 'value', 'false' );
-		var listText = ed.dom.getAttrib( specialtag, 'list', '' );
-
-		var innerText;
-		if ( cbt == 'checkbox' ) {
-			if ( valueText == 'checked' ) {
-				innerText = BsChecklist.makeCheckbox( true );
-			} else {
-				innerText = BsChecklist.makeCheckbox( false );
-			}
-		} else if ( cbt == 'list' ) {
-			innerText = BsChecklist.makeSelectbox(
-				BsChecklist.getOptionsList( listText ) , valueText
-			);
-		}
-
-		var moreAttribs = 'data-bs-value="'+valueText+'"';
-		moreAttribs += ' data-bs-cbtype="'+cbt+'"';
-
-		return {
-			innerText: innerText,
-			moreAttribs: moreAttribs
-		};
-	});
-
-	$(document).on( "BSVisualEditorRecoverSpecialTag", function( event, sender, specialTagMatch, innerText )	{
-		if( specialTagMatch == null ) return false;
-		var valueregex = '<.*?data-bs-value="(.*?)"[^>]*?>';
-		var valueMatcher = new RegExp( valueregex, '' );
-		var value = valueMatcher.exec( specialTagMatch[1] );
-		var valueText;
-		if ( value ) {
-			valueText = value[1];
-		} else {
-			valueText = '';
-		}
-		var newInnerText = innerText.replace( /value="(.*?)"/, 'value="'+valueText+'"' );
-		return {
-			innerText: newInnerText
-		}
-	});
-
-	$(document).on( "BSVisualEditorClickSpecialTag", function( event, sender, ed, e, dataname ){
-		if ( dataname == 'bs:checklist' ) {
-			var cbtype = ed.dom.getAttrib( e.target.parentNode, 'data-bs-cbtype' );
-
-			if ( !cbtype ) {
-				cbtype = 'checkbox';
-			}
-
-			var value = ed.dom.getAttrib( e.target.parentNode, 'data-bs-value' );
-
-			if ( cbtype == 'checkbox' ) {
-				if ( value == 'checked' ) {
-					value = 'false';
-					ed.dom.setStyle(e.target, 'background-image', "url('"+BsChecklist.checkboxImage+"')" );
-				} else {
-					value = 'checked';
-					ed.dom.setStyle( e.target, 'background-image', "url('"+BsChecklist.checkboxImageChecked+"')" );
-				}
-			}
-
-			ed.dom.setAttrib( e.target.parentNode, 'data-bs-value', value );
-		}
-	});
 
 	function print_r(printthis, returnoutput) {
 		var output = '';
@@ -256,14 +158,15 @@ var BsWikiCode = function() {
 		// @todo inline stylings taken from MediaWiki and adapted to TinyMCE markup. Not nice...
 		var htmlImageObject = $('<img />').attr( me.makeDefaultImageAttributesObject() ),
 			wikiImageObject = me.makeWikiImageDataObject(),
-			parts = link.split("|"), part = '',
-			unsuffixedValue, dimensions, kvpair, key, value, src, imgParts,
-			imgName;
+			parts = link.split("|"), 
+			image = new Array(),
+			part = '',
+			unsuffixedValue, dimensions, kvpair, key, value, src, imgParts, imgName;
 
 		wikiImageObject.imagename = parts[0];
 		for (var i = 1; i < parts.length; i++) {
 			part = parts[i];
-			if (part.endsWith('px')) {
+			if (part.endsWith('px')) { //process picture dimensions
 				// Hint: frame ignores size but we want to keep this information
 				// See: mediawiki.org/wiki/Help:Images#Size_and_frame
 
@@ -282,7 +185,7 @@ var BsWikiCode = function() {
 				continue;
 			}
 
-			if ($.inArray(part, ['thumb', 'mini', 'miniatur']) !== -1) {
+			if ($.inArray(part, ['thumb', 'mini', 'miniatur']) !== -1) { 
 				wikiImageObject.thumb = true;
 				continue;
 			}
@@ -417,15 +320,6 @@ var BsWikiCode = function() {
 			htmlImageObject.attr('alt', wikiImageObject.alt);
 		}
 
-
-		// Workaround for HW#2013020710000217.
-		// This is more a bug of InsertFile and should be fixed there.
-		// @todo Check if this is still needed. In REL_1.21 the code for
-		//       adding an alt tag in InsertFile has changed.
-/*		if (wikiImageObject.caption) {
-			htmlImageObject.attr('title', wikiImageObject.caption);
-		}*/
-
 		if (wikiImageObject.sizewidth !== false) {
 			htmlImageObject.width(wikiImageObject.sizewidth);
 		}
@@ -437,7 +331,6 @@ var BsWikiCode = function() {
 		if (wikiImageObject.thumb === true) {
 			htmlImageObject.addClass('thumb');
 			if (wikiImageObject.sizewidth === false) {
-				htmlImageObject.width(wikiImageObject.thumbsize);
 			}
 		}
 
@@ -502,7 +395,9 @@ var BsWikiCode = function() {
 		htmlImageObject.attr('data-bs-wikitext', link);
 
 		//We set a dummy url which contains the original filename as
-		//querystring parameter
+		//querystring parameter.  This will be replaced later with the real
+		//url which is done in function _loadImageRealUrls. 
+		//this is so the url can be inserted after the nodes are created 
 		imgParts = parts[0].split(':');
 		imgParts.shift(); //Throw away leading namespace prefix
 		imgName = imgParts.join(':'); //Reassemble image name
@@ -831,22 +726,21 @@ var BsWikiCode = function() {
 				}
 
 				linkHtml = anchorFormat.format(
-					encodeURI( linkTarget ),//escape(linkTarget),	// href
-					linkLabel,					// <a>linkLabel</a>
+					encodeURI( linkTarget ),		//escape(linkTarget),	// href
+					linkLabel,						// <a>linkLabel</a>
 					'internal_link',				// data-bs-type
 					'internal bs-internal-link mceNonEditable',	// class
 					encodeURI( $('<div/>').text(link).html() ),	// data-bs-wikitext
-					encodeURI( linkTarget ),			// data-mce-href
-					linkTarget					// title
+					encodeURI( linkTarget ),		// data-mce-href
+					linkTarget						// title
 				);
 
-				targetParts = linkTarget.split(":");
+				targetParts = linkTarget.split(":"); //look for link to file uploaded to wiki
+				var tmp = mw.config;
 				if (targetParts.length > 1) {
 					nsText = targetParts[0];
 					nsId = namespaces[nsText.toLowerCase()];
-/* dc images namespace is always 6 so lets just test for that instead
-					if (nsId === bs.ns.NS_IMAGE) {
-*/
+
 					if (nsId === 6) {
 						targetTextParts = linkTarget.split(".");
 						fileExtension = targetTextParts[targetTextParts.length - 1];
@@ -1233,7 +1127,15 @@ var BsWikiCode = function() {
 	}
 
 	function _tables2wiki(e) {
+
 		var text = e.content;
+
+		// save some effort if no tables
+		if (!text.match(/\<table\>/g)) return text;
+
+		// protect new lines from being replace by a space in the html domparser
+		text = text.replace(/\n/gmi, '@@NL@@');
+
 		/* Use {{!}} instead of | if this will be a value passed to a template. */
 		//var editingTextarea = $(tinymce.activeEditor.getElement());
 		var editingTextarea = $(e.target.targetElm);
@@ -1285,6 +1187,9 @@ var BsWikiCode = function() {
 		text = text.replace(/(&[^\s]*?;)/gmi, function($0) {
 			return tinymce.DOM.decode($0);
 		});
+
+		//restore the new lines
+		text = text.replace(/@@NL@@/gm, '\n');
 
 		//cleanup thead and tbody tags. Caution: Must be placed before th cleanup because of
 		//regex collision
@@ -1608,27 +1513,15 @@ var BsWikiCode = function() {
 		text = text.replace(/'''([^'\n][^\n]*?)'''([^']?)/gmi, '<strong>$1</strong>$2');
 		text = text.replace(/''([^'\n][^\n]*?)''([^']?)/gmi, '<em>$1</em>$2');
 
-		/*
-		 text = text.replace(/(^|\n)?========(.+?)========(\n+|$)/gmi, '$1<h8>$2</h8>\n');
-		 text = text.replace(/(^|\n)?=======(.+?)=======(\n+|$)/gmi, '$1<h7>$2</h7>\n');
-		 text = text.replace(/(^|\n)?======(.+?)======(\n+|$)/gmi, '$1<h6>$2</h6>\n');
-		 text = text.replace(/(^|\n)?=====(.+?)=====(\n+|$)/gmi, '$1<h5>$2</h5>\n');
-		 text = text.replace(/(^|\n)?====(.+?)====(\n+|$)/gmi, '$1<h4>$2</h4>\n');
-		 text = text.replace(/(^|\n)?===(.+?)===(\n+|$)/gmi, '$1<h3>$2</h3>\n');
-		 text = text.replace(/(^|\n)?==(.+?)==(\n+|$)/gmi, '$1<h2>$2</h2>\n');
-		 text = text.replace(/(^|\n)?=(.+?)=(\n+|$)/gmi, '$1<h1>$2</h1>\n');
-		 */
 		// faster replacement for header processing
 		// One regexp to rule them all, on regexp to find them,
 		// one regexp to bring them all and in html bind them!!!
-		//DC only match 0 or 1 \n and as they all get replaced by a single /n
-//DC		text = text.replace(/(^|\n)((?:=){1,6})\s*(.+?)\s*\2(?:\n+|$)/img, _wikiHeader2html);
 		text = text.replace(/(^|\n)((?:=){1,6})\s*(.+?)\s*\2(?:\n?|$)/img, _wikiHeader2html);
 
 		// horizontal rule
 		text = text.replace(/^\n?----\n?/gmi, "\n<hr>\n");
 
-		// process links
+		// process links (including images)
 		text = _links2html(text);
 
 		// process tables
@@ -2010,9 +1903,9 @@ var BsWikiCode = function() {
 			squareBraceFirst, tempTemplate, innerText, id, htmlText, el,
 			templateName, templateText, templateResult, templateNameLines,
 			switchWikiText;
-		var server = mw.config.get( "wgServer" ) ;
-		var script = mw.config.get( 'wgScriptPath' ) + '/api.php';
-		var title = mw.config.get( "wgCanonicalNamespace" ) + ':' + mw.config.get( "wgTitle" ) ;
+		var server = _server ;
+		var script = _script ;
+		var title = _title ;
 
 		var ed = tinymce.get(e.target.id);
 		if (ed == null) {
@@ -2756,13 +2649,16 @@ var BsWikiCode = function() {
 
 	/**
 	 *
+	 * This function looks up the real urls for image files from the wiki.
+	 * We do this here becuase it has to be done after all the image nodes
+	 * have been created
 	 */
 	function _loadImageRealUrls() {
 		var image;
 		var content;
 		var ed = _ed;
-		var server = mw.config.get( "wgServer" ) ;
-		var script = mw.config.get( 'wgScriptPath' ) + '/api.php';
+		var server = _server ;
+		var script = _script ;
 		for( var i = 0; i < _images.length; i ++ ) {
 			image = _images[i];
 			image["imageName"] = decodeURIComponent(image["imageName"]);
@@ -2797,7 +2693,10 @@ var BsWikiCode = function() {
 									var part1 = decodeURI( images[i].src );
 									var part2 = decodeURI( server + _imageDummyUrl + '?' + imageparts[1]) ;
 									part2 = part2.replace(/ /g,"_");
-									if ( part1 !== part2 ) {
+									// If the image name in the wikitext starts with a lowercase letter, part1
+									// will have it in lowercase while part2 (usually) will not. Lowercase both
+									// strings entirely to make sure that this test gets passed.
+									if ( part1.toLowerCase() !== part2.toLowerCase() ) {
 										continue;
 									}
 									//Last but not least set the url to the correct image
@@ -3017,8 +2916,8 @@ var BsWikiCode = function() {
 			titles += "|" + decodeURIComponent(internalLinksTitles[i].replace("_"," "));
 		}
 		/*DC now go and check the links to see if pages exist */
-		var server = mw.config.get( "wgServer" ) ;
-		var script = mw.config.get( 'wgScriptPath' ) + '/api.php';
+		var server = _server;
+		var script = _script;
 		var data = {'action': 'query','titles': titles,'format': 'json',};
 		$.ajax({
 			dataType: "json",
@@ -3088,4 +2987,4 @@ var BsWikiCode = function() {
 	};
 };
 
-tinymce.PluginManager.add('wikicode', BsWikiCode);
+tinymce.PluginManager.add('wikicode', TinyMCEWikiCode);
