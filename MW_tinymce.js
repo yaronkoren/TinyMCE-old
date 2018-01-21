@@ -33,7 +33,7 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 //          selector: '.tinymce',
           selector: '#wpTextbox1, .tinymce',
 	  branding: false,
-	  relative_urls: false,
+//	  relative_urls: false,
 //	  remove_script_host: false,
 	  document_base_url: mw.config.get( "wgServer" ),
 	  automatic_uploads: true,
@@ -73,7 +73,7 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 	  // the html mode for tag creation (we need xhtml)
 	  element_format: 'xhtml',
 	  // define the element what all inline elements needs to be wrapped in
-//	  forced_root_block: 'div',
+	  //forced_root_block: 'div',
 	  forced_root_block: false,
 	  forced_root_block_attrs: {
 		'class': 'bs_emptyline'
@@ -94,11 +94,17 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
           image_title: true,
           image_dimensions: true,
           image_advtab: true,
+	  image_class_list: [
+    		{title: mw.msg("tinymce-upload-type-label-file"), value: 'File'},
+    		{title: mw.msg("tinymce-upload-type-label-url"), value: 'URL'},
+    		{title: mw.msg("tinymce-upload-type-label-wik"), value: 'Wiki'}
+		],
           external_plugins: {
 //             'advlist': scriptPath + '/extensions/TinyMCE/tinymce/plugins/advlist/plugin.js',
              'anchor': scriptPath + '/extensions/TinyMCE/tinymce/plugins/anchor/plugin.js',
              'autolink': scriptPath + '/extensions/TinyMCE/tinymce/plugins/autolink/plugin.js',
              'autoresize': scriptPath + '/extensions/TinyMCE/tinymce/plugins/autoresize/plugin.js',
+             'autosave': scriptPath + '/extensions/TinyMCE/tinymce/plugins/autosave/plugin.js',
              'charmap': scriptPath + '/extensions/TinyMCE/tinymce/plugins/charmap/plugin.js',
              'colorpicker': scriptPath + '/extensions/TinyMCE/tinymce/plugins/colorpicker/plugin.js',
              'contextmenu': scriptPath + '/extensions/TinyMCE/tinymce/plugins/contextmenu/plugin.js',
@@ -112,7 +118,7 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
              'textcolor': scriptPath + '/extensions/TinyMCE/tinymce/plugins/textcolor/plugin.js',
              'visualblocks': scriptPath + '/extensions/TinyMCE/tinymce/plugins/visualblocks/plugin.js',
              'wikicode': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_wikicode/plugin.js',
-//             'wikiimage': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_image/plugin.js',
+             'wikiimage': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_image/plugin.js',
              'wikilink': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_link/plugin.js',
              'wikimagic': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_wikimagic/plugin.js',
              'wikipaste': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_paste/plugin.js',
@@ -145,21 +151,22 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 
              	function insertImage() {
                 	var editorid = editor.id;
-			var nodeID;
 			var node = editor.selection.getNode();
+			var nodeID;
+			var uploadType;
 			if (node.nodeName == 'IMG') {
-				var upLoadType = "local";
+				uploadType = "local";
 				nodeID = node.id;
 			} else {
-				var upLoadType = "file";
-				nodeID = "";
+				uploadType = "file";
+				nodeID = '';
 			}
 
                  	var uploadform = scriptPath + '/index.php?title=Special:TinyMCEUploadWindow&pfInputID=' + editorid + 
 				'&pfEditor=tinymce' + 
 				'&pfSelect=' + editor.selection.getContent() + 
 				'&pfNode=' + nodeID + 
-				'&wpSourceType=' + upLoadType ;
+				'&wpSourceType=' + uploadType ;
                  	$.fancybox([
                       		uploadform
                       		], {
@@ -269,32 +276,15 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 	file_picker_callback: function(cb, value, meta) {
 		var input = document.createElement('input');
 		input.setAttribute('type', 'file');
-		input.setAttribute('accept', 'image/*');
-    
-		// Note: In modern browsers input[type="file"] is functional without 
-		// even adding it to the DOM, but that might not be the case in some older
-		// or quirky browsers like IE, so you might want to add it to the DOM
-		// just in case, and visually hide it. And do not forget do remove it
-		// once you do not need it anymore.
-
 		input.onchange = function() {
 			var file = this.files[0];
       
 			var reader = new FileReader();
 			reader.onload = function (e) {
-				// Note: Now we need to register the blob in TinyMCEs image blob
-				// registry. In the next release this part hopefully won't be
-				// necessary, as we are looking to handle it internally.
-				var id = 'blobid' + (new Date()).getTime();
-				var blobCache =  tinymce.activeEditor.editorUpload.blobCache;
-				var base64 = reader.result.split(',')[1];
-				var blobInfo = blobCache.create(id, file, base64);
-				blobCache.add(blobInfo);
-
-				// call the callback and populate the Title field with the file name
-debugger;
-				cb(blobInfo.blobUri(), { src: file.name });
-//				cb(e.target.result, { src: file.name });
+				var fileContent = file;
+				// call the callback and populate the src field with the file name
+				// and srccontent field with the content of the file
+				cb(e.target.result, { srccontent: fileContent, src: file.name });
 			};
 			reader.readAsDataURL(file);
 		};
