@@ -144,7 +144,8 @@ class TinyMCEHooks {
 	 */
 	static function setGlobalJSVariables( &$vars, $out ) {
 		global $wgTinyMCEEnabled, $wgTinyMCEMacros;
-		global $wgParser;
+		global $wgParser, $wgCheckFileExtensions, $wgStrictFileExtensions;
+		global $wgFileExtensions, $wgFileBlacklist;
 
 		if ( !$wgTinyMCEEnabled ) {
 			return true;
@@ -174,6 +175,38 @@ class TinyMCEHooks {
 		$vars['wgTinyMCELanguage'] = $tinyMCELanguage;
 		$directionality = $context->getLanguage()->getDir();
 		$vars['wgTinyMCEDirectionality'] = $directionality;
+		$checkFileExtensions = $wgCheckFileExtensions;
+		$vars['wgTinyMCECheckFileExtensions'] = $checkFileExtensions ;
+		$strictFileExtensons = $wgStrictFileExtensions;
+		$vars['wgTinyMCEStrictFileExtensions'] = $strictFileExtensons ;
+		$allowedsFileExtensions = $wgFileExtensions;  
+		$vars['wgTinyMCEFileExtensions'] = $allowedsFileExtensions ;
+		$disallowedsFileExtensions = $wgFileBlacklist;
+		$vars['wgTinyMCEwgFileBlacklist'] = $disallowedsFileExtensions ;
+
+		$user = $context->getUser();
+
+		if ($user->isAllowed('upload')) {
+			$userMayUpload = true;
+		} else {
+			$userMayUpload = false;
+		}
+		$vars['wgTinyMCEUserMayUpload'] = $userMayUpload;
+
+		if ($user->isAllowed('upload_by_url')) {
+			$userMayUploadFromURL = true;
+		} else {
+			$userMayUploadFromURL= false;
+		}
+		$vars['wgTinyMCEUserMayUploadFromURL'] = $userMayUploadFromURL;
+
+		if ($user->isBlocked()) {
+			$userIsBlocked = true;
+		} else {
+			$userIsBlocked = false;
+		}
+		$vars['wgTinyMCEUserIsBlocked'] = $userIsBlocked ;
+
 
 		$jsMacroArray = array();
 		foreach ( $wgTinyMCEMacros as $macro ) {
