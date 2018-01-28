@@ -33,7 +33,7 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 //          selector: '.tinymce',
           selector: '#wpTextbox1, .tinymce',
 	  branding: false,
-	  relative_urls: false,
+//	  relative_urls: false,
 //	  remove_script_host: false,
 	  document_base_url: mw.config.get( "wgServer" ),
 	  automatic_uploads: true,
@@ -113,15 +113,15 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
              'textcolor': scriptPath + '/extensions/TinyMCE/tinymce/plugins/textcolor/plugin.js',
              'visualblocks': scriptPath + '/extensions/TinyMCE/tinymce/plugins/visualblocks/plugin.js',
              'wikicode': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_wikicode/plugin.js',
-//             'wikiimage': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_image/plugin.js',
              'wikilink': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_link/plugin.js',
              'wikimagic': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_wikimagic/plugin.js',
              'wikipaste': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_paste/plugin.js',
-             'wikisourcecode': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_code/plugin.js'
+             'wikisourcecode': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_code/plugin.js',
+             'wikiupload': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_upload/plugin.js'
           },
           menubar: false, //'edit insert view format table tools',
           removed_menuitems: 'media',
-          toolbar1: 'undo redo | cut copy paste insert | bold italic underline strikethrough subscript superscript forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | charmap singlelinebreak wikilink unlink table image wikiimageupload wikimagic wikisourcecode | formatselect removeformat | searchreplace ',
+          toolbar1: 'undo redo | cut copy paste insert | bold italic underline strikethrough subscript superscript forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | charmap singlelinebreak wikilink unlink table wikiupload wikiimageupload wikimagic wikisourcecode | formatselect removeformat | searchreplace ',
           style_formats_merge: true,
           style_formats: [
             {title: "Table", items: [
@@ -271,32 +271,15 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 	file_picker_callback: function(cb, value, meta) {
 		var input = document.createElement('input');
 		input.setAttribute('type', 'file');
-		input.setAttribute('accept', 'image/*');
-    
-		// Note: In modern browsers input[type="file"] is functional without 
-		// even adding it to the DOM, but that might not be the case in some older
-		// or quirky browsers like IE, so you might want to add it to the DOM
-		// just in case, and visually hide it. And do not forget do remove it
-		// once you do not need it anymore.
-
 		input.onchange = function() {
 			var file = this.files[0];
       
 			var reader = new FileReader();
 			reader.onload = function (e) {
-				// Note: Now we need to register the blob in TinyMCEs image blob
-				// registry. In the next release this part hopefully won't be
-				// necessary, as we are looking to handle it internally.
-				var id = 'blobid' + (new Date()).getTime();
-				var blobCache =  tinymce.activeEditor.editorUpload.blobCache;
-				var base64 = reader.result.split(',')[1];
-				var blobInfo = blobCache.create(id, file, base64);
-				blobCache.add(blobInfo);
-
-				// call the callback and populate the Title field with the file name
-debugger;
-				cb(blobInfo.blobUri(), { src: file.name });
-//				cb(e.target.result, { src: file.name });
+				var fileContent = file;
+				// call the callback and populate the src field with the file name
+				// and srccontent field with the content of the file
+				cb(e.target.result, { srccontent: fileContent, src: file.name });
 			};
 			reader.readAsDataURL(file);
 		};
