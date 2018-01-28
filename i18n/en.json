@@ -39,7 +39,7 @@
 	"tinymce-insertbtn": "Insert existing file",
 	"tinymce-uploadbtn": "Upload/Insert/Update file/link",
 	"tinymce-sideupload-drop-error": "Problem encountered uploading $1 directly from website. Try downloading to a local disk and using the insert image button to upload from there",
-	"tinymce-upload": "Upload/insert wiki image",
+	"tinymce-upload": "Upload & insert file",
 	"tooltip-tinymce-upload": "Start upload/insert file",
 	"tinymce-openlink": "Open link",
 	"tinymce-wikimagic": "Add wiki templates, parser functions and magic words",
@@ -47,5 +47,10 @@
 	"tinymce-wikisourcecode": "View and edit wiki source code",
 	"tinymce-wikisourcecode-title": "Wiki source code",
 	"tinymce-insert-linebreak": "Insert single linebreak at current position",
-	"tinymce-preference": "Use the TinyMCE editor to edit pages"
+	"tinymce-preference": "Use the TinyMCE editor to edit pages",
+	"tinymce-upload-type-label": "Upload type",
+	"tinymce-upload-type-label-file": "Local file",
+	"tinymce-upload-type-label-url": "URL",
+	"tinymce-upload-type-label-wiki": "File in this wiki",
+	"tinymce-upload-type-tooltip": "Enter the type of file you wish to upload: a Loal File which is on your device or a file located at a URL on the internet or display a file on this page which has already been uploaded onto this wiki"
 }
