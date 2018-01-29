@@ -135,7 +135,7 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 			
 			if (disallowedsFileExtensions) { 
 				for (fileExtension in disallowedsFileExtensions) {
-					if (disallowedsFileExtensions[fileExtension] == extension) {
+					if (disallowedsFileExtensions[fileExtension].toLowerCase() == extension.toLowerCase()) {
 						return false;
 					}
 				}
@@ -146,7 +146,7 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 				if (strictFileExtensons) {
 					extensionAllowed = false;
 					for (fileExtension in allowedsFileExtensions) {
-						if (allowedsFileExtensions[fileExtension] == extension) {
+						if (allowedsFileExtensions[fileExtension].toLowerCase() == extension.toLowerCase())
 							extensionAllowed = true;
 						}
 					}
