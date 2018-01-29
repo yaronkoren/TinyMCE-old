@@ -12,6 +12,7 @@
  */
 
 /*global tinymce:true */
+/*global mw:true */
 
 tinymce.PluginManager.add('wikiupload', function(editor) {
 

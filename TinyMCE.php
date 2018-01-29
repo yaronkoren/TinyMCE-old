@@ -92,6 +92,10 @@ $GLOBALS['wgResourceModules'] += array(
 		'dependencies' => 'ext.tinymce.fancybox',
 		'messages' => array(
 			'tinymce-upload',
+			'tinymce-upload-type-label-file',
+			'tinymce-upload-type-label-url',
+			'tinymce-upload-type-label-wiki',
+			'tinymce-upload-type-tooltip',
 			'tinymce-openlink',
 			'tinymce-wikimagic',
 			'tinymce-wikimagic-title',
