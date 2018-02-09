@@ -1236,7 +1236,7 @@ var BsWikiCode = function() {
 		var text = e.content;
 		
 		// save some effort if no tables
-		if (!text.match(/\<table\>/g)) return text;
+		if (!text.match(/\<table/g)) return text;
 
 		// protect new lines from being replaced by a space in the html domparser
 		text = text.replace(/\n/gmi, '@@NL@@');
