@@ -1875,9 +1875,18 @@ var BsWikiCode = function() {
 					break;
 				case '<br' :
 					if (listTag.length > 0) {
-						text = text.replace(/<br \/>/, "@@br_emptyline@@" + listTag + ": ");
+						text = text.replace(/<br \/>/, "<@@nl@@>" + listTag + ": ");
 					} else {
-						text = text.replace(/<br \/>/, "@@br_emptyline@@");
+						// replace  first <br /> with 2 new lines
+						// any <br />s that follow immediately will be
+						// replaced by single new lines
+						text = text.replace(/<br ?\/>/mi, "<@@2nl@@>");
+						currentPos = text.search(/(<br ?\/>)+/mi);
+						while (currentPos - 9 === nextPos) {
+							text = text.replace(/<br ?\/>/mi, "<@@nl@@>");
+							nextPos = currentPos - 1;
+							currentPos = text.search(/(<br ?\/>)+/mi);
+						}
 					}
 					break;
 			}
