@@ -73,10 +73,11 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 	  // the html mode for tag creation (we need xhtml)
 	  element_format: 'xhtml',
 	  // define the element what all inline elements needs to be wrapped in
-	  //forced_root_block: 'div',
-	  forced_root_block: false,
+//	  forced_root_block: 'div',
+//	  forced_root_block: false,
+	  forced_root_block: 'p',
 	  forced_root_block_attrs: {
-		'class': 'bs_emptyline'
+		'class': 'mw_paragraph'
 	  },
 	  // keep current style on pressing return
 	  keep_styles: true,
@@ -143,6 +144,17 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
           images_upload_credentials: true,
           autoresize_max_height: 400,
           setup: function(editor) {
+
+/*		editor.on('keypress', function(event) {
+debugger;
+			if (event.keyCode == 13)  {  //enter
+				event.preventDefault();
+				event.stopPropagation();
+				//do stuff here
+				alert("Enter!");
+			}
+			else{ alert (event.keyCode);}
+		});*/
 
              	function insertImage() {
                 	var editorid = editor.id;
