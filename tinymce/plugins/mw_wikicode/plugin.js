@@ -1234,7 +1234,6 @@ var BsWikiCode = function() {
 
 	function _tables2wiki(e) {
 		var text = e.content;
-		
 		// save some effort if no tables
 		if (!text.match(/\<table/g)) return text;
 
@@ -1704,6 +1703,7 @@ var BsWikiCode = function() {
 	 * @returns {String}
 	 */
 	function _html2wiki(e) {
+debugger;
 		var text = e.content;
 		// save some work, if the text is empty
 		if (text === '') {
@@ -1793,7 +1793,6 @@ var BsWikiCode = function() {
 			oldText = text;
 			switch (text.substr(nextPos, 2).toLowerCase()) {
 				case '<p' :
-
 					// Todo: putting these lines straight in row might lead to strange behaviour
 					currentPos = text.search(/<p[^>]*>(<span[^>]*bs_comment[^>]*>[\s\S]*?<\/span>[\s\S]*?)<\/p>/mi);
 					if (currentPos === nextPos) {
@@ -2944,9 +2943,11 @@ var BsWikiCode = function() {
 	 * @returns {String}
 	 */
 	function _preprocessHtml2Wiki( e ) {
+debugger;
 		// convert html text to DOM
 		var text = e.content;
 		var $dom = $( "<div id='tinywrapper'>" + text + "</div>" );
+		var frb, findText, replaceText, ed;
 
 		// perform the actual preprocessing
 		$dom.find( "span[style*='text-decoration: underline']" ).replaceWith( function() {
@@ -2970,8 +2971,39 @@ var BsWikiCode = function() {
 		text = text.replace(/(&[^\s]*?;)/gmi, function($0) {
 			return tinymce.DOM.decode($0);
 		});
+		//cleanup forced_root_block elements
+//TODO make this work whatever the forced_root_ block element is, even false
+		ed = tinymce.get(e.target.id);
+		if (ed == null) {
+			ed = tinymce.activeEditor;
+		}
+		frb = ed.getParam("forced_root_block")
+		//first clean when multiple enter keypresses one after another
+		text = text.replace(/<p class="mw_paragraph"><br data-mce-bogus="1"><\/p>/gmi, '<br class="bs_emptyline"><br class="bs_emptyline">');
+		//then replace forced_root_blocks with mediawiki paragraphs eg three new lines
+		text = text.replace(/<p class="mw_paragraph">(.*?)<\/p>/gmi, '$1<br class="bs_emptyline_first"><br class="bs_emptyline">');
 
 		return text;
+	}
+
+	/**
+	 * Event handler for "onKeyPress"
+	 * This is used to process "shift-enter" keypresses.
+	 * @param {tinymce.ContentEvent} e
+	 */
+	function _onKeyPress(e) {
+		// DC changes so that we always use 'raw' format
+		// if raw format is requested, this is usually for internal issues like
+		// undo/redo. So no additional processing should occur. Default is 'html'
+		if (e.format == 'raw' ) return;
+		e.format = 'raw';
+		if (e.load) {
+			e.content = _preprocessWiki2Html(e);
+		}
+		_images = []; //Reset the images "array"
+		e.content = _wiki2html(e);
+		_loadImageRealUrls();
+
 	}
 
 	/**
@@ -3102,6 +3134,18 @@ var BsWikiCode = function() {
 		ed.on('beforeSetContent', _onBeforeSetContent);
 		ed.on('getContent', _onGetContent);
 		ed.on('loadContent', _onLoadContent);
+/*		ed.on('keyPress', function (evt) {
+debugger;
+//				if(evt.shiftKey && evt.keyCode == 13) {
+				if(evt.keyCode == 13) {
+                	evt.preventDefault();
+                	evt.stopPropagation();
+					console.log('Key press event: ' + evt.keyCode)
+
+					//alert('shift + enter key');
+					return;
+				}
+			})*/
 	};
 
 	this.getSpecialTagList = function() {
