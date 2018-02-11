@@ -860,7 +860,8 @@ var BsWikiCode = function() {
 				}
 
 				link = link.replace( "@@PIPE@@", "|" );
-				text = text.replace("[[" + link + "]]", linkHtml);
+//				text = text.replace("[[" + link + "]]", linkHtml);
+				text = text.replace("[[" + link + "]]", '<div>' + linkHtml + '</div>');
 			}
 		}
 
@@ -1033,7 +1034,7 @@ var BsWikiCode = function() {
 	 * @param {String} text
 	 * @returns {String}
 	 */
-	function _tables2html(text) {
+	function _tables2html(text, embedded) {
 		var lines, line, innerLines, innerTable,
 			tableAttr, closeLine, attr, endTd,
 			tdText, tdAttr, cells, curLine,
@@ -1044,6 +1045,10 @@ var BsWikiCode = function() {
 			inTh = false,
 			start = 0,
 			nestLevel = 0;
+debugger;
+		if (typeof embedded == 'undefined') {
+			embedded = false;
+		}
 
 		// images or links in tables may contain | in their attributes, esp. in bs-data-*. These
 		// need to be properly escaped in order not to interfere with table syntax
@@ -1084,15 +1089,21 @@ var BsWikiCode = function() {
 						}
 					}
 					i++;
-					innerTable = _tables2html(innerLines);
+					embedded = true;
+					innerTable = _tables2html(innerLines, embedded);
 					lines.splice(i, 0, innerTable);
+					embedded = false;
 					continue;
 				}
 				tableAttr = line[0].substr(2, line[0].length);
 				if (tableAttr !== '') {
 					tableAttr = " " + tableAttr;
 				}
-				lines[i] = "<table" + tableAttr + ">";
+				if (embedded) {
+					lines[i] = "<table" + tableAttr + ">";
+				} else {
+					lines[i] = "<div><table" + tableAttr + ">";
+				}
 				start = i;
 				inTable = true;
 			} else if (line = lines[i].match(/^\|\}/gi)) {
@@ -1106,7 +1117,11 @@ var BsWikiCode = function() {
 				if (inTr) {
 					closeLine += "</tr>";
 				}
-				lines[i] = closeLine + "</table>" + line[0].substr(2, line[0].length);
+				if (embedded) {
+					lines[i] = closeLine + "</table>" + line[0].substr(2, line[0].length);
+				} else {
+					lines[i] = closeLine + "</table></div>" + line[0].substr(2, line[0].length);
+				}
 				inTr = inTd = inTh = inTable = false;
 			} else if ((i === (start + 1)) && (line = lines[i].match(/^\|\+(.*)/gi))) {
 				lines[i] = "<caption>" + line[0].substr(2) + "</caption>";
@@ -1300,9 +1315,11 @@ var BsWikiCode = function() {
 		text = text.replace(/<(\/)?tbody([^>]*)>/gmi, "");
 		text = text.replace(/<(\/)?thead([^>]*)>/gmi, "");
 		text = text.replace(/<(\/)?tfoot([^>]*)>/gmi, "");
-
-		text = text.replace(/\n?<table([^>]*)>/gmi, "<@@tnl@@>{" + pipeText + "$1");
-		text = text.replace(/\n?<\/table([^>]*)>/gi, "<@@tnl@@>" + pipeText + "}<@@tnl@@>");
+debugger;
+//		text = text.replace(/\n?<table([^>]*)>/gmi, "<@@tnl@@>{" + pipeText + "$1");
+		text = text.replace(/\n?(<div>)?<table([^>]*)>/gmi, "<@@tnl@@>{" + pipeText + "$1");
+//		text = text.replace(/\n?<\/table([^>]*)>/gi, "<@@tnl@@>" + pipeText + "}<@@tnl@@>");
+		text = text.replace(/\n?<\/table([^>]*)>(<\/div>)?/gi, "<@@tnl@@>" + pipeText + "}<@@tnl@@>");
 
 		// remove spurious new lines at start and end of tables
 //		text = text.replace(/<td><@@tnl@@>\{\|/gmi, "<td>{|"); // before table in table
@@ -1579,7 +1596,8 @@ var BsWikiCode = function() {
 		if( typeof lineStart == 'undefined' ) {
 			lineStart = '';
 		}
-		return lineStart + "<h" + level.length + ">" + content + "</h" + level.length + ">";
+//		return lineStart + "<h" + level.length + ">" + content + "</h" + level.length + ">";
+		return lineStart + "<div><h" + level.length + ">" + content + "</h" + level.length + "></div>";
 	}
 
 	/**
@@ -1697,6 +1715,115 @@ var BsWikiCode = function() {
 	function _htmlFindList(text) {
 		return text.search(/(<ul|<ol|<li( |>)|<\/?dl|<\/?dt|<blockquote[^>]*?>|<\/li( |>)|<\/ul|<\/ol|<\/blockquote|<p( |>)|<\/p( |>)|<h[1-6]|<hr|<br)/);
 	}
+
+	function _textStyles2wiki (text) {
+		text = text.replace(/<strong>(.*?)<\/strong>/gmi, "'''$1'''");
+		text = text.replace(/<b>(.*?)<\/b>/gmi, "'''$1'''");
+		text = text.replace(/<em>(.*?)<\/em>/gmi, "''$1''");
+		text = text.replace(/<i>(.*?)<\/i>/gmi, "''$1''");
+		//underline needs no conversion
+		text = text.replace(/<strike>(.*?)<\/strike>/gi, "<s>$1</s>");
+/*		text = text.replace(/<span style="text-decoration: line-through;">(.*?)<\/span>/gi, "<s>$1</s>");
+		text = text.replace(/<span style="text-decoration: underline;">(.*?)<\/span>/gi, "<u>$1</u>");*/
+		//sub and sup need no conversion
+		
+		text = text.replace(/\n?<p style="([^"]*?)">(.*?)<\/p>/gmi, "\n<div style='$1'>$2</div><@@nl@@>");
+		text = text.replace(/\n?<p style="text-align:\s?left;?">(.*?)<\/p>/gmi, "<@@nl@@><div style='text-align: left'>$1</div><@@nl@@>");
+		text = text.replace(/\n?<p style="text-align:\s?right;?">(.*?)<\/p>/gmi, "<@@nl@@><div style='text-align: right'>$1</div><@@nl@@>");
+		text = text.replace(/\n?<p style="text-align:\s?center;?">(.*?)<\/p>/gmi, "<@@nl@@><div style='text-align: center'>$1</div><@@nl@@>");
+		text = text.replace(/\n?<p style="text-align:\s?justify;?">(.*?)<\/p>/gmi, "<@@nl@@><div style='text-align: justify'>$1</div><@@nl@@>");
+		text = text.replace(/\n?<p style=('|")padding-left: 30px;('|")>([\S\s]*?)<\/p>/gmi, "<blockquote>$3</blockquote>");
+		text = text.replace(/\n?<p style=('|")padding-left: 60px;('|")>([\S\s]*?)<\/p>/gmi, "<blockquote><blockquote>$3</blockquote>");
+		text = text.replace(/\n?<p style=('|")padding-left: 90px;('|")>([\S\s]*?)<\/p>/gmi, "<blockquote><blockquote><blockquote>$3</blockquote>");
+
+		text = text.replace(/\n?<div style=('|")padding-left: 30px;('|")>([\S\s]*?)<\/div>/gmi, "<blockquote>$3</blockquote>");
+		text = text.replace(/\n?<div style=('|")padding-left: 60px;('|")>([\S\s]*?)<\/div>/gmi, "<blockquote><blockquote>$3</blockquote>");
+		text = text.replace(/\n?<div style=('|")padding-left: 90px;('|")>([\S\s]*?)<\/div>/gmi, "<blockquote><blockquote><blockquote>$3</blockquote>");
+
+		return text
+	}
+	
+	function _preserveNewLines4wiki (text) {
+debugger;
+		//TODO make this work whatever the forced_root_ block element is, even false
+		var frb, findText, replaceText, ed, currentPos, nextPos;
+		
+		ed = tinymce.activeEditor;
+		frb = ed.getParam("forced_root_block")
+		
+		//Remove \nl as they are not part of html formatting
+		text = text.replace(/\n/gi, "");
+		
+		//Process Enter Key (<p>) and Shift-Enter key (<br>)formatting
+		//first clean when multiple Enter keypresses one after another
+//		text = text.replace(/<p class="mw_paragraph"><br data-mce-bogus="1"><\/p>/gmi, '@@br_emptyline_first@@@@br_emptyline@@');
+		text = text.replace(/<p class="mw_paragraph"><br data-mce-bogus="1"><\/p>/gmi, '@@br_emptyline_first@@');
+		//then replace paragraphs containing only blank lines first followed by a <div> with just blank line
+		text = text.replace(/<p class="mw_paragraph"><br class="bs_emptyline_first"><\/p><div>/gmi, '@@br_emptyline@@<div>');		
+		//then replace paragraphs containing only blank lines first with just blank lines first
+		text = text.replace(/<p class="mw_paragraph"><br class="bs_emptyline_first"><\/p>/gmi, '@@br_emptyline_first@@');		
+		//then replace blank lines first followed by blank line at end of paragraph with blank line first
+		text = text.replace(/<br class="bs_emptyline_first"><br class="bs_emptyline"><\/p>/gmi, '@@br_emptyline_first@@</p>');		
+		//then replace blank lines first at end of paragraph with blank line
+		text = text.replace(/<br class="bs_emptyline_first"><\/p>/gmi, '@@br_emptyline@@</p>');		
+		//then replace Enter keypress followed by 'div's (eg table, lists etc, with a single empty line
+		text = text.replace(/<p class="mw_paragraph">(.*?)<\/p><div>/gmi, '$1@@br_emptyline@@<div>');
+		//then replace Enter keypress with wiki paragraph eg three new lines
+//		text = text.replace(/<p class="mw_paragraph">(.*?)<\/p>/gmi, '$1@@br_emptyline_first@@@@br_emptyline@@');
+		text = text.replace(/<p class="mw_paragraph">(.*?)<\/p>/gmi, '$1@@br_emptyline_first@@');
+		//finally replace Shift enters appropriate number of new lines eg two for first and one for immediately following
+		text = text.replace(/<br>/gmi, '@@br_emptyline_first@@');
+/*		currentPos = text.search(/(<br>)+/mi);
+		while (currentPos > -1) {
+			text = text.replace(/<br ?\/>/mi, '@@br_emptyline_first@@');
+			nextPos = currentPos - 1;	
+			currentPos = text.search(/(<br>)+/mi);	
+			while (currentPos - 9 === nextPos) {
+				text = text.replace(/<br>/mi, '@@br_emptyline@@');
+				currentPos = text.search(/(<br>)+/mi);
+				nextPos = currentPos - 1;
+			}
+		}*/
+				
+		text = text.replace(/<br class="bs_emptyline_first"[^>]*>/gmi, "@@br_emptyline_first@@");
+		// if emptyline_first is no longer empty, change it to a normal p
+//		text = text.replace(/<div class="bs_emptyline_first"[^>]*>&nbsp;<\/div>/gmi, '<div>@@br_emptyline_first@@</div>'); // TinyMCE 4
+//		text = text.replace(/<div class="bs_emptyline_first"[^>]*>(.*?\S+.*?)<\/div>/gmi, "<div>$1</div>");
+//		text = text.replace(/<div class="bs_emptyline_first"[^>]*>.*?<\/div>/gmi, "<div>@@br_emptyline_first@@</div>");
+//		text = text.replace(/<div>@@br_emptyline_first@@<\/div>/gmi, "@@br_emptyline_first@@");
+		text = text.replace(/<br class="bs_emptyline"[^>]*>/gmi, "@@br_emptyline@@");
+		//text = text.replace(/<br>/gmi, "@@br_emptyline@@");
+		// if emptyline is no longer empty, change it to a normal p
+//		text = text.replace(/<div class="bs_emptyline"[^>]*>&nbsp;<\/div>/gmi, '<div>@@br_emptyline@@</div>'); // TinyMCE 4
+//		text = text.replace(/<div class="bs_emptyline"[^>]*>(.*?\S+.*?)<\/div>/gmi, "<div>$1</div>"); //doesn't replace 2nd occurence
+//		text = text.replace(/<div class="bs_emptyline"[^>]*>(.*?)<\/div>/gmi, "<div>@@br_emptyline@@</div>");//file 10
+		text = text.replace(/<br mce_bogus="1"\/>/gmi, "");
+		//DC added next line to remove stray bougs data placeholders
+		text = text.replace(/<br data-mce-bogus="1">/gmi, "");
+
+		text = text.replace(/<br.*?>/gi, function(match, offset, string) {
+			var attributes = $(match).attr('data-attributes');
+			if (typeof attributes === 'undefined' || attributes == "") {
+				attributes = ' /';
+			}
+			return '<br' + decodeURI(attributes) + '>';
+		});
+		
+		return text;
+	}
+	
+	function _variableAndSpecialSpans2wiki (text) {
+		text = text.replace(/(<span class="variable">(.*?)<\/span>)/gmi, "$2");
+		text = text.replace(/(<span class="special">(.*?)<\/span>)/gmi, "$2");
+		return text;
+	}
+	
+	function _divs2wiki (text) {
+		text = text.replace(/<\/div>\n?/gmi, "</div>\n");
+		text = text.replace(/<div>(.*?)<\/div>/gmi, "$1");
+		return text;
+	}
+	
 	/**
 	 *
 	 * @param {String} text
@@ -1717,72 +1844,22 @@ debugger;
 		$(document).trigger('TinyMCEBeforeHtmlToWiki', [textObject]);
 		// get the text back
 		text = textObject.text;
-		// Normalize UTF8 spaces as of TinyMCE 3.4.9
+		// normalize UTF8 spaces as of TinyMCE 3.4.9
 		text = text.replace(/\u00a0/gi, '');
-		//Save content of pre tags
+		// save content of pre tags
 		text = _preservePres(text);
-
-		text = text.replace(/\n/gi, "");
-
-		text = text.replace(/<strong>(.*?)<\/strong>/gmi, "'''$1'''");
-		text = text.replace(/<b>(.*?)<\/b>/gmi, "'''$1'''");
-		text = text.replace(/<em>(.*?)<\/em>/gmi, "''$1''");
-		text = text.replace(/<i>(.*?)<\/i>/gmi, "''$1''");
-		//underline needs no conversion
-		text = text.replace(/<strike>(.*?)<\/strike>/gi, "<s>$1</s>");
-/*		text = text.replace(/<span style="text-decoration: line-through;">(.*?)<\/span>/gi, "<s>$1</s>");
-		text = text.replace(/<span style="text-decoration: underline;">(.*?)<\/span>/gi, "<u>$1</u>");*/
-		//sub and sup need no conversion
-		text = text.replace(/<br class="bs_emptyline_first"[^>]*>/gmi, "@@br_emptyline_first@@");
-		// if emptyline_first is no longer empty, change it to a normal p
-		text = text.replace(/<div class="bs_emptyline_first"[^>]*>&nbsp;<\/div>/gmi, '<div>@@br_emptyline_first@@</div>'); // TinyMCE 4
-		text = text.replace(/<div class="bs_emptyline_first"[^>]*>(.*?\S+.*?)<\/div>/gmi, "<div>$1</div>");
-		text = text.replace(/<div class="bs_emptyline_first"[^>]*>.*?<\/div>/gmi, "<div>@@br_emptyline_first@@</div>");
-		text = text.replace(/<div>@@br_emptyline_first@@<\/div>/gmi, "@@br_emptyline_first@@");
-		text = text.replace(/<br class="bs_emptyline"[^>]*>/gmi, "@@br_emptyline@@");
-		//text = text.replace(/<br>/gmi, "@@br_emptyline@@");
-		// if emptyline is no longer empty, change it to a normal p
-		text = text.replace(/<div class="bs_emptyline"[^>]*>&nbsp;<\/div>/gmi, '<div>@@br_emptyline@@</div>'); // TinyMCE 4
-		text = text.replace(/<div class="bs_emptyline"[^>]*>(.*?\S+.*?)<\/div>/gmi, "<div>$1</div>"); //doesn't replace 2nd occurence
-		text = text.replace(/<div class="bs_emptyline"[^>]*>(.*?)<\/div>/gmi, "<div>@@br_emptyline@@</div>");//file 10
-		text = text.replace(/<br mce_bogus="1"\/>/gmi, "");
-		//DC added next line to remove stray bougs data placeholders
-		text = text.replace(/<br data-mce-bogus="1">/gmi, "");
-
-		text = text.replace(/<br.*?>/gi, function(match, offset, string) {
-			var attributes = $(match).attr('data-attributes');
-			if (typeof attributes === 'undefined' || attributes == "") {
-				attributes = ' /';
-			}
-			return '<br' + decodeURI(attributes) + '>';
-		});
-
-		text = text.replace(/(<span class="variable">(.*?)<\/span>)/gmi, "$2");
-		text = text.replace(/(<span class="special">(.*?)<\/span>)/gmi, "$2");
-
+		// convert text decorations
+		text = _textStyles2wiki(text);
+		// preserve new lines
+		text = _preserveNewLines4wiki(text);
+		// convert variable and specia spans
+		text = _variableAndSpecialSpans2wiki(text);
+		// convert images
 		text = _image2wiki(text);
+		//convert links
 		text = _links2wiki(text);
-
-		// @todo this needs to be placed in front of the blocklevel or put within
-		text = text.replace(/\n?<p style="([^"]*?)">(.*?)<\/p>/gmi, "\n<div style='$1'>$2</div><@@nl@@>");
-		text = text.replace(/\n?<p style="text-align:\s?left;?">(.*?)<\/p>/gmi, "<@@nl@@><div style='text-align: left'>$1</div><@@nl@@>");
-		text = text.replace(/\n?<p style="text-align:\s?right;?">(.*?)<\/p>/gmi, "<@@nl@@><div style='text-align: right'>$1</div><@@nl@@>");
-		text = text.replace(/\n?<p style="text-align:\s?center;?">(.*?)<\/p>/gmi, "<@@nl@@><div style='text-align: center'>$1</div><@@nl@@>");
-		text = text.replace(/\n?<p style="text-align:\s?justify;?">(.*?)<\/p>/gmi, "<@@nl@@><div style='text-align: justify'>$1</div><@@nl@@>");
-
-		text = text.replace(/<\/div>\n?/gmi, "</div>\n");
-
-		text = text.replace(/\n?<p style=('|")padding-left: 30px;('|")>([\S\s]*?)<\/p>/gmi, "<blockquote>$3</blockquote>");
-		text = text.replace(/\n?<p style=('|")padding-left: 60px;('|")>([\S\s]*?)<\/p>/gmi, "<blockquote><blockquote>$3</blockquote>");
-		text = text.replace(/\n?<p style=('|")padding-left: 90px;('|")>([\S\s]*?)<\/p>/gmi, "<blockquote><blockquote><blockquote>$3</blockquote>");
-
-		text = text.replace(/\n?<div style=('|")padding-left: 30px;('|")>([\S\s]*?)<\/div>/gmi, "<blockquote>$3</blockquote>");
-		text = text.replace(/\n?<div style=('|")padding-left: 60px;('|")>([\S\s]*?)<\/div>/gmi, "<blockquote><blockquote>$3</blockquote>");
-		text = text.replace(/\n?<div style=('|")padding-left: 90px;('|")>([\S\s]*?)<\/div>/gmi, "<blockquote><blockquote><blockquote>$3</blockquote>");
-
-		//replace simple divs by p
-//		text = text.replace(/<div>(.*?)<\/div>/gmi, "<p>$1</p>");
-		text = text.replace(/<div>(.*?)<\/div>/gmi, "$1");
+		//convert divs
+		text = _divs2wiki(text);
 
 		var listTag, currentPos, nextPos, oldText;
 		listTag = '';
@@ -1873,6 +1950,7 @@ debugger;
 					}
 					break;
 				case '<br' :
+				//TODO check this now works as simple <br>s were preserved in preserveNewLines4wiki function
 					if (listTag.length > 0) {
 						text = text.replace(/<br \/>/, "<@@nl@@>" + listTag + ": ");
 					} else {
@@ -2947,7 +3025,6 @@ debugger;
 		// convert html text to DOM
 		var text = e.content;
 		var $dom = $( "<div id='tinywrapper'>" + text + "</div>" );
-		var frb, findText, replaceText, ed;
 
 		// perform the actual preprocessing
 		$dom.find( "span[style*='text-decoration: underline']" ).replaceWith( function() {
@@ -2972,38 +3049,8 @@ debugger;
 			return tinymce.DOM.decode($0);
 		});
 		//cleanup forced_root_block elements
-//TODO make this work whatever the forced_root_ block element is, even false
-		ed = tinymce.get(e.target.id);
-		if (ed == null) {
-			ed = tinymce.activeEditor;
-		}
-		frb = ed.getParam("forced_root_block")
-		//first clean when multiple enter keypresses one after another
-		text = text.replace(/<p class="mw_paragraph"><br data-mce-bogus="1"><\/p>/gmi, '<br class="bs_emptyline"><br class="bs_emptyline">');
-		//then replace forced_root_blocks with mediawiki paragraphs eg three new lines
-		text = text.replace(/<p class="mw_paragraph">(.*?)<\/p>/gmi, '$1<br class="bs_emptyline_first"><br class="bs_emptyline">');
 
 		return text;
-	}
-
-	/**
-	 * Event handler for "onKeyPress"
-	 * This is used to process "shift-enter" keypresses.
-	 * @param {tinymce.ContentEvent} e
-	 */
-	function _onKeyPress(e) {
-		// DC changes so that we always use 'raw' format
-		// if raw format is requested, this is usually for internal issues like
-		// undo/redo. So no additional processing should occur. Default is 'html'
-		if (e.format == 'raw' ) return;
-		e.format = 'raw';
-		if (e.load) {
-			e.content = _preprocessWiki2Html(e);
-		}
-		_images = []; //Reset the images "array"
-		e.content = _wiki2html(e);
-		_loadImageRealUrls();
-
 	}
 
 	/**
