@@ -144,7 +144,9 @@ class TinyMCEHooks {
 	 */
 	static function setGlobalJSVariables( &$vars, $out ) {
 		global $wgTinyMCEEnabled, $wgTinyMCEMacros;
-		global $wgParser;
+		global $wgParser, $wgCheckFileExtensions, $wgStrictFileExtensions;
+		global $wgFileExtensions, $wgFileBlacklist;
+		global $wgEnableUploads;
 
 		if ( !$wgTinyMCEEnabled ) {
 			return true;
@@ -174,6 +176,11 @@ class TinyMCEHooks {
 		$vars['wgTinyMCELanguage'] = $tinyMCELanguage;
 		$directionality = $context->getLanguage()->getDir();
 		$vars['wgTinyMCEDirectionality'] = $directionality;
+		$vars['wgCheckFileExtensions'] = $wgCheckFileExtensions;
+		$vars['wgStrictFileExtensions'] = $wgStrictFileExtensions;
+		$vars['wgFileExtensions'] = $wgFileExtensions;  
+		$vars['wgFileBlacklist'] = $wgFileBlacklist;
+		$vars['wgEnableUploads'] = $wgEnableUploads;
 
 		$jsMacroArray = array();
 		foreach ( $wgTinyMCEMacros as $macro ) {
