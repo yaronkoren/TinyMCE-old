@@ -74,9 +74,10 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 	  element_format: 'xhtml',
 	  // define the element what all inline elements needs to be wrapped in
 	  //forced_root_block: 'div',
-	  forced_root_block: false,
+	  //forced_root_block: false,
+	  forced_root_block: 'p',
 	  forced_root_block_attrs: {
-		'class': 'bs_emptyline'
+		'class': 'mw_paragraph'
 	  },
 	  // keep current style on pressing return
 	  keep_styles: true,
