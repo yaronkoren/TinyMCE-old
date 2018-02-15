@@ -1949,14 +1949,14 @@ debugger;
 	});
 
 	editor.addButton('image', {
-		icon: 'upload',
+		icon: 'image',
 		tooltip: 'Insert/edit image',
 		onclick: showDialog,
 		stateSelector: 'img:not([data-mce-object],[data-mce-placeholder]),figure.image'
 	});
 
 	editor.addMenuItem('image', {
-		icon: 'upload',
+		icon: 'image',
 		text: 'Image',
 		onclick: showDialog,
 		context: 'insert',
