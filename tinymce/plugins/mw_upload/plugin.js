@@ -1097,14 +1097,14 @@ editor.windowManager.open({
 	});
 
 	editor.addButton('wikiupload', {
-		icon: 'upload',
+		icon: 'image',
 		tooltip: 'Upload/edit file',
 		onclick: showDialog,
 		stateSelector: 'img:not([data-mce-object],[data-mce-placeholder]),figure.image'
 	});
 
 	editor.addMenuItem('wikiupload', {
-		icon: 'upload',
+		icon: 'image',
 		text: 'Upload/edit file',
 		onclick: showDialog,
 		context: 'upload',
