@@ -122,15 +122,16 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 				userMayUploadFromURL = true;;
 				return true;
 			}
-			return false;
+
+			return true;
 		}
 
 		// check if files of with given extension are allowed to be uploaded
 		function checkFileExtensionIsAllowed(extension) {
-			var checkFileExtensions = (mw.config.get( 'wgTinyMCECheckFileExtensions' )),
-				strictFileExtensons = (mw.config.get( 'wgTinyMCEStrictFileExtensions' )),
-				allowedsFileExtensions = (mw.config.get( 'wgTinyMCEFileExtensions' )),
-				disallowedsFileExtensions = (mw.config.get( 'wgTinyMCEFileBlacklist' )),
+			var checkFileExtensions = (mw.config.get( 'wgCheckFileExtensions' )),
+				strictFileExtensons = (mw.config.get( 'wgStrictFileExtensions' )),
+				allowedsFileExtensions = (mw.config.get( 'wgFileExtensions' )),
+				disallowedsFileExtensions = (mw.config.get( 'wgFileBlacklist' )),
 				extensionAllowed;
 
 			if (disallowedsFileExtensions) {

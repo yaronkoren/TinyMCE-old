@@ -182,6 +182,29 @@ class TinyMCEHooks {
 		$vars['wgFileBlacklist'] = $wgFileBlacklist;
 		$vars['wgEnableUploads'] = $wgEnableUploads;
 
+		$user = $context->getUser();
+
+		if ($user->isAllowed('upload')) {
+			$userMayUpload = true;
+		} else {
+			$userMayUpload = false;
+		}
+		$vars['wgTinyMCEUserMayUpload'] = $userMayUpload;
+
+		if ($user->isAllowed('upload_by_url')) {
+			$userMayUploadFromURL = true;
+		} else {
+			$userMayUploadFromURL= false;
+		}
+		$vars['wgTinyMCEUserMayUploadFromURL'] = $userMayUploadFromURL;
+
+		if ($user->isBlocked()) {
+			$userIsBlocked = true;
+		} else {
+			$userIsBlocked = false;
+		}
+		$vars['wgTinyMCEUserIsBlocked'] = $userIsBlocked ;
+
 		$jsMacroArray = array();
 		foreach ( $wgTinyMCEMacros as $macro ) {
 			if ( !array_key_exists( 'name', $macro ) || !array_key_exists( 'text', $macro ) ) {
