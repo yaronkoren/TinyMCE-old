@@ -1547,7 +1547,8 @@ debugger;
 							//do nothing
 						} else {
 //dc 29122017				lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_first"/></div>';
-							lines[i] = lines[i] + '<br class="bs_emptyline_first"/>';
+							//lines[i] = lines[i] + '<br class="bs_emptyline_first"/>';
+							lines[i] = lines[i] + '<br class="bs_emptyline_first"/><br class="bs_emptyline_first"/>';
 						}
 						inParagraph = true;
 					} else {// this is already in a paragraph
@@ -1769,8 +1770,8 @@ debugger;
 		//then replace Enter keypress followed by 'div's (eg table, lists etc, with a single empty line
 		text = text.replace(/<p class="mw_paragraph">(.*?)<\/p><div>/gmi, '$1@@br_emptyline@@<div>');
 		//then replace Enter keypress with wiki paragraph eg three new lines
-//		text = text.replace(/<p class="mw_paragraph">(.*?)<\/p>/gmi, '$1@@br_emptyline_first@@@@br_emptyline@@');
-		text = text.replace(/<p class="mw_paragraph">(.*?)<\/p>/gmi, '$1@@br_emptyline_first@@');
+		text = text.replace(/<p class="mw_paragraph">(.*?)<\/p>/gmi, '$1@@br_emptyline_first@@@@br_emptyline@@');
+//		text = text.replace(/<p class="mw_paragraph">(.*?)<\/p>/gmi, '$1@@br_emptyline_first@@');
 		//finally replace Shift enters appropriate number of new lines eg two for first and one for immediately following
 		text = text.replace(/<br>/gmi, '@@br_emptyline_first@@');
 /*		currentPos = text.search(/(<br>)+/mi);
@@ -1860,6 +1861,8 @@ debugger;
 		text = _links2wiki(text);
 		//convert divs
 		text = _divs2wiki(text);
+
+		text = text.replace(/@@br_emptyline_first@@/gi, "<br />");
 
 		var listTag, currentPos, nextPos, oldText;
 		listTag = '';
@@ -1954,6 +1957,8 @@ debugger;
 					if (listTag.length > 0) {
 						text = text.replace(/<br \/>/, "<@@nl@@>" + listTag + ": ");
 					} else {
+						text = text.replace(/<br ?\/>/gi, "<@@nl@@>");
+/*
 						// replace  first <br /> with 2 new lines
 						// any <br />s that follow immediately will be
 						// replaced by single new lines
@@ -1964,6 +1969,7 @@ debugger;
 							nextPos = currentPos - 1;
 							currentPos = text.search(/(<br ?\/>)+/mi);
 						}
+*/
 					}
 					break;
 			}
