@@ -1957,7 +1957,7 @@ debugger;
 					if (listTag.length > 0) {
 						text = text.replace(/<br \/>/, "<@@nl@@>" + listTag + ": ");
 					} else {
-						text = text.replace(/<br ?\/>/gi, "<@@nl@@>");
+						text = text.replace(/<br ?\/>/, "<@@nl@@>");
 /*
 						// replace  first <br /> with 2 new lines
 						// any <br />s that follow immediately will be
