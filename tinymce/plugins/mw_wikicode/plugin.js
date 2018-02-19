@@ -1631,8 +1631,13 @@ debugger;
 		text = text.replace(/\n\|\}\n?/gmi, '\n\|\}\n');
 
 		// br preprocessing
-		text = text.replace(/<br(.*?)>/gi, function(match, p1, offset, string) {
-			return '<br data-attributes="' + encodeURI(p1) + '" />'; // @todo: Use JSON.stringify
+		text = text.replace(/<br(.*?)\/?>/gi, function(match, p1, offset, string) {
+			p1 = p1.trim();
+			if ( p1 == '' ) {
+				return '<br />';
+			} else {
+				return '<br data-attributes="' + encodeURI(p1) + '" />'; // @todo: Use JSON.stringify
+			}
 		});
 
 		// simple formatting
@@ -1773,7 +1778,7 @@ debugger;
 		text = text.replace(/<p class="mw_paragraph">(.*?)<\/p>/gmi, '$1@@br_emptyline_first@@@@br_emptyline@@');
 //		text = text.replace(/<p class="mw_paragraph">(.*?)<\/p>/gmi, '$1@@br_emptyline_first@@');
 		//finally replace Shift enters appropriate number of new lines eg two for first and one for immediately following
-		text = text.replace(/<br>/gmi, '@@br_emptyline_first@@');
+//		text = text.replace(/<br>/gmi, '@@br_emptyline_first@@');
 /*		currentPos = text.search(/(<br>)+/mi);
 		while (currentPos > -1) {
 			text = text.replace(/<br ?\/>/mi, '@@br_emptyline_first@@');
@@ -1805,11 +1810,11 @@ debugger;
 		text = text.replace(/<br.*?>/gi, function(match, offset, string) {
 			var attributes = $(match).attr('data-attributes');
 			if (typeof attributes === 'undefined' || attributes == "") {
-				attributes = ' /';
+				return '<br class="single_linebreak"/>';
 			}
 			return '<br' + decodeURI(attributes) + '>';
 		});
-		
+
 		return text;
 	}
 	
@@ -1955,9 +1960,13 @@ debugger;
 				case '<br' :
 				//TODO check this now works as simple <br>s were preserved in preserveNewLines4wiki function
 					if (listTag.length > 0) {
-						text = text.replace(/<br \/>/, "<@@nl@@>" + listTag + ": ");
+						text = text.replace(/<br .*?\/>/, "<@@nl@@>" + listTag + ": ");
 					} else {
-						text = text.replace(/<br ?\/>/, "<@@nl@@>");
+						if (text.search(/<br class="single_linebreak"/) === nextPos) {
+							text = text.replace(/<br .*?\/>/, "<@@1nl@@>");
+						} else {
+							text = text.replace(/<br .*?\/>/, "<@@nl@@>");
+						}
 /*
 						// replace  first <br /> with 2 new lines
 						// any <br />s that follow immediately will be
@@ -2100,6 +2109,7 @@ debugger;
 		text = text.replace(/\n*/gi, '');
 		text = text.replace(/<br \/><br \/>/gmi, "\n");
 		text = text.replace(/<br \/>/gmi, "");
+		text = text.replace(/<@@1nl@@>/gmi, "<br />\n");
 		text = text.replace(/<@@2nl@@>/gmi, "\n\n");
 		text = text.replace(/<@@nl@@>/gmi, "\n");
 
@@ -2864,7 +2874,8 @@ debugger;
 			return $0;
 		}
 		_processFlag = true;
-		return $1 + $2 + "<span class='single_linebreak' title='single linebreak'>&para;<\/span>" + $3;
+		//return $1 + $2 + "<span class='single_linebreak' title='single linebreak'>&para;<\/span>" + $3;
+		return $1 + $2 + $3;
 	}
 
 	/**
