@@ -288,6 +288,8 @@ class TinyMCEHooks {
 
 		$output->addModules( 'ext.tinymce' );
 
+		$output->addHTML( Html::rawElement( 'p', null, wfMessage( 'tinymce-notice' )->parse() ) );
+
 		return true;
 	}
 
