@@ -860,8 +860,7 @@ var BsWikiCode = function() {
 				}
 
 				link = link.replace( "@@PIPE@@", "|" );
-//				text = text.replace("[[" + link + "]]", linkHtml);
-				text = text.replace("[[" + link + "]]", '<div>' + linkHtml + '</div>');
+				text = text.replace("[[" + link + "]]", linkHtml);
 			}
 		}
 
