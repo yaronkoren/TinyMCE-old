@@ -1747,30 +1747,33 @@ debugger;
 
 		return text
 	}
-	
+
 	function _preserveNewLines4wiki (text) {
 debugger;
 		//TODO make this work whatever the forced_root_ block element is, even false
 		var frb, findText, replaceText, ed, currentPos, nextPos;
-		
+
 		ed = tinymce.activeEditor;
 		frb = ed.getParam("forced_root_block")
-		
+
 		//Remove \nl as they are not part of html formatting
 		text = text.replace(/\n/gi, "");
-		
+
 		//Process Enter Key (<p>) and Shift-Enter key (<br>)formatting
 		//first clean when multiple Enter keypresses one after another
 //		text = text.replace(/<p class="mw_paragraph"><br data-mce-bogus="1"><\/p>/gmi, '@@br_emptyline_first@@@@br_emptyline@@');
 		text = text.replace(/<p class="mw_paragraph"><br data-mce-bogus="1"><\/p>/gmi, '@@br_emptyline_first@@');
 		//then replace paragraphs containing only blank lines first followed by a <div> with just blank line
-		text = text.replace(/<p class="mw_paragraph"><br class="bs_emptyline_first"><\/p><div>/gmi, '@@br_emptyline@@<div>');		
+		//text = text.replace(/<p class="mw_paragraph"><br class="bs_emptyline_first"><\/p><div>/gmi, '@@br_emptyline@@<div>');
 		//then replace paragraphs containing only blank lines first with just blank lines first
-		text = text.replace(/<p class="mw_paragraph"><br class="bs_emptyline_first"><\/p>/gmi, '@@br_emptyline_first@@');		
+		//text = text.replace(/<p class="mw_paragraph"><br class="bs_emptyline_first"><\/p>/gmi, '@@br_emptyline_first@@');
+		text = text.replace(/<p class="mw_paragraph"><br class="bs_emptyline_first">/gmi, '<p class="mw_paragraph">');
 		//then replace blank lines first followed by blank line at end of paragraph with blank line first
-		text = text.replace(/<br class="bs_emptyline_first"><br class="bs_emptyline"><\/p>/gmi, '@@br_emptyline_first@@</p>');		
+		//text = text.replace(/<br class="bs_emptyline_first"><br class="bs_emptyline"><\/p>/gmi, '@@br_emptyline_first@@</p>');
 		//then replace blank lines first at end of paragraph with blank line
-		text = text.replace(/<br class="bs_emptyline_first"><\/p>/gmi, '@@br_emptyline@@</p>');		
+		//text = text.replace(/<br class="bs_emptyline_first"><\/p>/gmi, '@@br_emptyline@@</p>');
+		text = text.replace(/<br class="bs_emptyline_first"><\/p>/gmi, '</p>');
+		text = text.replace(/<br class="bs_emptyline"><\/p>/gmi, '</p>');
 		//then replace Enter keypress followed by 'div's (eg table, lists etc, with a single empty line
 		text = text.replace(/<p class="mw_paragraph">(.*?)<\/p><div>/gmi, '$1@@br_emptyline@@<div>');
 		//then replace Enter keypress with wiki paragraph eg three new lines
@@ -1781,15 +1784,15 @@ debugger;
 /*		currentPos = text.search(/(<br>)+/mi);
 		while (currentPos > -1) {
 			text = text.replace(/<br ?\/>/mi, '@@br_emptyline_first@@');
-			nextPos = currentPos - 1;	
-			currentPos = text.search(/(<br>)+/mi);	
+			nextPos = currentPos - 1;
+			currentPos = text.search(/(<br>)+/mi);
 			while (currentPos - 9 === nextPos) {
 				text = text.replace(/<br>/mi, '@@br_emptyline@@');
 				currentPos = text.search(/(<br>)+/mi);
 				nextPos = currentPos - 1;
 			}
 		}*/
-				
+
 		text = text.replace(/<br class="bs_emptyline_first"[^>]*>/gmi, "@@br_emptyline_first@@");
 		// if emptyline_first is no longer empty, change it to a normal p
 //		text = text.replace(/<div class="bs_emptyline_first"[^>]*>&nbsp;<\/div>/gmi, '<div>@@br_emptyline_first@@</div>'); // TinyMCE 4
@@ -1816,19 +1819,19 @@ debugger;
 
 		return text;
 	}
-	
+
 	function _variableAndSpecialSpans2wiki (text) {
 		text = text.replace(/(<span class="variable">(.*?)<\/span>)/gmi, "$2");
 		text = text.replace(/(<span class="special">(.*?)<\/span>)/gmi, "$2");
 		return text;
 	}
-	
+
 	function _divs2wiki (text) {
 		text = text.replace(/<\/div>\n?/gmi, "</div>\n");
 		text = text.replace(/<div>(.*?)<\/div>/gmi, "$1");
 		return text;
 	}
-	
+
 	/**
 	 *
 	 * @param {String} text
