@@ -11,6 +11,7 @@ var tinyMCEMacros = mw.config.get( 'wgTinyMCEMacros' );
 
 jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
   function() {
+/*
 	$('.tinymce').each( function() {
 		$(this).before("<p><a class=\"toggleMCE\" data-current-state=\"enabled\" data-input-id=\"" +
 			$(this).attr('id') + "\" href=\"javascript:void(0)\">Switch to basic editor</a></p>");
@@ -28,6 +29,7 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 		// Prevent reload of the page.
 		return false;
 	});
+*/
 
       window.tinymce.init({ 
 //          selector: '.tinymce',
@@ -90,7 +92,7 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 	  body_id: 'bodyContent',
 	  //Allowable file typr for file picker
   	  file_picker_types: 'file image media', 
-          //Enable/diasable options in upload popup
+          //Enable/disable options in upload popup
           image_description: true,
           image_title: true,
           image_dimensions: true,
