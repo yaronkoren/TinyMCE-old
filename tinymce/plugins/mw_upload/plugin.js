@@ -7,7 +7,7 @@
  * License: http://www.tinymce.com/license
  * Contributing: http://www.tinymce.com/contributing
  *
- * Modified to work with Mediawiki 
+ * Modified to work with Mediawiki
  * Duncan Crane duncan.crane@aoxomoxoa.co.uk
  */
 
@@ -20,11 +20,16 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 		_srccontent,
 		_userThumbsize = 3,
 		_thumbsizes = ['120', '150', '180', '200', '250', '300'];
-		
+
 	_userThumbsize = _thumbsizes[ mw.user ? mw.user.options.get('thumbsize') : 3 ];
+	
+//DC always have the advtab leave for now incase want to repurpos?
+/*	if (!editor.settings.image_advtab) {
+		return;
+	}*/
 
 	var scriptPath = mw.config.get( 'wgScriptPath' );
-	
+
 /***************
 
 			data = dom.getAttribs(imgElm);
@@ -42,14 +47,14 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 				data[data-bs-frameless] = 'true' ;
 			} else if (e.data.format === 'border') {
 				data[data-bs-border] = 'true' ;
-			} 
+			}
 			if (e.data.format === 'thumb' || e.data.format === 'frame') {
 				data.style += 'border:1px solid #CCCCCC;';
 				if (e.data.format === 'thumb') {
 					pclass = 'thumb ';
 				} else  {
 					pclass = 'thumbimage ';
-				}	
+				}
 				if (e.data.horizontalalign === 'none'){
 					data.style += 'float:right;';
 					data.style += 'clear:right;';
@@ -64,12 +69,12 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 				data.style += 'clear:none;';
 				data.style += 'margin-left:auto;';
 				data.style += 'margin-right:auto;';
-				if (width) { 
+				if (width) {
 					data.style += 'width:' + width + ';';
 				} else {
 					data.style += 'width:auto;';
 				}
-				if (height) { 
+				if (height) {
 					data.style += 'height:' + height + ';';
 				}
 			} else if (data.horizontalalignment === 'right') {
@@ -88,10 +93,10 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 			}*/
 
 	// display and process upload form
-	function showDialog(dialogData) { 
+	function showDialog(dialogData) {
 		var format, pclass, win, data = {}, dom = editor.dom, imgElm, figureElm, srcType = 'File';
 		var width, height, link, imageListCtrl, classListCtrl, dialogData = {};
-		var imageDimensions = editor.settings.image_dimensions !== false;		
+		var imageDimensions = editor.settings.image_dimensions !== false;
 		var userMayUpload = true;
 		var userMayUploadFromURL = false;
 
@@ -101,39 +106,40 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 				editor.windowManager.alert(mw.config.get( 'wgReadOnly' ));
 				return false;
 			}
-	
+
 			if (!mw.config.get( 'wgEnableUploads' )) {
 				editor.windowManager.alert("I'm sorry, uploads aren't enabled on this wiki");
 				return false;
 			}
-	
+
 			if (mw.config.get( 'wgTinyMCEUserIsBlocked' )) {
 				editor.windowManager.alert("I'm sorry, you are not allowed to upload to this wiki");
 				return false;
 			}
-	
+
 			if (!mw.config.get( 'wgTinyMCEUserMayUpload' )) {
 				userMayUpload = false;
 //				editor.windowManager.alert("I'm sorry, you do not have permission to upload files on this wiki but you may still insert on this page a file which has previously been uploaded");
-				return true;		
+				return true;
 			}
-	
+
 			if (mw.config.get( 'wgTinyMCEUserMayUploadFromURL' )) {
 				userMayUploadFromURL = true;;
 				return true;
 			}
-			return false;
+
+			return true;
 		}
-		
+
 		// check if files of with given extension are allowed to be uploaded
-		function checkFileExtensionIsAllowed(extension) { 
-			var checkFileExtensions = (mw.config.get( 'wgTinyMCECheckFileExtensions' )),
-				strictFileExtensons = (mw.config.get( 'wgTinyMCEStrictFileExtensions' )), 
-				allowedsFileExtensions = (mw.config.get( 'wgTinyMCEFileExtensions' )),  
-				disallowedsFileExtensions = (mw.config.get( 'wgTinyMCEFileBlacklist' )),
+		function checkFileExtensionIsAllowed(extension) {
+			var checkFileExtensions = (mw.config.get( 'wgCheckFileExtensions' )),
+				strictFileExtensons = (mw.config.get( 'wgStrictFileExtensions' )),
+				allowedsFileExtensions = (mw.config.get( 'wgFileExtensions' )),
+				disallowedsFileExtensions = (mw.config.get( 'wgFileBlacklist' )),
 				extensionAllowed;
-			
-			if (disallowedsFileExtensions) { 
+
+			if (disallowedsFileExtensions) {
 				for (fileExtension in disallowedsFileExtensions) {
 					if (disallowedsFileExtensions[fileExtension].toLowerCase() == extension.toLowerCase()) {
 						return false;
@@ -142,11 +148,11 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 			}
 
 			extensionAllowed = true;
-			if (checkFileExtensions) { 
+			if (checkFileExtensions) {
 				if (strictFileExtensons) {
 					extensionAllowed = false;
 					for (fileExtension in allowedsFileExtensions) {
-						if (allowedsFileExtensions[fileExtension].toLowerCase() == extension.toLowerCase())
+						if (allowedsFileExtensions[fileExtension].toLowerCase() == extension.toLowerCase()) {
 							extensionAllowed = true;
 						}
 					}
@@ -154,29 +160,63 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 			}
 			return extensionAllowed;
 		}
-		
-		function checkUploadDetail(uploadDetails, submittedData) {
-			var message;
+
+		function checkUploadDetail(uploadDetails) {
+			var message,
+				result;
+				
 			if (typeof uploadDetails == "undefined") {
-				showDialog(submittedData);
 				message = "I'm sorry, you have encountered an unknown error trying to upload this file.  If this error persists please cntact your systems administrator";
 				editor.windowManager.alert(message);
-				return false;		
+				result = false;
 			} else if (typeof uploadDetails.error != "undefined") {
-				showDialog(submittedData);
 				message = "I'm sorry, you have encountered an error trying to upload to this wiki : " + uploadDetails.error.info + ". If this continues please contact your administrator";
 				editor.windowManager.alert(message);
-				return false;		
+				result = false;
 			} else if (typeof uploadDetails.warnings != "undefined") { // shouldn't get here as ignorewarnings currently set to true
-				showDialog(submittedData);
-				message = "I'm sorry, you have encountered a warning trying to upload to this wiki. If this continues please contact your administrator";
-				editor.windowManager.alert(message);
-				return false;		
+				message = "I'm sorry, you have encountered the following warnings trying to upload this file: \n\n" ;  
+				result = 'warning';
+				for (warning in uploadDetails.warnings) {
+					warningDetails = uploadDetails.warnings[warning];
+					if (warning == 'badfilename') {
+						message = message + "	The destination filename is not allowed\n";
+						result = false;
+					} else if (warning == 'exists') {
+						// this warning will also be trapped by destchange so just return warning
+						message = message + "	The destination filename already exists\n";
+						result = false;
+					} else if (warning == 'duplicate') {
+						duplicate = warningDetails[0];
+						message = message + "	The file is a duplicate of " + duplicate + "\n"
+						result = false;
+					} else {
+						message = message + "	You have received the warning " + warning + "\n"
+						result = false;
+					}
+				}
+				if (result == 'warning') {
+/*					result = false;
+					message = message + "\nSelect Ok if you wish to retry while ignoring these warnings, else select Cancel";
+					editor.windowManager.confirm(message,
+						function(ok) {
+							if (ok) {
+								result = 'ignore_warning';
+							} else {
+								result = false;
+							}
+						}
+					);*/
+				} else {
+					message = message + "\nPlease correct the errors and try again";
+					editor.windowManager.alert(message);		
+					result = false;
+				}
 			} else if (typeof uploadDetails.imageinfo != "undefined") {
-				return uploadDetails.imageinfo.url
+				result = uploadDetails.imageinfo.url;
 			}
+			return result;
 		}
-		
+
 		// cleans submitted data to ensure all datatypes are valid
 		function cleanSubmittedData(submittedData) {
 			if (!submittedData.type) submittedData.type = '';
@@ -192,41 +232,41 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 			if (!submittedData.format) submittedData.format = '';
 			return submittedData;
 		}
-		
+
 		function getImageSize(url, callback) {
 			var img = document.createElement('img');
-	  
+	
 			function done(width, height) {
 				if (img.parentNode) {
 					img.parentNode.removeChild(img);
 				}
-	  
+	
 				callback({width: width, height: height});
 			}
-	  
+	
 			img.onload = function() {
 				done(Math.max(img.width, img.clientWidth), Math.max(img.height, img.clientHeight));
 			};
-	  
+	
 			img.onerror = function() {
 				done();
 			};
-	  
+	
 			var style = img.style;
 			style.visibility = 'hidden';
 			style.position = 'fixed';
 			style.bottom = style.left = 0;
 			style.width = style.height = 'auto';
-	  
+	
 			document.body.appendChild(img);
 			img.src = url;
 		}
 
 		function recalcSize() {
-			var widthCtrl = win.find('#width')[0], 
+			var widthCtrl = win.find('#width')[0],
 				heightCtrl = win.find('#height')[0],
-				dimensions = [], 
-				newWidth, 
+				dimensions = [],
+				newWidth,
 				newHeight;
 
 			newWidth = widthCtrl.value();
@@ -237,9 +277,9 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 					newHeight = Math.round((newWidth / width) * height);
 
 					if (isNaN(newHeight) || (newHeight == 0)) {
-						newHeight = null;	
+						newHeight = null;
 					}
-					
+
 					heightCtrl.value(newHeight);
 				}
 			}
@@ -258,11 +298,6 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 				return value;
 			}
 
-//DC always have the advtab leave for now incase want to repurpos?
-/*			if (!editor.settings.image_advtab) {
-				return;
-			}*/
-			
 			var data = win.toJSON(),
 				css = dom.parseStyle(data.style);
 
@@ -276,7 +311,7 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 					pclass = 'thumb ';
 				} else  {
 					pclass = 'thumbimage ';
-				}	
+				}
 				if (data.horizontalalign === 'none'){
 					data.style += 'float:right;';
 					data.style += 'clear:right;';
@@ -291,12 +326,12 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 				data.style += 'clear:none;';
 				data.style += 'margin-left:auto;';
 				data.style += 'margin-right:auto;';
-				if (width) { 
+				if (width) {
 					data.style += 'width:' + width + ';';
 				} else {
 					data.style += 'width:auto;';
 				}
-				if (height) { 
+				if (height) {
 					data.style += 'height:' + height + ';';
 				}
 			} else if (data.horizontalalignment === 'right') {
@@ -313,17 +348,17 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 			if (data.verticalalignment) {
 				data.style += 'vertical-align:' + data.verticalalignment + ';';
 			}
-			
+
 			return data.style;
 		}
-		
+
 		function removePixelSuffix(value) {
 			if (value) {
 				value = value.replace(/px$/, '');
 			}
 			return value;
 		}
-		
+
 		// get details of file already uploaded to wiki including url
 		function getFileDetailsFromWiki(fileName) {
 			queryData = new FormData();
@@ -336,7 +371,7 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 			var fileDetails = false;
 			//as we now have created the data to send, we send it...
 			$.ajax( { //http://stackoverflow.com/questions/6974684/how-to-send-formdata-objects-with-ajax-requests-in-jquery
-				url: url, //url to api.php 
+				url: url, //url to api.php
 				contentType:false,
 				processData:false,
 				type:'POST',
@@ -378,12 +413,12 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 				summaryCtrl = win.find('#summary')[0],
 				dummySummaryCtrl = win.find('#dummySummary')[0],
 				sourceType = typeCtrl.value();
-				
+
 			if (sourceType == 'File') {			// local Fle upload
 				// enable filpicker and summary input
-				alternateSrcCtrl.visible(false);				
+				alternateSrcCtrl.visible(false);
 				srcCtrl.visible(true);
-				dummySummaryCtrl.visible(false);				
+				dummySummaryCtrl.visible(false);
 				summaryCtrl.visible(true);
 			} else if (sourceType == 'URL') {	// URL upload
 				if (!userMayUploadFromURL) {
@@ -393,21 +428,22 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 				}
 				// disable file pickker and enable summary inpt
 				srcCtrl.visible(false);
-				alternateSrcCtrl.visible(true);				
-				dummySummaryCtrl.visible(false);				
+				alternateSrcCtrl.visible(true);
+				dummySummaryCtrl.visible(false);
 				summaryCtrl.visible(true);
 			} else if (sourceType == 'Wiki') {	// file already uploaded to wiki
 				// disable file pickker and summary inpt
 				srcCtrl.visible(false);
-				alternateSrcCtrl.visible(true);				
+				alternateSrcCtrl.visible(true);
 				summaryCtrl.visible(false);
-				dummySummaryCtrl.visible(true);				
+				dummySummaryCtrl.visible(true);
 			}
 			return;
 		}
 
 		// called when the source for the upload changes
 		function srcChange(e) {
+debugger;
 
 			var typeCtrl = win.find('#type')[0],
 				srcCtrl = win.find('#src')[0],
@@ -415,13 +451,13 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 				destCtrl = win.find('#dest')[0]
 				summaryCtrl = win.find('#summary')[0],
 				dummySummaryCtrl = win.find('#dummySummary')[0];
-				
+
 			var sourceType = typeCtrl.value(),
-				srcURL, 
+				srcURL,
 				prependURL,
-				absoluteURLPattern, 
+				absoluteURLPattern,
 				meta = e.meta || {};
-		
+
 			if ((sourceType == 'File') || (sourceType == 'URL')) {	//Pre process local file upload
 				if (sourceType == 'File') {
 					tinymce.each(meta, function(value, key) {
@@ -439,11 +475,11 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 					}
 					this.value(srcURL); //reset the value of this field to the propper src name which is striped of its path
 				} else { // type is URL
-					srcURL = alternateSrcCtrl.value(); 
-					srcURL = srcURL.split('/').pop().split('#')[0].split('?')[0];					
+					srcURL = alternateSrcCtrl.value();
+					srcURL = srcURL.split('/').pop().split('#')[0].split('?')[0];
 				}
 
-//TODO check what this next bit does or doesn't do
+/*TODO check what this next bit does or doesn't do
 				if (!meta.width && !meta.height) {
 					getImageSize(editor.documentBaseURI.toAbsolute(this.value()), function(data) {
 						if (data.width && data.height && imageDimensions) {
@@ -453,18 +489,19 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 							win.find('#height').value(height);
 						}
 					});
-				}
+				}*/
 			} else if (sourceType == 'Wiki') {	//Pre process display file already uploaded to wiki
-				srcURL = alternateSrcCtrl.value(); 
+				srcURL = alternateSrcCtrl.value();
 			}
 
 			destCtrl.value(srcURL); // initially set the valueof the dest field to be the same as the src field
 			destCtrl.fire('change'); // initially set the valueof the dest field to be the same as the src field
 		}
-		
+
 		// called when the destination for the upload changes
 		function destChange(e) {
 
+debugger;
 			var typeCtrl = win.find('#type')[0],
 				srcCtrl = win.find('#src')[0],
 				alternateSrcCtrl = win.find('#alternatesrc')[0],
@@ -473,23 +510,24 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 				dummySummaryCtrl = win.find('#dummySummary')[0],
 				sourceType = typeCtrl.value();
 				destinationFile = 'File:' + destCtrl.value();
-				
+
 			var destinationFileDetails,
 				file,
-				extension,	
+				extension,
 				extensionAllowed;
 
 			// see if file already on wiki and return details if it is
 			$.when(getFileDetailsFromWiki(destinationFile), $.ready).then( function(a1){
+debugger;
 				destinationFileDetails = a1;
 			});
-			
-			// encountered an error trying to access the api	
+debugger;
+			// encountered an error trying to access the api
 			if (typeof destinationFileDetails.error != "undefined") {
-					editor.windowManager.alert("I'm sorry, there seems to be a problem accessing the wiki from this dialog.  If the problem persists try logging off and on again");	
+					editor.windowManager.alert("I'm sorry, there seems to be a problem accessing the wiki from this dialog.  If the problem persists try logging off and on again");
 					srcCtrl.focus();
 					return;
-			}			
+			}
 
 			if (sourceType == 'File' || sourceType == 'URL') { // file is to uploaded
 				if (destinationFileDetails) { // file of this name already exists on this wiki
@@ -497,10 +535,10 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 						function(ok) {
 							  if (ok) {
 								  typeCtrl.value('Wiki');
-								  alternateSrcCtrl.value(destCtrl.value());	
+								  alternateSrcCtrl.value(destCtrl.value());
 								  // disable file pickker and summary inpt
 								  srcCtrl.visible(false);
-								  alternateSrcCtrl.visible(true);				
+								  alternateSrcCtrl.visible(true);
 								  summaryCtrl.visible(false);
 								  dummySummaryCtrl.visible(true);
 								  destCtrl.focus();
@@ -510,36 +548,6 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 							  }
 						});
 
-/* Experimental to show html in a popup window doesn't work
-
-
-var dialogBody = '<p>Whatever <b>you</b> want here</p>';
-
-editor.windowManager.open({
-    title: 'Destination File Exists',
-    html: dialogBody,
-    buttons: [{
-        text: 'Ok',
-        subtype: 'primary',
-        onclick: function() {
-								  typeCtrl.value('Wiki');
-								  alternateSrcCtrl.value(destCtrl.value());	
-								  // disable file pickker and summary inpt
-								  srcCtrl.visible(false);
-								  alternateSrcCtrl.visible(true);				
-								  summaryCtrl.visible(false);
-								  dummySummaryCtrl.visible(true);
-            (this).parent().parent().close();
-        }
-    },
-    {
-        text: 'Cancel',
-        onclick: function() {
-								  destCtrl.value('');
-            (this).parent().parent().close();
-        }
-    }]
-});*/
 					destCtrl.focus();
 					return;
 				} else { // check if files of this type allowed to be uploaded?
@@ -547,7 +555,7 @@ editor.windowManager.open({
 					extension = file.split('.').pop();
 					extensionAllowed = checkFileExtensionIsAllowed(extension);
 					if (!extensionAllowed) {
-							editor.windowManager.alert("I'm sorry, you are not allowed to upload files of this type to this wiki. Please choose a file of a different type");	
+							editor.windowManager.alert("I'm sorry, you are not allowed to upload files of this type to this wiki. Please choose a file of a different type");
 							srcCtrl.focus();
 							srcCtrl.value('');
 							destCtrl.value('');
@@ -562,9 +570,9 @@ editor.windowManager.open({
 								typeCtrl.value('File');
 								srcCtrl.value('');
 								// enable filpicker and summary input
-								alternateSrcCtrl.visible(false);				
+								alternateSrcCtrl.visible(false);
 								srcCtrl.visible(true);
-								dummySummaryCtrl.visible(false);				
+								dummySummaryCtrl.visible(false);
 								summaryCtrl.visible(true);
 								destCtrl.value('');
 							} else {
@@ -595,7 +603,7 @@ editor.windowManager.open({
 			}
 			return;
 		}
-		
+
 		function displayForm(dialogData) {
 			// set up defaults using previously enterred data if any
 			if (!dialogData.type) dialogData.type = 'File';
@@ -610,7 +618,7 @@ editor.windowManager.open({
 			if (!dialogData.horizontalalignment) dialogData.horizontalalignment = 'right';
 			if (!dialogData.verticalalignment) dialogData.verticalalignment = 'middle';
 			if (!dialogData.format) dialogData.format = 'thumb';
-	
+
 			if (imgElm) { //Populate form with details of existing upload
 				dialogData.type = 'Wiki';
 				dialogData.src = dom.getAttrib(imgElm, 'src').split('/').pop().split('#')[0].split('?')[0];
@@ -620,20 +628,20 @@ editor.windowManager.open({
 				dialogData.link = dom.getAttrib(imgElm, 'data-bs-link');
 				if (dialogData.link == 'false') dialogData.link = '';
 				dialogData.alt = dom.getAttrib(imgElm, 'data-bs-alt');
-				if ( dialogData.alt == 'false') dialogData.height = '';				
+				if ( dialogData.alt == 'false') dialogData.height = '';
 				if (dialogData.constrain != false) dialogData.constrain = true;
 				dialogData.width = dom.getAttrib(imgElm, 'data-bs-sizewidth');
-				if ( dialogData.width == 'false') dialogData.width = null;				
+				if ( dialogData.width == 'false') dialogData.width = null;
 				dialogData.height = dom.getAttrib(imgElm, 'data-bs-sizeheight');
-				if ( dialogData.height == 'false') dialogData.height = null;				
+				if ( dialogData.height == 'false') dialogData.height = null;
 				dialogData.horizontalalignment = dom.getAttrib(imgElm, 'data-bs-align');
-				if ( dialogData.horizontalalignment == 'false') dialogData.horizontalalignment = null;				
+				if ( dialogData.horizontalalignment == 'false') dialogData.horizontalalignment = null;
 				dialogData.verticalalignment = dom.getAttrib(imgElm, 'data-bs-verticalalign');
-				if ( dialogData.verticalalignment == 'false') dialogData.verticalalignment = null;				
+				if ( dialogData.verticalalignment == 'false') dialogData.verticalalignment = null;
 				dialogData.format = dom.getAttrib(imgElm, 'data-bs-format');
-				if ( dialogData.format == 'false') dialogData.format = null;				
+				if ( dialogData.format == 'false') dialogData.format = null;
 			}
-	
+
 			// setup the list of upload types according to user permissions
 			var typelist = [];
 			if (userMayUpload) {
@@ -644,36 +652,37 @@ editor.windowManager.open({
 			}
 			typelist.push({text: mw.msg("tinymce-upload-type-label-wiki"), value: "Wiki"});
 			if (!userMayUpload) dialogData.type = "Wiki";
-			
+
 			//setup the form controls
 			
 			typeListCtrl = {
 				name: 'type',
 				type: 'listbox',
+				label: mw.msg("tinymce-upload-type-label"),
+				tooltip: mw.msg("tinymce-upload-type-tooltip"),
 				autofocus: true,
-				label: mw.msg("tinymce-upload"),
 				value: dialogData.type,
 				onselect: typeChange,
-				tooltip: mw.msg("tinymce-upload-type-tooltip"),
 				values: typelist,
 			};
-	
+
 			srcTextCtrl = {
 				type: 'container',
-				label: 'Source',
-				minHeight: 30, 
+				label: mw.msg("tinymce-upload-source-label"),
+				tooltip: mw.msg("tinymce-upload-source-tooltip"),
+				minHeight: 30,
 				layout: 'fit',
 				style: "position: realtive; width: 100%",
 				align: 'center',
 				items: [
-					{name: 'alternatesrc', 
+					{name: 'alternatesrc',
 						type: 'textbox',
 						value: dialogData.src,
 						style: "position: absolute; top: 0; left: 0",
 						onchange: srcChange,
 						onbeforecall: onBeforeCall,
 						visible: !userMayUpload},
-					{name: 'src', 
+					{name: 'src',
 						type: 'filepicker',
 						filetype: 'image',
 						style: "position: absolute; top: 0; right: 0",
@@ -683,155 +692,159 @@ editor.windowManager.open({
 						visible: userMayUpload},
 				]
 			};
-	
+
 			srcTextDisplay = {
 				name: 'src',
 				type: 'textBox',
+				label: mw.msg("tinymce-upload-source-label"),
 				value: dialogData.src,
-				label: 'Source',
 				disabled: true,
 			};
-	
+
 			destTextCtrl = {
-				name: 'dest', 
-				type: 'textbox', 
+				name: 'dest',
+				type: 'textbox',
+				label: mw.msg("tinymce-upload-destination-label"),
+				tooltip: mw.msg("tinymce-upload-destination-tooltip"),
 				value: dialogData.dest,
-				label: 'Destination File Name',
 				onchange: destChange,
 			};
-	
+
 			summaryTextCtrl = {
 				type: 'container',
-				label: 'Summary',
+				label: mw.msg("tinymce-upload-summary-label"),
+				tooltip: mw.msg("tinymce-upload-summary-tooltip"),
 				layout: 'fit',
-				minHeight: 90, 
+				minHeight: 90,
 				style: "position: realtive; width: 100%",
 				align: 'center',
 				items: [
-					{name: 'dummySummary', 
-						type: 'textbox', 
+					{name: 'dummySummary',
+						type: 'textbox',
 						multiline: 'true',
 						style: "background: #f0f0f0; position: absolute; width: 100%; height: 100%; top: 0; left: 0",
 						disabled: true,
 						visible: false},
-					{name: 'summary', 
-						type: 'textbox', 
+					{name: 'summary',
+						type: 'textbox',
 						multiline: 'true',
 						value: dialogData.summary,
 						style: "position: absolute; width: 100%; height: 100%; top: 0; right: 0",
 						visible: true},
 				]
 			};
-			
+
 			linkTextCtrl = {
-				label: 'Link To',
 				name: 'link',
+				label: mw.msg("tinymce-upload-link-label"),
+				tooltip: mw.msg("tinymce-upload-link-tooltip"),
 				type: 'textbox',
 				value: dialogData.link,
 			};
-	
+
 			altTextCtrl = {
-				name: 'alt', 
-				type: 'textbox', 
-				label: 'Alternative Text',
+				name: 'alt',
+				label: mw.msg("tinymce-upload-alttext-label"),
+				tooltip: mw.msg("tinymce-upload-alttext-tooltip"),
+				type: 'textbox',
 				value: dialogData.alt,
 			};
-	
+
 			imageDimensionsCtrl = {
 				type: 'container',
-				label: 'Dimensions',
+				label: mw.msg("tinymce-upload-dimensions-label"),
+				tooltip: mw.msg("tinymce-upload-dimensions-tooltip"),
 				layout: 'flex',
 				direction: 'row',
 				align: 'center',
 				spacing: 5,
 				items: [
-					{name: 'constrain', 
-						type: 'checkbox', 
-						checked: dialogData.constrain, 
-						onchange: constrainChange, 
-						text: 'Constrain proportions'},
-					{name: 'width', 
-						type: 'textbox',
-						value: dialogData.width, 
-						maxLength: 5, 
-						size: 3, 
-//						onchange: recalcSize, 
-						label: 'W',
-//						ariaLabel: 'Width'
+					{name: 'constrain',
+						type: 'checkbox',
+						text: mw.msg("tinymce-upload-dimensions-contrain-text"),
+						checked: dialogData.constrain,
+						onchange: constrainChange
 						},
-					{type: 'label', 
+					{name: 'width',
+						type: 'textbox',
+						label: mw.msg("tinymce-upload-dimensions-width-label"),
+						value: dialogData.width,
+						maxLength: 5,
+						size: 3
+						},
+					{type: 'label',
 						text: 'x'},
-					{name: 'dummyheight', 
-						type: 'textbox', 
-						maxLength: 5, 
-						size: 3, 
+					{name: 'dummyheight',
+						type: 'textbox',
+						label: mw.msg("tinymce-upload-dimensions-height-label"),
+						maxLength: 5,
+						size: 3,
 						style: "background: #f0f0f0",
 						disabled: true,
-						visible: true,
-						label: 'H',
-//						ariaLabel: 'DummyHeight'
+						visible: true
 					},
-					{name: 'height', 
-						type: 'textbox', 
-						value: dialogData.height, 
-						maxLength: 5, 
-						size: 3, 
-//						onchange: recalcSize, 
-						visible: false,
-						label: 'H',
-//						ariaLabel: 'Height'
+					{name: 'height',
+						type: 'textbox',
+						label: mw.msg("tinymce-upload-dimensions-height-label"),
+						value: dialogData.height,
+						maxLength: 5,
+						size: 3,
+						visible: false
 					},
 				]
 			};
-	
+
 			verticalAlignListCtrl = {
 				type   : 'listbox',
 				name   : 'verticalalignment',
-				label  : 'Vertical Alignment',
+				label  : mw.msg("tinymce-upload-vertalign-label"),
+				tooltip: mw.msg("tinymce-upload-vertalign-tooltip"),
 				value  : dialogData.verticalalignment,
-				values : 
+				values :
 					[
-						{ text: 'Middle', value: 'middle' },
-						{ text: 'Top', value: 'top' },
-						{ text: 'Bottom', value: 'bottom' },
-						{ text: 'Baseline', value: 'baseline' },
-						{ text: 'Sub', value: 'sub' },
-						{ text: 'Super', value: 'super' },
-						{ text: 'Text top', value: 'text-top' },
-						{ text: 'Text bottom', value: 'text-bottom'}
+						{ text: mw.msg("tinymce-upload-vertalign-middle-text"), value: 'middle' },
+						{ text: mw.msg("tinymce-upload-vertalign-top-text"), value: 'top' },
+						{ text: mw.msg("tinymce-upload-vertalign-bottom-text"), value: 'bottom' },
+						{ text: mw.msg("tinymce-upload-vertalign-baseline-text"), value: 'baseline' },
+						{ text: mw.msg("tinymce-upload-vertalign-sub-text"), value: 'sub' },
+						{ text: mw.msg("tinymce-upload-vertalign-super-text"), value: 'super' },
+						{ text: mw.msg("tinymce-upload-vertalign-texttop-text"), value: 'text-top' },
+						{ text: mw.msg("tinymce-upload-vertalign-textbottom-text"), value: 'text-bottom'}
 					]
 			};
-	
+
 			horizontalAlignListCtrl = {
 				type   : 'listbox',
 				name   : 'horizontalalignment',
-				label  : 'Horizontal Alignment',
+				label  : mw.msg("tinymce-upload-horizontalalign-label"),
+				tooltip: mw.msg("tinymce-upload-horizontalalign-tooltip"),
 				value  : dialogData.horizontalalignment,
-				values : 
+				values :
 					[
-						{ text: 'Left', value: 'left' },
-						{ text: 'Centre', value: 'center' },
-						{ text: 'Right', value: 'right' },
-						{ text: 'None', value: 'none'}
+						{ text: mw.msg("tinymce-upload-horizontalalign-left-text"), value: 'left' },
+						{ text: mw.msg("tinymce-upload-horizontalalign-centre-text"), value: 'center' },
+						{ text: mw.msg("tinymce-upload-horizontalalign-right-text"), value: 'right' },
+						{ text: mw.msg("tinymce-upload-horizontalalign-none-text"), value: 'none'}
 					]
 			};
-	
+
 			formatListCtrl = {
 				type   : 'listbox',
 				name   : 'format',
-				label  : 'Format',
+				label  : mw.msg("tinymce-upload-format-label"),
+				tooltip: mw.msg("tinymce-upload-format-tooltip"),
 				value  : dialogData.format,
-				values : 
+				values :
 					[
-						{ text: 'Thumb', value: 'thumb' },
-						{ text: 'Border', value: 'border' },
-						{ text: 'Frame', value: 'frame' },
-						{ text: 'Frameless', value: 'frameless'}
+						{ text: mw.msg("tinymce-upload-format-thumb-text"), value: 'thumb' },
+						{ text: mw.msg("tinymce-upload-format-border-text"), value: 'border' },
+						{ text: mw.msg("tinymce-upload-format-frame-text"), value: 'frame' },
+						{ text: mw.msg("tinymce-upload-format-frameless-text"), value: 'frameless'}
 					]
 			};
-	
+
 			if (imgElm) { // editing an existing image node
-		
+
 				var generalFormItems = [
 					srcTextDisplay,
 					linkTextCtrl,
@@ -841,7 +854,7 @@ editor.windowManager.open({
 					horizontalAlignListCtrl,
 					formatListCtrl
 				];
-				
+
 			} else { // new upload from local file store or url
 				var generalFormItems = [
 					typeListCtrl,
@@ -849,7 +862,7 @@ editor.windowManager.open({
 					destTextCtrl,
 					summaryTextCtrl,
 				];
-		
+
 				var imageFormItems = [
 					linkTextCtrl,
 					altTextCtrl,
@@ -857,10 +870,10 @@ editor.windowManager.open({
 					verticalAlignListCtrl,
 					horizontalAlignListCtrl,
 					formatListCtrl
-				];	
-							
+				];
+
 			}
-			
+
 			if (imgElm) { // edit existing image display
 				// Parse styles from img
 /*				if (imgElm.style.marginLeft && imgElm.style.marginRight && imgElm.style.marginLeft === imgElm.style.marginRight) {
@@ -872,10 +885,10 @@ editor.windowManager.open({
 				if (imgElm.style.borderWidth) {
 					data.border = removePixelSuffix(imgElm.style.borderWidth);
 				}*/
-	
-	
+
+
 				data.style = editor.dom.serializeStyle(editor.dom.parseStyle(editor.dom.getAttrib(imgElm, 'style')));
-	
+
 				win = editor.windowManager.open({
 					title: 'Update image display properties',
 					data: data,
@@ -902,10 +915,14 @@ editor.windowManager.open({
 					],
 					onSubmit: onSubmitForm
 				});
-			}	
+			}
 		}
-		
+
 		function onSubmitForm(e) {
+			var srcCtrl = win.find('#src')[0],
+				alternateSrcCtrl = win.find('#alternatesrc')[0],
+				destCtrl = win.find('#dest')[0]
+
 			var submittedData = win.toJSON();
 
 			var figureElm,
@@ -913,20 +930,20 @@ editor.windowManager.open({
 				style,
 				nodeID,
 				uploadDetails,
-				uploadSrc,
+				uploadResult,
 				fileType,
 				fileContent,
 				fileName,
 				fileSummary,
-				uploadDetails;
+				ignoreWarnings = false;
 
-			function doUpload(fileType, fileToUpload, fileName, fileSummary){
+			function doUpload(fileType, fileToUpload, fileName, fileSummary, ignoreWarnings){
 				uploadData = new FormData();
 				uploadData.append("action", "upload");
 				uploadData.append("filename", fileName);
 				uploadData.append("text", fileSummary);
 				uploadData.append("token", mw.user.tokens.get( 'editToken' ) );
-//				uploadData.append("ignorewarnings", true );
+				uploadData.append("ignorewarnings", ignoreWarnings );
 				if (fileType == 'File') uploadData.append("file", fileToUpload);
 				if (fileType == 'URL') uploadData.append("url", fileToUpload);
 				uploadData.append("format", 'json');
@@ -934,7 +951,7 @@ editor.windowManager.open({
 				var uploadDetails;
 				//as we now have created the data to send, we send it...
 				$.ajax( { //http://stackoverflow.com/questions/6974684/how-to-send-formdata-objects-with-ajax-requests-in-jquery
-					url: url, //url to api.php 
+					url: url, //url to api.php
 					contentType:false,
 					processData:false,
 					type:'POST',
@@ -943,51 +960,64 @@ editor.windowManager.open({
 					success:function(data){
 						uploadDetails = data.upload;
 						//do what you like, console logs are just for demonstration :-)
-						console.log("success!");
-						console.log(data);
+//						console.log("success!");
+//						console.log(data);
 					},
 					error:function(xhr,status, error){
-		
+
 						console.log(error)
 					}
 				});
 				return uploadDetails;
 			}
 			
-			// have to have a destnation name unless editing previous upload		
-			if (!submittedData.dest && !imgElm) { 
-				submittedData.dest = '';
-				showDialog(submittedData);
-				editor.windowManager.alert("I'm sorry, you have to provide a destination file name. If this field was blank it is probably because the filename corresponding to the source file has already been used.  Please enter a different one");
+			// prevent processing of submit in case warnings or errors need to be processed
+			e.preventDefault();
+        	e.stopPropagation();
+       		e.stopImmediatePropagation();
+
+			// have to have a destnation name unless editing previous upload
+			if (!submittedData.dest && !imgElm) {
+				// user may have clicked submit without exiting source field so
+				// fire source change to update the destination field and refetch data
+/*				srcCtrl.fire('change'); // initially set the valueof the dest field to be the same as the src field
+				submittedData = win.toJSON();*/
+				editor.windowManager.alert("I'm sorry, you have to provide a destination file name. If the one generated is OK then press Submit again or else change it");
 				return;
 			}
-			
+
 			submittedData = cleanSubmittedData(submittedData);
 			dimensions = recalcSize();
 			width = dimensions['width'];
 			height = dimensions['height'];
 			style = updateStyle();
 			uploadDetails = [];
-			uploadSrc = '';
+			uploadResult = '';
 			if (imgElm) {		//Editing image node so skip upload
 				nodeID = imgElm.id
-				uploadSrc = imgElm.src;
+				uploadResult = imgElm.src;
 			} else {
 				if ((submittedData.type == 'File') || (submittedData.type == 'URL')) {
 					if (submittedData.type == 'File') {
-						fileContent = _srccontent;				
+						fileContent = _srccontent;
 					} else {
-						fileContent = submittedData.alternatesrc;						
+						fileContent = submittedData.alternatesrc;
 					}
 					nodeID = "TinyMCE" + (Math.floor((Math.random() * 100000) + 100000));
 					fileType = submittedData.type;
 					fileName = submittedData.dest;
 					fileSummary = submittedData.summary;
 					if ((fileContent) && (fileName)) {
-// TODO test uploadSrc for errors and warnings and process accordingly
-						uploadDetails = doUpload(fileType, fileContent, fileName, fileSummary);
-						uploadSrc = checkUploadDetail(uploadDetails, submittedData);
-						if (!uploadSrc) {
+						do {
+							uploadDetails = doUpload(fileType, fileContent, fileName, fileSummary, ignoreWarnings);
+							uploadResult = checkUploadDetail(uploadDetails);
+							if (uploadResult == 'ignore_warning') {
+								ignoreWarnings = true;
+							} else {
+								ignoreWarnings = false;								
+							}
+						} while (ignoreWarnings)
+						if (uploadResult == false) {
 							return;
 						}
 				  	} else {
@@ -996,13 +1026,16 @@ editor.windowManager.open({
 					}
 				} else if (submittedData.type == 'Wiki') {
 					fileName = submittedData.dest;
-					uploadSrc = submittedData.alternatesrc;
+					uploadResult = submittedData.alternatesrc;
 				}
 			}
 
+			// close the dialog window
+			win.close()
+			
 			//set up node data for inserting or updating in editor window
 			var data = {
-				src: uploadSrc,
+				src: uploadResult,
 				alt: submittedData.alt,
 				width: width,
 				height: height,
@@ -1013,7 +1046,7 @@ editor.windowManager.open({
 				style: style,
 				contentEditable: 'false',
 				id: nodeID,
-				"data-bs-src": uploadSrc,
+				"data-bs-src": uploadResult,
 				"data-bs-link": submittedData.link,
 				"data-bs-alt": submittedData.alt,
 				"data-bs-sizewidth": width,
@@ -1022,7 +1055,7 @@ editor.windowManager.open({
 				"data-bs-verticalalign": submittedData.verticalalignment,
 				"data-bs-format": submittedData.format
 			};
-			
+
 			if (imgElm) { //update existing node
 //TODO if there is a link check if its changed and process accordingly
 				editor.undoManager.transact(function(){
@@ -1048,10 +1081,10 @@ editor.windowManager.open({
 
 		// abort if permissions not Ok
 		if (!checkPermisionsOk()) return;
-		
+
 		imgElm = editor.selection.getNode();
 		figureElm = dom.getParent(imgElm, 'figure.image');
-		
+
 		// if node is a link to an image then get the image
 		if (figureElm) {
 			imgElm = dom.select('img', figureElm)[0];
@@ -1066,7 +1099,7 @@ editor.windowManager.open({
 
 		return;
 	}
-	
+
 	editor.on('preInit', function() {
 		function hasImageClass(node) {
 			var className = node.attr('class');
