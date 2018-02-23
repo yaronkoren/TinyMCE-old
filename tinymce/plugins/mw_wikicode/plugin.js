@@ -1597,7 +1597,7 @@ debugger;
 			lineStart = '';
 		}
 //		return lineStart + "<h" + level.length + ">" + content + "</h" + level.length + ">";
-		return lineStart + "<div><h" + level.length + ">" + content + "</h" + level.length + "></div>";
+		return lineStart + "<div><h" + level.length + ">" + content + "</h" + level.length + "></div>\n";
 	}
 
 	/**
@@ -1657,9 +1657,7 @@ debugger;
 		// faster replacement for header processing
 		// One regexp to rule them all, on regexp to find them,
 		// one regexp to bring them all and in html bind them!!!
-		//DC only match 0 or 1 \n and as they all get replaced by a single /n
-//DC		text = text.replace(/(^|\n)((?:=){1,6})\s*(.+?)\s*\2(?:\n+|$)/img, _wikiHeader2html);
-		text = text.replace(/(^|\n)((?:=){1,6})\s*(.+?)\s*\2(?:\n?|$)/img, _wikiHeader2html);
+		text = text.replace(/(^|\n)((?:=){1,6})\s*(.+?)\s*\2(?:\n+|$)/img, _wikiHeader2html);
 
 		// horizontal rule
 		text = text.replace(/^\n?----\n?/gmi, "\n<hr>\n");
