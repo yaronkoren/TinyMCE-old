@@ -110,5 +110,6 @@
 	"tinymce-upload-alert-source-or-destination-undefined": "I'm sorry, you there's a problem with either the source or destination being undefined.  Please check and try again",
 	"tinymce-upload-confirm-file-already-exists": "The destination file already exists on this wiki.  Select Ok if you would like to use the existing file or select Cancel and enter a different destination filename for this upload",
 	"tinymce-upload-confirm-file-not-on-wiki": "The file does not exist on this wiki.  Select Ok if you would like to upload a new file or select Cancel and enter a different filename for this link",
-	"tinymce-upload-confirm-ignore-warnings": "Select Ok if you wish to retry while ignoring these warnings, else select Cancel"
+	"tinymce-upload-confirm-ignore-warnings": "Select Ok if you wish to retry while ignoring these warnings, else select Cancel",
+	"tinymce-upload-menu-item-text": "Upload/edit file"
 }
