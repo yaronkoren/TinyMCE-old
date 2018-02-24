@@ -154,6 +154,7 @@ $GLOBALS['wgResourceModules'] += array(
 			'tinymce-upload-confirm-file-already-exists',
 			'tinymce-upload-confirm-file-not-on-wiki',
 			'tinymce-upload-confirm-ignore-warnings',
+			'tinymce-upload-menu-item-text',
 			'tinymce-openlink',
 			'tinymce-wikimagic',
 			'tinymce-wikimagic-title',
