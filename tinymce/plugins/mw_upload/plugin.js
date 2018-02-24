@@ -1063,14 +1063,14 @@ debugger;
 
 	editor.addButton('wikiupload', {
 		icon: 'image',
-		tooltip: 'Upload/edit file',
+		tooltip: mw.msg("tinymce-upload-menu-item-text"),
 		onclick: showDialog,
 		stateSelector: 'img:not([data-mce-object],[data-mce-placeholder]),figure.image'
 	});
 
 	editor.addMenuItem('wikiupload', {
 		icon: 'image',
-		text: 'Upload/edit file',
+		text: mw.msg("tinymce-upload-menu-item-text"),
 		onclick: showDialog,
 		context: 'upload',
 		prependToContext: true
