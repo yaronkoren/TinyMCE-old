@@ -26,8 +26,8 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 		var nodeType = '';
 		var isWikimagic = '';
 		var value = '';
-		if (typeof(selectedNode.attributes["data-bs-type"]) !== "undefined" ) {
-			nodeType = selectedNode.attributes["data-bs-type"].value;
+		if (typeof(selectedNode.attributes["data-mw-type"]) !== "undefined" ) {
+			nodeType = selectedNode.attributes["data-mw-type"].value;
 			isWikimagic = 
 				nodeType == "template" || 
 				nodeType == "switch" || 
@@ -36,7 +36,7 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 		}
 
 		if (isWikimagic) {
-			value = selectedNode.attributes["data-bs-wikitext"].value;
+			value = selectedNode.attributes["data-mw-wikitext"].value;
 			value = decodeURIComponent(value);
 		} else {
 			value = editor.selection.getContent({format : 'text'});
@@ -77,15 +77,15 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 				for (var aSwitch in switches) {
 					switchWikiText= switches[aSwitch];
 					t = Math.floor((Math.random() * 100000) + 100000) + i;
-					id = "bs_switch:@@@SWT"+ t + "@@@";
+					id = "mw_switch:@@@SWT"+ t + "@@@";
 					var codeAttrs = {
 						'id': id,
 						'class': "mceNonEditable wikimagic switch",
 						'title': switchWikiText,
-						'data-bs-type': "switch",
-						'data-bs-id': t,
-						'data-bs-name': aSwitch, 
-						'data-bs-wikitext': switchWikiText,
+						'data-mw-type': "switch",
+						'data-mw-id': t,
+						'data-mw-name': aSwitch, 
+						'data-mw-wikitext': switchWikiText,
 						'contenteditable': "false"
 					};
 
@@ -149,15 +149,15 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 							var displayTagWikiText = encodeURIComponent(tagWikiText);
 
 							var t = Math.floor((Math.random() * 100000) + 100000) + i;
-							var id = "bs_specialtag:@@@ST"+ t + "@@@";
+							var id = "mw_specialtag:@@@ST"+ t + "@@@";
 							var codeAttrs = {
 								'id': id,
 								'class': "mceNonEditable wikimagic tag",
 								'title': tagWikiText,
-								'data-bs-type': "tag",
-								'data-bs-id': t,
-								'data-bs-name': tagName,
-								'data-bs-wikitext': displayTagWikiText,
+								'data-mw-type': "tag",
+								'data-mw-id': t,
+								'data-mw-name': tagName,
+								'data-mw-wikitext': displayTagWikiText,
 								'contenteditable': "false"
 							};
 							tagHTML += '<div class="mceNonEditableOverlay" />';
@@ -286,15 +286,15 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 								var displayTemplateWikiText = encodeURIComponent(templateWikiText);
 
 								t = Math.floor((Math.random() * 100000) + 100000) + i;
-								id = "bs_template:@@@TPL"+ t + "@@@";
+								id = "mw_template:@@@TPL"+ t + "@@@";
 								var codeAttrs = {
 									'id': id,
 									'class': "mceNonEditable wikimagic template",
 									'title': templateWikiText,
-									'data-bs-type': "template",
-									'data-bs-id': t,
-									'data-bs-name': templateName, 
-									'data-bs-wikitext': displayTemplateWikiText,
+									'data-mw-type': "template",
+									'data-mw-id': t,
+									'data-mw-name': templateName, 
+									'data-mw-wikitext': displayTemplateWikiText,
 									'contenteditable': "false"
 								};
 								templateHTML += '<div class="mceNonEditableOverlay" />';
@@ -327,15 +327,15 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 				cmt = '';
 				while ((cmt = matcher.exec(mtext)) !== null) {
 					var t = Math.floor((Math.random() * 100000) + 100000) + i;
-					id = "bs_switch:@@@CMT"+ t + "@@@";
+					id = "mw_switch:@@@CMT"+ t + "@@@";
 					var codeAttrs = {
 						'id': id,
 						'class': "mceNonEditable wikimagic comment",
 						'title': cmt[1],
-						'data-bs-type': "comment",
-						'data-bs-id': t,
-						'data-bs-name': commentText,
-						'data-bs-wikitext': cmt[0],
+						'data-mw-type': "comment",
+						'data-mw-id': t,
+						'data-mw-name': commentText,
+						'data-mw-wikitext': cmt[0],
 						'contenteditable': "false"
 					};
 
@@ -428,21 +428,21 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 				if (emptyLine) { // process empty lines
 					// If not already in a paragraph (block of blank lines).  Process first empty line differently
 					if (!inParagraph) {
-						lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_first"/></div>';
+						lines[i] = lines[i] + '<div class="mw_emptyline_first"><br class="mw_emptyline_first"/></div>';
 						inParagraph = true;
 					} else {// this is already in a paragraph
-						lines[i] = lines[i] + '<div class="bs_emptyline"><br class="bs_emptyline"/></div>';
+						lines[i] = lines[i] + '<div class="mw_emptyline"><br class="mw_emptyline"/></div>';
 					}
 				} else { // not an empty line
 					if (!inParagraph && lines[i].match(/(^\<@@@TAG)/i)) { // if the line starts with <@@@TAG then precede it with a blank line
-							lines[i] = '<br class="bs_emptyline"/>' + lines[i];
+							lines[i] = '<br class="mw_emptyline"/>' + lines[i];
 					}
 /*					if (!inParagraph && lines[i].match(/(^\<@@@CMT)/i)) { // if the line starts with <@@@CMT then precede it with a blank line
-							lines[i] = '<br class="bs_emptyline"/>' + lines[i];
+							lines[i] = '<br class="mw_emptyline"/>' + lines[i];
 					}*/
 					inParagraph = false;
 					if (lines[i].match(/(^\<td\>)/i)) { //first line of data in a table cell
-						lines[i] = lines[i] + '<br class="bs_emptyline"/>';
+						lines[i] = lines[i] + '<br class="mw_emptyline"/>';
 					}
 				}
 				//Test if the previous line was in a list if so close the list
@@ -495,7 +495,6 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 		return text;
 	}
 
-	editor.addCommand('mceWikimagic', showDialog);
 
 	editor.addButton('wikimagic', {
 		icon: 'codesample',
@@ -513,12 +512,13 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 		onclick: showDialog
 	});
 
-	// Add option to double-click on non-editable sections to get
+	// Add option to double-click on non-editable overlay to get
 	// "wikimagic" popup.
-        editor.on('dblclick', function(e) {
-            if (e.target.className == 'mceNonEditableOverlay' ) {
-                tinyMCE.activeEditor.execCommand('mceWikimagic');
-            }
-        });
+	editor.addCommand('mceWikimagic', showDialog);
+	editor.on('dblclick', function(e) {
+		if (e.target.className == 'mceNonEditableOverlay' ) {
+			tinyMCE.activeEditor.execCommand('mceWikimagic');
+		}
+	});
 
 });
