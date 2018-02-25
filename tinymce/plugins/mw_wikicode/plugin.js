@@ -17,7 +17,7 @@
 
 /*TODO: dc Fix so images always retain their aspect ratio when constrained by width or height as they do in mediawiki */
 
-var BsWikiCode = function() {
+var MwWikiCode = function() {
 
 	"use strict";
 	var
@@ -92,7 +92,7 @@ var BsWikiCode = function() {
 		 */
 		_imageDummyUrl = '',
 		/**
-		 * One of the thumbnail sizes, choosen by the user in Spezial:Preferences
+		 * One of the thumbnail sizes, choosen by the user in Special:Preferences
 		 * @default 3
 		 * @type Number
 		 */
@@ -114,6 +114,10 @@ var BsWikiCode = function() {
 		_ed = null;
 
 		var me = this;
+		
+	_userThumbsize = _thumbsizes[ mw.user ? mw.user.options.get('thumbsize') : _userThumbsize ];
+	
+	var scriptPath = mw.config.get( 'wgScriptPath' );
 
 	this.makeWikiImageDataObject = function() {
 		return {
@@ -151,7 +155,7 @@ var BsWikiCode = function() {
 	function _makeDataAttributeObject( obj ) {
 		var data = {};
 		for ( var property in obj ) {
-			data['data-bs-'+property] = obj[property];
+			data['data-mw-'+property] = obj[property];
 		}
 		return data;
 	}
@@ -162,78 +166,6 @@ var BsWikiCode = function() {
 			return typeof args[ number ] !== 'undefined' ? args[number] : match;
 		});
 	};
-
-	$(document).on( "BSVisualEditorRenderSpecialTag", function( event, sender, type, st ){
-		if ( type != 'bs:checklist' ) return false;
-		var ed = tinymce.activeEditor;
-		var specialtag = ed.dom.createFragment( st[0] ).childNodes[0];
-
-		var cbt = ed.dom.getAttrib( specialtag, 'type', 'checkbox' );
-		var valueText = ed.dom.getAttrib( specialtag, 'value', 'false' );
-		var listText = ed.dom.getAttrib( specialtag, 'list', '' );
-
-		var innerText;
-		if ( cbt == 'checkbox' ) {
-			if ( valueText == 'checked' ) {
-				innerText = BsChecklist.makeCheckbox( true );
-			} else {
-				innerText = BsChecklist.makeCheckbox( false );
-			}
-		} else if ( cbt == 'list' ) {
-			innerText = BsChecklist.makeSelectbox(
-				BsChecklist.getOptionsList( listText ) , valueText
-			);
-		}
-
-		var moreAttribs = 'data-bs-value="'+valueText+'"';
-		moreAttribs += ' data-bs-cbtype="'+cbt+'"';
-
-		return {
-			innerText: innerText,
-			moreAttribs: moreAttribs
-		};
-	});
-
-	$(document).on( "BSVisualEditorRecoverSpecialTag", function( event, sender, specialTagMatch, innerText )	{
-		if( specialTagMatch == null ) return false;
-		var valueregex = '<.*?data-bs-value="(.*?)"[^>]*?>';
-		var valueMatcher = new RegExp( valueregex, '' );
-		var value = valueMatcher.exec( specialTagMatch[1] );
-		var valueText;
-		if ( value ) {
-			valueText = value[1];
-		} else {
-			valueText = '';
-		}
-		var newInnerText = innerText.replace( /value="(.*?)"/, 'value="'+valueText+'"' );
-		return {
-			innerText: newInnerText
-		}
-	});
-
-	$(document).on( "BSVisualEditorClickSpecialTag", function( event, sender, ed, e, dataname ){
-		if ( dataname == 'bs:checklist' ) {
-			var cbtype = ed.dom.getAttrib( e.target.parentNode, 'data-bs-cbtype' );
-
-			if ( !cbtype ) {
-				cbtype = 'checkbox';
-			}
-
-			var value = ed.dom.getAttrib( e.target.parentNode, 'data-bs-value' );
-
-			if ( cbtype == 'checkbox' ) {
-				if ( value == 'checked' ) {
-					value = 'false';
-					ed.dom.setStyle(e.target, 'background-image', "url('"+BsChecklist.checkboxImage+"')" );
-				} else {
-					value = 'checked';
-					ed.dom.setStyle( e.target, 'background-image', "url('"+BsChecklist.checkboxImageChecked+"')" );
-				}
-			}
-
-			ed.dom.setAttrib( e.target.parentNode, 'data-bs-value', value );
-		}
-	});
 
 	function print_r(printthis, returnoutput) {
 		var output = '';
@@ -251,6 +183,56 @@ var BsWikiCode = function() {
 			alert(output);
 		}
 	}
+	
+	// get details of file already uploaded to wiki including url
+	function getFileDetailsFromWiki(fileName) {
+		var queryData;
+		
+		queryData = new FormData();
+		queryData.append("action", "query");
+		queryData.append("prop", "imageinfo");
+		queryData.append("iiprop", "url");
+		queryData.append("titles", fileName);
+		queryData.append("format", "json");
+		var url = scriptPath + '/api.php';
+		var fileDetails = false;
+		//as we now have created the data to send, we send it...
+		$.ajax( { //http://stackoverflow.com/questions/6974684/how-to-send-formdata-objects-with-ajax-requests-in-jquery
+			url: url, //url to api.php
+			contentType:false,
+			processData:false,
+			type:'POST',
+			data: queryData,//the queryData object we created above
+			async: false,
+			success:function(data){
+				if (typeof data.query == "undefined") {
+					fileDetails = JSON.parse(data)
+				} else if (typeof data.query.pages != "undefined") {
+					var pages = data.query.pages;
+					for( var page in pages ) {
+						if (page == -1) {
+							//error in lookup
+							// Todo: i18n
+							var response = pages["-1"];
+							var reason = response["invalidreason"];
+							var title = response["title"]
+							alert('Error looking up ' + title + '. Reason given: ' + reason);
+						} else if ((typeof pages[page].missing == "undefined") && (typeof pages[page].invalid == "undefined") ) {
+							var pageTitle = pages[page].title
+							var imageInfo = pages[page].imageinfo;
+							var imageURL = imageInfo[0].url;
+							if (pageTitle.replace("_"," ").toLowerCase() == fileName.replace("_"," ").toLowerCase()) {
+								fileDetails = imageURL;
+							}
+						}
+					}
+				}
+			},
+			error:function(xhr,status, error){
+			}
+		});
+		return fileDetails;
+	}
 
 	function _image2html(link) {
 		// @todo inline stylings taken from MediaWiki and adapted to TinyMCE markup. Not nice...
@@ -258,7 +240,7 @@ var BsWikiCode = function() {
 			wikiImageObject = me.makeWikiImageDataObject(),
 			parts = link.split("|"), part = '',
 			unsuffixedValue, dimensions, kvpair, key, value, src, imgParts,
-			imgName;
+			imgName, imageFileDetails;
 
 		wikiImageObject.imagename = parts[0];
 		for (var i = 1; i < parts.length; i++) {
@@ -282,26 +264,26 @@ var BsWikiCode = function() {
 				continue;
 			}
 
-			if ($.inArray(part, ['thumb', 'mini', 'miniatur']) !== -1) {
+			if ($.inArray(part, ['thumb']) !== -1) {
 				wikiImageObject.thumb = true;
 				continue;
 			}
 
-			if ($.inArray(part, ['right', 'rechts']) !== -1) {
+			if ($.inArray(part, ['right']) !== -1) {
 				wikiImageObject.left = false;
 				wikiImageObject.right = true;
 				wikiImageObject.align = 'right';
 				continue;
 			}
 
-			if ($.inArray(part, ['left', 'links']) !== -1) {
+			if ($.inArray(part, ['left']) !== -1) {
 				wikiImageObject.right = false;
 				wikiImageObject.left = true;
 				wikiImageObject.align = 'left';
 				continue;
 			}
 
-			if ($.inArray(part, ['center', 'zentriert']) !== -1) {
+			if ($.inArray(part, ['center']) !== -1) {
 				wikiImageObject.right = false;
 				wikiImageObject.left = false;
 				wikiImageObject.center = true;
@@ -357,22 +339,22 @@ var BsWikiCode = function() {
 				continue;
 			}
 
-			if ($.inArray(part, ['none', 'ohne']) !== -1) {
+			if ($.inArray(part, ['none']) !== -1) {
 				wikiImageObject.none = true;
 				continue;
 			}
 
-			if ($.inArray(part, ['frame', 'gerahmt']) !== -1) {
+			if ($.inArray(part, ['frame']) !== -1) {
 				wikiImageObject.frame = true;
 				continue;
 			}
 
-			if ($.inArray(part, ['frameless', 'rahmenlos']) !== -1) {
+			if ($.inArray(part, ['frameless']) !== -1) {
 				wikiImageObject.frameless = true;
 				continue;
 			}
 
-			if ($.inArray(part, ['border', 'rand']) !== -1) {
+			if ($.inArray(part, ['border']) !== -1) {
 				wikiImageObject.border = true;
 				wikiImageObject.mwborder = true;
 				continue;
@@ -387,7 +369,7 @@ var BsWikiCode = function() {
 			key = kvpair[0];
 			value = kvpair[1];
 
-			if ($.inArray(key, ['link', 'verweis']) !== -1) {
+			if ($.inArray(key, ['link']) !== -1) {
 				wikiImageObject.link = value;
 				continue;
 			}
@@ -402,7 +384,7 @@ var BsWikiCode = function() {
 				continue;
 			}
 
-			if ($.inArray(key, ['upright', 'hochkant']) !== -1) {
+			if ($.inArray(key, ['upright']) !== -1) {
 				wikiImageObject.upright = value;
 				continue;
 			}
@@ -416,15 +398,6 @@ var BsWikiCode = function() {
 		if (wikiImageObject.alt) {
 			htmlImageObject.attr('alt', wikiImageObject.alt);
 		}
-
-
-		// Workaround for HW#2013020710000217.
-		// This is more a bug of InsertFile and should be fixed there.
-		// @todo Check if this is still needed. In REL_1.21 the code for
-		//       adding an alt tag in InsertFile has changed.
-/*		if (wikiImageObject.caption) {
-			htmlImageObject.attr('title', wikiImageObject.caption);
-		}*/
 
 		if (wikiImageObject.sizewidth !== false) {
 			htmlImageObject.width(wikiImageObject.sizewidth);
@@ -499,8 +472,9 @@ var BsWikiCode = function() {
 		//Let's store the original WikiText as well. This makes it easier for
 		//other extensions to read in the data.
 		//We can not use [[/]] because this might cause double parsing!
-		htmlImageObject.attr('data-bs-wikitext', link);
+		htmlImageObject.attr('data-mw-wikitext', link);
 
+/*		//DEPRECATED use of dummy url, instead look up directly
 		//We set a dummy url which contains the original filename as
 		//querystring parameter
 		imgParts = parts[0].split(':');
@@ -510,10 +484,26 @@ var BsWikiCode = function() {
 
 		//We have to save the name and url of the image to allow post process
 		//replacement of dummyUrls
-		_images.push({ imageName: imgName, dummySrc: src });
+		_images.push({ imageName: imgName, dummySrc: src });*/
+		
+debugger;
+		
+		// see if file already on wiki and return details if it is
+		
+		$.when(getFileDetailsFromWiki(parts[0]), $.ready).then( function(a1){
+			src = a1;
+		});
 
+// TODO show error message if file not found
+		// encountered an error trying to access the api
+		if (typeof src.error != "undefined") {
+			src = parts[0];
+		}
+		
 		// image, resulting in a 404 error.
-		htmlImageObject.attr('src', src);
+		if (src) {
+			htmlImageObject.attr('src', src);
+		}
 
 		// make contenteditable false so image can be selected correctly
 		htmlImageObject.attr('contentEditable', false);
@@ -556,7 +546,7 @@ var BsWikiCode = function() {
 			//TODO: maybe use bs.util.unprefixDataAttributeObject
 			for (var j = 0; j < attributes.length; j++) {
 				attribute = attributes[j].name;
-				if (attribute.startsWith('data-bs-') === false) {
+				if (attribute.startsWith('data-mw-') === false) {
 					property = attribute;
 				} else {
 					property = attribute.substr(8, attribute.length);
@@ -772,7 +762,7 @@ var BsWikiCode = function() {
 			linkTargetParts, protocol, targetText,
 			namespaces = mw.config.get('wgNamespaceIds'),
 			imageExtensions = mw.config.get('wgFileExtensions'),
-			anchorFormat = '<a href="{0}" data-mce-href="{5}" title="{6}" data-bs-type="{2}" class="{3}" data-bs-wikitext="{4}">{1}</a>';
+			anchorFormat = '<a href="{0}" data-mce-href="{5}" title="{6}" data-mw-type="{2}" class="{3}" data-mw-wikitext="{4}">{1}</a>';
 
 		links = text.match(/\[\[([^\]]*?)\]\]/gi);
 		var pos = 0;
@@ -833,9 +823,9 @@ var BsWikiCode = function() {
 				linkHtml = anchorFormat.format(
 					encodeURI( linkTarget ),//escape(linkTarget),	// href
 					linkLabel,					// <a>linkLabel</a>
-					'internal_link',				// data-bs-type
+					'internal_link',				// data-mw-type
 					'internal bs-internal-link mceNonEditable',	// class
-					encodeURI( $('<div/>').text(link).html() ),	// data-bs-wikitext
+					encodeURI( $('<div/>').text(link).html() ),	// data-mw-wikitext
 					encodeURI( linkTarget ),			// data-mce-href
 					linkTarget					// title
 				);
@@ -896,9 +886,9 @@ var BsWikiCode = function() {
 				linkHtml = anchorFormat.format(
 					encodeURI( linkTarget.replace( /%20/g, ' ' ) ),	// href
 					linkLabel,					// <a>linkLabel</a>
-					'external_link',				// data-bs-type
+					'external_link',				// data-mw-type
 					'external bs-external-link mceNonEditable bs-protocol-'+protocol,// class
-					$( '<div/>' ).text( link ).html(),		// data-bs-wikitext
+					$( '<div/>' ).text( link ).html(),		// data-mw-wikitext
 					encodeURI( linkTarget.replace( /%20/g, ' ' ) ),	// data-mce-href
 					$( '<div/>' ).text( linkLabel ).html()		// title
 				);
@@ -943,12 +933,12 @@ var BsWikiCode = function() {
 				}
 
 				//TODO: Maybe we should relay on classes instead?
-				typeAttr = link.match(/data-bs-type="(.*?)"/i);
+				typeAttr = link.match(/data-mw-type="(.*?)"/i);
 				if (typeAttr) {
 					type = decodeURI( typeAttr[1] );
 				}
 
-				wikitext = link.match(/data-bs-wikitext="(.*?)"/i);
+				wikitext = link.match(/data-mw-wikitext="(.*?)"/i);
 				if (wikitext) {
 					wikitext = decodeURI( wikitext[1] );
 				}
@@ -2162,10 +2152,10 @@ debugger;
 				'id': id,
 				'class': "mceNonEditable wikimagic switch",
 				'title': switchWikiText,
-				'data-bs-type': "switch",
-				'data-bs-id': i,
-				'data-bs-name': aSwitch,
-				'data-bs-wikitext': switchWikiText,
+				'data-mw-type': "switch",
+				'data-mw-id': i,
+				'data-mw-name': aSwitch,
+				'data-mw-wikitext': switchWikiText,
 				'contenteditable': "false"
 			};
 
@@ -2238,10 +2228,10 @@ debugger;
 						'id': id,
 						'class': "mceNonEditable wikimagic tag",
 						'title': tagWikiText ,
-						'data-bs-type': "tag",
-						'data-bs-id': t,
-						'data-bs-name': tagName,
-						'data-bs-wikitext': displayTagWikiText,
+						'data-mw-type': "tag",
+						'data-mw-id': t,
+						'data-mw-name': tagName,
+						'data-mw-wikitext': displayTagWikiText,
 						'contenteditable': "false"
 					};
 					tagHTML += '<div class="mceNonEditableOverlay" />';
@@ -2376,10 +2366,10 @@ debugger;
 							'class': "mceNonEditable wikimagic template",
 //							'title': "{{" + templateName + "}}",
 							'title': templateWikiText,
-							'data-bs-type': "template",
-							'data-bs-id': t,
-							'data-bs-name': templateName,
-							'data-bs-wikitext': displayTemplateWikiText,
+							'data-mw-type': "template",
+							'data-mw-id': t,
+							'data-mw-name': templateName,
+							'data-mw-wikitext': displayTemplateWikiText,
 							'contenteditable': "false"
 						};
 						templateHTML += '<div class="mceNonEditableOverlay" />';
@@ -2415,10 +2405,10 @@ debugger;
 				'id': id,
 				'class': "mceNonEditable wikimagic comment",
 				'title': cmt[1],
-				'data-bs-type': "comment",
-				'data-bs-id': i,
-				'data-bs-name': commentText,
-				'data-bs-wikitext': cmt[0],
+				'data-mw-type': "comment",
+				'data-mw-id': i,
+				'data-mw-name': commentText,
+				'data-mw-wikitext': cmt[0],
 				'contenteditable': "false"
 			};
 
@@ -2464,7 +2454,7 @@ debugger;
 				tagText = specialtags[i].outerHTML;
 				tagText = tagText.replace(/[^A-Za-z0-9_]/g, '\\$&');
 				searchText = new RegExp(tagText, 'g');
-				tagWikiText = decodeURIComponent(specialtags[i].attributes["data-bs-wikitext"].value);
+				tagWikiText = decodeURIComponent(specialtags[i].attributes["data-mw-wikitext"].value);
 				replaceText = "<@@@TAGENT" + i + "@@@>";
 				_tagEntities4Wiki[i] = tagWikiText;
 				text = text.replace(
@@ -2487,7 +2477,7 @@ debugger;
 				var templateText = templates[i].outerHTML;
 				templateText = templateText.replace(/[^A-Za-z0-9_]/g, '\\$&');
 				var searchText = new RegExp(templateText, 'g');
-				var templateWikiText = decodeURIComponent(templates[i].attributes["data-bs-wikitext"].value);
+				var templateWikiText = decodeURIComponent(templates[i].attributes["data-mw-wikitext"].value);
 				replaceText = "<@@@TMPENT" + i + "@@@>";
 				_templateEntities4Wiki[i] = templateWikiText;
 				text = text.replace(
@@ -2507,7 +2497,7 @@ debugger;
 				var commentText = comments[i].outerHTML;
 				commentText = commentText.replace(/[^A-Za-z0-9_]/g, '\\$&');
 				var searchText = new RegExp(commentText, 'g');
-				var commentWikiText = decodeURIComponent(comments[i].attributes["data-bs-wikitext"].value);
+				var commentWikiText = decodeURIComponent(comments[i].attributes["data-mw-wikitext"].value);
 				var replaceText = commentWikiText;
 				text = text.replace(
 					searchText,
@@ -2527,8 +2517,8 @@ debugger;
 //				switchText = switchText.replace(/ contenteditable="false"/gmi,'')
 				switchText = switchText.replace(/<a.*\/a>/gmi,'');
 				switchText = switchText.replace(/"data-mce-href=".*"/gmi,'');
-//				text = text.replace(switchText, switches[i].attributes["data-bs-wikitext"].value);
-				text = text.replace(switchText, '<br class="bs_emptyline">' + switches[i].attributes["data-bs-wikitext"].value);
+//				text = text.replace(switchText, switches[i].attributes["data-mw-wikitext"].value);
+				text = text.replace(switchText, '<br class="bs_emptyline">' + switches[i].attributes["data-mw-wikitext"].value);
 			}
 		}
 		return text;
@@ -2765,7 +2755,7 @@ debugger;
 		_templateEntities4Wiki = false;
 
 		// cleanup templates in table markers
-		text = text.replace(/data-bs-t.*?-tpl.*?="(.*?)"/gmi, "{{$1}}");
+		text = text.replace(/data-mw-t.*?-tpl.*?="(.*?)"/gmi, "{{$1}}");
 
 		return text;
 	}
@@ -2881,6 +2871,7 @@ debugger;
 	/**
 	 *
 	 */
+/* DEPRECATED now looked up as image converted to html
 	function _loadImageRealUrls() {
 		var image;
 		var content;
@@ -2937,7 +2928,7 @@ debugger;
 				}
 			);
 		}
-	}
+	}*/
 
 	/**
 	 *
@@ -2978,28 +2969,28 @@ debugger;
 		// mark templates in table headers, as they cannot be rendered
 		var i = 0;
 		while (text.match(/^(\{\|.*?)(\{\{(.*?)\}\})(.*?)$/gmi)) {
-			text = text.replace(/^(\{\|.*?)(\{\{(.*?)\}\})(.*?)$/gmi, '$1 data-bs-table-tpl'+i+'="$3"$4');
+			text = text.replace(/^(\{\|.*?)(\{\{(.*?)\}\})(.*?)$/gmi, '$1 data-mw-table-tpl'+i+'="$3"$4');
 			i++;
 		}
 
 		// mark templates in row definitions, as they cannot be rendered
 		var i = 0;
 		while (text.match(/^(\|-.*?)(\{\{(.*?)\}\})(.*?)$/gmi)) {
-			text = text.replace(/^(\|-.*?)(\{\{(.*?)\}\})(.*?)$/gmi, '$1 data-bs-tr-tpl'+i+'="$3"$4');
+			text = text.replace(/^(\|-.*?)(\{\{(.*?)\}\})(.*?)$/gmi, '$1 data-mw-tr-tpl'+i+'="$3"$4');
 			i++;
 		}
 
 		// mark templates in header definitions, as they cannot be rendered
 		var i = 0;
 		while (text.match(/^(!.*?)(\{\{(.*?)\}\})(.*?\|)/gmi)) {
-			text = text.replace(/^(!.*?)(\{\{(.*?)\}\})(.*?\|)/gmi, '$1 data-bs-th-tpl'+i+'="$3"$4');
+			text = text.replace(/^(!.*?)(\{\{(.*?)\}\})(.*?\|)/gmi, '$1 data-mw-th-tpl'+i+'="$3"$4');
 			i++;
 		}
 
 		// mark templates in cell definitions, as they cannot be rendered
 		var i = 0;
 		while (text.match(/^(\|.*?)(\{\{(.*?)\}\})(.*?\|)/gmi)) {
-			text = text.replace(/^(\|.*?)(\{\{(.*?)\}\})(.*?\|)/gmi, '$1 data-bs-td-tpl'+i+'="$3"$4');
+			text = text.replace(/^(\|.*?)(\{\{(.*?)\}\})(.*?\|)/gmi, '$1 data-mw-td-tpl'+i+'="$3"$4');
 			i++;
 		}
 
@@ -3086,7 +3077,8 @@ debugger;
 		}
 		_images = []; //Reset the images "array"
 		e.content = _wiki2html(e);
-		_loadImageRealUrls();
+/* DEPRECATED now done as image converted to html
+		_loadImageRealUrls();*/
 
 	}
 
@@ -3229,4 +3221,4 @@ debugger;
 	};
 };
 
-tinymce.PluginManager.add('wikicode', BsWikiCode);
+tinymce.PluginManager.add('wikicode', MwWikiCode);
