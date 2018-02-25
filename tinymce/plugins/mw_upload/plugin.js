@@ -278,7 +278,7 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 								var pageTitle = pages[page].title
 								var imageInfo = pages[page].imageinfo;
 								var imageURL = imageInfo[0].url;
-								if (pageTitle.replace("_"," ").toLowerCase() == fileName.replace("_"," ").toLowerCase()) {
+								if (pageTitle.replace(/_/g," ").toLowerCase() == fileName.replace(/_/g," ").toLowerCase()) {
 									fileDetails = imageURL;
 								}
 							}
@@ -972,6 +972,7 @@ debugger;
 				verticalalignment: submittedData.verticalalignment,
 				format: submittedData.format,
 				style: style,
+				class: 'mw-image',
 				contentEditable: 'false',
 				id: nodeID,
 				"data-bs-src": uploadResult,
@@ -1077,4 +1078,13 @@ debugger;
 	});
 
 	editor.addCommand('mceImage', showDialog);
+	
+	// Add option to double-click on file to get
+	// "upload" popup.
+	editor.on('dblclick', function(e) {
+		if (e.target.className.includes("mw-image")) {
+			tinyMCE.activeEditor.execCommand('mceImage');
+		}
+	});
+
 });
