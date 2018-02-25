@@ -306,8 +306,8 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 
 		if ((value = dom.getAttrib(anchorElm, 'class'))) {
 			data['class'] = value;
-			if (data["class"] == "internal bs-internal-link mceNonEditable new") {
-				data["class"] = "internal bs-internal-link mceNonEditable" ;
+			if (data["class"] == "internal mw-internal-link mceNonEditable new") {
+				data["class"] = "internal mw-internal-link mceNonEditable" ;
 			}
 		}
 
@@ -315,7 +315,7 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 			data.title = value;
 		}
 
-		if ((value = dom.getAttrib(anchorElm, 'data-bs-wikitext'))) {
+		if ((value = dom.getAttrib(anchorElm, 'data-mw-wikitext'))) {
 			data.wikitext = value;
 		}
 
@@ -474,8 +474,8 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 					data.type = "";
 					var apage = decodeURIComponent(data.href).replace("_"," ");
 					var linkTarget = apage;
-					if ((data["class"] == "internal bs-internal-link mceNonEditable") || 
-						(data["class"] == "internal bs-internal-link mceNonEditable new")) {
+					if ((data["class"] == "internal mw-internal-link mceNonEditable") || 
+						(data["class"] == "internal mw-internal-link mceNonEditable new")) {
 
 						/*DC now go and check the links to see if pages exist */
 						var server = mw.config.get( "wgServer" ) ;
@@ -488,12 +488,12 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 							async: false, 
 							success: function(ajaxdata) {
 								if (typeof ajaxdata.query.pages == "undefined") {
-									data["class"] = "internal bs-internal-link mceNonEditable new";
+									data["class"] = "internal mw-internal-link mceNonEditable new";
 								} else {
 									var pages = ajaxdata.query.pages;
 									for( var page in pages ) {
 										if ( !(typeof pages[page].missing == "undefined" && typeof pages[page].invalid == "undefined") ) {
-											data["class"] = "internal bs-internal-link mceNonEditable new";
+											data["class"] = "internal mw-internal-link mceNonEditable new";
 											linkTarget += " (page does not exist)";
 										}
 									}
@@ -501,7 +501,7 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 							}
 						});
 						data.type = "internal_link" ;
-					} else if (data["class"] == "external bs-external-link mceNonEditable") {
+					} else if (data["class"] == "external mw-external-link mceNonEditable") {
 						data.type = "external_link" ; 
 					}
 					data.wikitext = apage ;
@@ -517,8 +517,8 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 					var linkAttrs = {
 						href: href,
 						'data-mce-href': href,
-						'data-bs-type': data.type,
-						'data-bs-wikitext': data.wikitext,
+						'data-mw-type': data.type,
+						'data-mw-wikitext': data.wikitext,
 						target: data.target ? data.target : null,
 						rel: data.rel ? data.rel : null,
 						"class": data["class"] ? data["class"] : null,
@@ -585,7 +585,7 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 				}
 
 				// Is not protocol prefixed
-				if ((data["class"] == "external bs-external-link mceNonEditable") &&
+				if ((data["class"] == "external mw-external-link mceNonEditable") &&
                                    ((editor.settings.link_assume_external_targets && !/^\w+:/i.test(href)) ||
 				   (!editor.settings.link_assume_external_targets && /^\s*www[\.|\d\.]/i.test(href)))) {
 					delayedConfirm(
@@ -636,7 +636,8 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 		);
 	}
 
-
+	this.showDialog = showDialog;
+	
 	editor.addShortcut('Meta+K', '', createLinkList(showDialog));
 	editor.addCommand('mceLink', createLinkList(showDialog));
 
@@ -656,7 +657,6 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 		}
 	});
 
-	this.showDialog = showDialog;
 
 	editor.addMenuItem('openlink', {
 		text: mw.msg('tinymce-openlink'),
@@ -674,6 +674,14 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 		stateSelector: 'a[href]',
 		context: 'insert',
 		prependToContext: true
+	});
+
+	// Add option to double-click on nlink to get
+	// "link" popup.
+	editor.on('dblclick', function(e) {
+		if (e.target.className.includes("mw-internal-link") || e.target.className.includes("mw-external-link")) {
+			tinyMCE.activeEditor.execCommand('mceLink');
+		}
 	});
 
 });
