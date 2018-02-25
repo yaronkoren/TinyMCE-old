@@ -113,11 +113,11 @@ var MwWikiCode = function() {
 		 */
 		_ed = null;
 
-		var me = this;
-		
+	var me = this,
+		scriptPath = mw.config.get( 'wgScriptPath' );
+
 	_userThumbsize = _thumbsizes[ mw.user ? mw.user.options.get('thumbsize') : _userThumbsize ];
 	
-	var scriptPath = mw.config.get( 'wgScriptPath' );
 
 	this.makeWikiImageDataObject = function() {
 		return {
@@ -144,7 +144,7 @@ var MwWikiCode = function() {
 
 	this.makeDefaultImageAttributesObject = function() {
 		return {
-			'class': "bs-ve-image",
+			'class': "mw-image",
 			'border': 0,
 			//'width': _userThumbsize,
 			//HAD: display:inline-block; //Future: only CSS class
@@ -187,7 +187,7 @@ var MwWikiCode = function() {
 	// get details of file already uploaded to wiki including url
 	function getFileDetailsFromWiki(fileName) {
 		var queryData;
-		
+				
 		queryData = new FormData();
 		queryData.append("action", "query");
 		queryData.append("prop", "imageinfo");
@@ -202,26 +202,37 @@ var MwWikiCode = function() {
 			contentType:false,
 			processData:false,
 			type:'POST',
-			data: queryData,//the queryData object we created above
+			data: queryData,
 			async: false,
 			success:function(data){
+				var reason,
+					message,
+					title,
+					imageInfo,
+					imageURL,
+					pages,
+					page;
 				if (typeof data.query == "undefined") {
 					fileDetails = JSON.parse(data)
 				} else if (typeof data.query.pages != "undefined") {
-					var pages = data.query.pages;
-					for( var page in pages ) {
+					pages = data.query.pages;
+					for( page in pages ) {
 						if (page == -1) {
 							//error in lookup
-							// Todo: i18n
-							var response = pages["-1"];
-							var reason = response["invalidreason"];
-							var title = response["title"]
-							alert('Error looking up ' + title + '. Reason given: ' + reason);
-						} else if ((typeof pages[page].missing == "undefined") && (typeof pages[page].invalid == "undefined") ) {
-							var pageTitle = pages[page].title
-							var imageInfo = pages[page].imageinfo;
-							var imageURL = imageInfo[0].url;
-							if (pageTitle.replace("_"," ").toLowerCase() == fileName.replace("_"," ").toLowerCase()) {
+							if ((typeof pages[page].missing != "undefined") ) {
+								title = pages[page].title;
+								message = mw.msg("tinymce-wikicode-alert-image-not-found-on-wiki",title);
+							} else if (typeof pages[page].invalid != "undefined") {
+								message = mw.msg("tinymce-wikicode-alert-image-request-invalid",filename);								
+							} else {
+								message = mw.msg("tinymce-wikicode-alert-image-request-unknown-error",filename);								
+							}
+							alert(message);
+						} else {
+							title = pages[page].title;
+							imageInfo = pages[page].imageinfo;
+							imageURL = imageInfo[0].url;
+							if (title.replace(/_/g," ").toLowerCase() == fileName.replace(/_/g," ").toLowerCase()) {
 								fileDetails = imageURL;
 							}
 						}
@@ -474,7 +485,7 @@ var MwWikiCode = function() {
 		//We can not use [[/]] because this might cause double parsing!
 		htmlImageObject.attr('data-mw-wikitext', link);
 
-/*		//DEPRECATED use of dummy url, instead look up directly
+/*DEPRECATED use of dummy url, instead look up directly
 		//We set a dummy url which contains the original filename as
 		//querystring parameter
 		imgParts = parts[0].split(':');
@@ -486,7 +497,6 @@ var MwWikiCode = function() {
 		//replacement of dummyUrls
 		_images.push({ imageName: imgName, dummySrc: src });*/
 		
-debugger;
 		
 		// see if file already on wiki and return details if it is
 		
@@ -494,20 +504,20 @@ debugger;
 			src = a1;
 		});
 
-// TODO show error message if file not found
 		// encountered an error trying to access the api
-		if (typeof src.error != "undefined") {
+		// set src to filename instead of url on wiki
+		if (!src) {
 			src = parts[0];
 		}
 		
-		// image, resulting in a 404 error.
+		// image
 		if (src) {
 			htmlImageObject.attr('src', src);
 		}
 
 		// make contenteditable false so image can be selected correctly
 		htmlImageObject.attr('contentEditable', false);
-		htmlImageObject.attr('id',"PF" + (Math.floor((Math.random() * 100000) + 100000)));
+		htmlImageObject.attr('id',"IMG" + (Math.floor((Math.random() * 100000) + 100000)));
 
 		//Create linked images
 		if (wikiImageObject.link !== false) {
@@ -521,17 +531,17 @@ debugger;
 
 	function _image2wiki(text) {
 //DC TODO check to see if this function can be simplified
+debugger;
+		var image, imageHTML, htmlImageObject, wikiImageObject,
+			attributes, attribute, wikiText, imageCaption,
+			size, property, value;
+
 		var images = text.match(/(<a([^>]*?)>)?<img([^>]*?)\/?>(<\/a>)?/gi);
 		if (!images)
 			return text;
 
 		for (var i = 0; i < images.length; i++) {
-			var image, htmlImageObject, wikiImageObject,
-				attributes, attribute, wikiText, imageCaption,
-				size, property, value;
-
 			image = images[i];
-
 			htmlImageObject = $(image);
 			wikiImageObject = {};
 
@@ -542,8 +552,8 @@ debugger;
 			}
 
 			attributes = htmlImageObject[0].attributes;
-
-			//TODO: maybe use bs.util.unprefixDataAttributeObject
+			// populate the wiki image object attributes
+			// strip the data-mw prefix from attribute names
 			for (var j = 0; j < attributes.length; j++) {
 				attribute = attributes[j].name;
 				if (attribute.startsWith('data-mw-') === false) {
@@ -555,7 +565,6 @@ debugger;
 					wikiImageObject[property] = attributes[j].value;
 				}
 			}
-
 			//Update things that might have changed in markup but not in "data"
 			//Check if wikiImageObject.imagename is set,
 			//if not set it to the name of the source file
@@ -752,9 +761,6 @@ debugger;
 		return text;
 	}
 
-	//Make public available?
-	//this.image2wiki = _image2wiki;
-
 	function _links2html(text) {
 		// internal links
 		var links, link, linkNoWrap, linkParts, linkTarget, linkLabel, linkHtml,
@@ -762,9 +768,10 @@ debugger;
 			linkTargetParts, protocol, targetText,
 			namespaces = mw.config.get('wgNamespaceIds'),
 			imageExtensions = mw.config.get('wgFileExtensions'),
-			anchorFormat = '<a href="{0}" data-mce-href="{5}" title="{6}" data-mw-type="{2}" class="{3}" data-mw-wikitext="{4}">{1}</a>';
+			anchorFormat = '<a href="{0}" data-mce-href="{5}" title="{6}" data-mw-type="{2}" class="{3}" data-mw-wikitext="{4}" contenteditable= "false" >{1} </a>';
 
 		links = text.match(/\[\[([^\]]*?)\]\]/gi);
+/*DEORECATED tdoes the preceding text match achive the same thing as following bit of code?
 		var pos = 0;
 		var squareBraceDepth = 0;
 		var checkedBraces = new Array();
@@ -800,8 +807,8 @@ debugger;
 				}
 			}
 		}
-
-		links = _links;
+debugger;
+		links = _links;*/
 
 		if (links) {
 			for (var i = 0; i < links.length; i++) {
@@ -824,7 +831,7 @@ debugger;
 					encodeURI( linkTarget ),//escape(linkTarget),	// href
 					linkLabel,					// <a>linkLabel</a>
 					'internal_link',				// data-mw-type
-					'internal bs-internal-link mceNonEditable',	// class
+					'internal mw-internal-link mceNonEditable',	// class
 					encodeURI( $('<div/>').text(link).html() ),	// data-mw-wikitext
 					encodeURI( linkTarget ),			// data-mce-href
 					linkTarget					// title
@@ -834,17 +841,9 @@ debugger;
 				if (targetParts.length > 1) {
 					nsText = targetParts[0];
 					nsId = namespaces[nsText.toLowerCase()];
-/* dc images namespace is always 6 so lets just test for that instead
-					if (nsId === bs.ns.NS_IMAGE) {
-*/
 					if (nsId === 6) {
 						targetTextParts = linkTarget.split(".");
 						fileExtension = targetTextParts[targetTextParts.length - 1];
-/* dc since its already in the wiki text lets assume that it is an image file for now
-						if ($.inArray(fileExtension.toLowerCase(), imageExtensions) !== -1) {
-							linkHtml = _image2html(link);
-						}
-*/
 						linkHtml = _image2html(link);
 					}
 				}
@@ -887,7 +886,7 @@ debugger;
 					encodeURI( linkTarget.replace( /%20/g, ' ' ) ),	// href
 					linkLabel,					// <a>linkLabel</a>
 					'external_link',				// data-mw-type
-					'external bs-external-link mceNonEditable bs-protocol-'+protocol,// class
+					'external mw-external-link mceNonEditable mw-protocol-'+protocol,// class
 					$( '<div/>' ).text( link ).html(),		// data-mw-wikitext
 					encodeURI( linkTarget.replace( /%20/g, ' ' ) ),	// data-mce-href
 					$( '<div/>' ).text( linkLabel ).html()		// title
@@ -1039,7 +1038,7 @@ debugger;
 			embedded = false;
 		}
 
-		// images or links in tables may contain | in their attributes, esp. in bs-data-*. These
+		// images or links in tables may contain | in their attributes, esp. in mw-data-*. These
 		// need to be properly escaped in order not to interfere with table syntax
 		while (text.match(/(\<[^\>]*?)(\|)([^\>]*?\>)/g)) {
 			text = text.replace(/(\<[^\>]*?)(\|)([^\>]*?\>)/g, "$1@@pipe@@$3");
@@ -1535,28 +1534,28 @@ debugger;
 							// if first line of data in a table cell
 							//do nothing
 						} else {
-//dc 29122017				lines[i] = lines[i] + '<div class="bs_emptyline_first"><br class="bs_emptyline_first"/></div>';
-							//lines[i] = lines[i] + '<br class="bs_emptyline_first"/>';
-							lines[i] = lines[i] + '<br class="bs_emptyline_first"/><br class="bs_emptyline_first"/>';
+//dc 29122017				lines[i] = lines[i] + '<div class="mw_emptyline_first"><br class="mw_emptyline_first"/></div>';
+							//lines[i] = lines[i] + '<br class="mw_emptyline_first"/>';
+							lines[i] = lines[i] + '<br class="mw_emptyline_first"/><br class="mw_emptyline_first"/>';
 						}
 						inParagraph = true;
 					} else {// this is already in a paragraph
-//dc 29122017			lines[i] = lines[i] + '<div class="bs_emptyline"><br class="bs_emptyline"/></div>';
-						lines[i] = lines[i] + '<br class="bs_emptyline"/>';
+//dc 29122017			lines[i] = lines[i] + '<div class="mw_emptyline"><br class="mw_emptyline"/></div>';
+						lines[i] = lines[i] + '<br class="mw_emptyline"/>';
 					}
 				} else { // not an empty line
 					if (!inParagraph && lines[i].match(/(^\<@@@TAG)/i) && i>0 ) { // if the line starts with <@@@TAG then precede it with a blank line
-							lines[i] = '<br class="bs_emptyline"/>' + lines[i];
+							lines[i] = '<br class="mw_emptyline"/>' + lines[i];
 					}
 					if (!inParagraph && lines[i].match(/(^\<@@@CMT)/i) && i>0 ) { // if the line starts with <@@@CMT then precede it with a blank line
-							lines[i] = '<br class="bs_emptyline"/>' + lines[i];
+							lines[i] = '<br class="mw_emptyline"/>' + lines[i];
 					}
 					inParagraph = false;
 					if ((lines[i].match(/(^\<td\>)/i)) || (lines[i].match(/(^\<\/td\>\<td\>)/i))) {	// if first line of data in a table cell
 						if (!(lines[i+1].match(/(^\<\/td)/i))) { // and not a single line
 							if (!(lines[i+1].match(/^(\s|&nbsp;)*$/))) { // and not an empty line after
 								if (!(lines[i+1].match(/(^\<table)/))) { // and not a table after
-									lines[i] = lines[i] + '<br class="bs_emptyline"/>';
+									lines[i] = lines[i] + '<br class="mw_emptyline"/>';
 								}
 							}
 						}
@@ -1688,10 +1687,10 @@ debugger;
 		else {
 			//<p> is neccessary to fix Ticket#2010111510000021. do not use <p>
 			//in the complementary line in html2wiki
-			text = text + '<div><br class="bs_lastline" /></div>';
+			text = text + '<div><br class="mw_lastline" /></div>';
 		}
 		// this reverts the line above. otherwise undo/redo will not work
-		text = text.replace(/<div><br [^>]*bs_lastline[^>]*><\/div>/gmi, '');
+		text = text.replace(/<div><br [^>]*mw_lastline[^>]*><\/div>/gmi, '');
 		text = text.replace(/<br data-attributes="" \/>/gmi, '<br/>');
 		text = text.replace(/<br data-attributes="[^>]*data-mce-bogus[^>]*" \/>/gmi, '');
 		text = text.replace(/<br [^>]*data-mce-bogus="1"[^>]*>/gmi, '');
@@ -1752,16 +1751,16 @@ debugger;
 //		text = text.replace(/<p class="mw_paragraph"><br data-mce-bogus="1"><\/p>/gmi, '@@br_emptyline_first@@@@br_emptyline@@');
 		text = text.replace(/<p class="mw_paragraph"><br data-mce-bogus="1"><\/p>/gmi, '@@br_emptyline_first@@');
 		//then replace paragraphs containing only blank lines first followed by a <div> with just blank line
-		//text = text.replace(/<p class="mw_paragraph"><br class="bs_emptyline_first"><\/p><div>/gmi, '@@br_emptyline@@<div>');
+		//text = text.replace(/<p class="mw_paragraph"><br class="mw_emptyline_first"><\/p><div>/gmi, '@@br_emptyline@@<div>');
 		//then replace paragraphs containing only blank lines first with just blank lines first
-		//text = text.replace(/<p class="mw_paragraph"><br class="bs_emptyline_first"><\/p>/gmi, '@@br_emptyline_first@@');
-		text = text.replace(/<p class="mw_paragraph"><br class="bs_emptyline_first">/gmi, '<p class="mw_paragraph">');
+		//text = text.replace(/<p class="mw_paragraph"><br class="mw_emptyline_first"><\/p>/gmi, '@@br_emptyline_first@@');
+		text = text.replace(/<p class="mw_paragraph"><br class="mw_emptyline_first">/gmi, '<p class="mw_paragraph">');
 		//then replace blank lines first followed by blank line at end of paragraph with blank line first
-		//text = text.replace(/<br class="bs_emptyline_first"><br class="bs_emptyline"><\/p>/gmi, '@@br_emptyline_first@@</p>');
+		//text = text.replace(/<br class="mw_emptyline_first"><br class="mw_emptyline"><\/p>/gmi, '@@br_emptyline_first@@</p>');
 		//then replace blank lines first at end of paragraph with blank line
-		//text = text.replace(/<br class="bs_emptyline_first"><\/p>/gmi, '@@br_emptyline@@</p>');
-		text = text.replace(/<br class="bs_emptyline_first"><\/p>/gmi, '</p>');
-		text = text.replace(/<br class="bs_emptyline"><\/p>/gmi, '</p>');
+		//text = text.replace(/<br class="mw_emptyline_first"><\/p>/gmi, '@@br_emptyline@@</p>');
+		text = text.replace(/<br class="mw_emptyline_first"><\/p>/gmi, '</p>');
+		text = text.replace(/<br class="mw_emptyline"><\/p>/gmi, '</p>');
 		//then replace Enter keypress followed by 'div's (eg table, lists etc, with a single empty line
 		text = text.replace(/<p class="mw_paragraph">(.*?)<\/p><div>/gmi, '$1@@br_emptyline@@<div>');
 		//then replace Enter keypress with wiki paragraph eg three new lines
@@ -1781,18 +1780,18 @@ debugger;
 			}
 		}*/
 
-		text = text.replace(/<br class="bs_emptyline_first"[^>]*>/gmi, "@@br_emptyline_first@@");
+		text = text.replace(/<br class="mw_emptyline_first"[^>]*>/gmi, "@@br_emptyline_first@@");
 		// if emptyline_first is no longer empty, change it to a normal p
-//		text = text.replace(/<div class="bs_emptyline_first"[^>]*>&nbsp;<\/div>/gmi, '<div>@@br_emptyline_first@@</div>'); // TinyMCE 4
-//		text = text.replace(/<div class="bs_emptyline_first"[^>]*>(.*?\S+.*?)<\/div>/gmi, "<div>$1</div>");
-//		text = text.replace(/<div class="bs_emptyline_first"[^>]*>.*?<\/div>/gmi, "<div>@@br_emptyline_first@@</div>");
+//		text = text.replace(/<div class="mw_emptyline_first"[^>]*>&nbsp;<\/div>/gmi, '<div>@@br_emptyline_first@@</div>'); // TinyMCE 4
+//		text = text.replace(/<div class="mw_emptyline_first"[^>]*>(.*?\S+.*?)<\/div>/gmi, "<div>$1</div>");
+//		text = text.replace(/<div class="mw_emptyline_first"[^>]*>.*?<\/div>/gmi, "<div>@@br_emptyline_first@@</div>");
 //		text = text.replace(/<div>@@br_emptyline_first@@<\/div>/gmi, "@@br_emptyline_first@@");
-		text = text.replace(/<br class="bs_emptyline"[^>]*>/gmi, "@@br_emptyline@@");
+		text = text.replace(/<br class="mw_emptyline"[^>]*>/gmi, "@@br_emptyline@@");
 		//text = text.replace(/<br>/gmi, "@@br_emptyline@@");
 		// if emptyline is no longer empty, change it to a normal p
-//		text = text.replace(/<div class="bs_emptyline"[^>]*>&nbsp;<\/div>/gmi, '<div>@@br_emptyline@@</div>'); // TinyMCE 4
-//		text = text.replace(/<div class="bs_emptyline"[^>]*>(.*?\S+.*?)<\/div>/gmi, "<div>$1</div>"); //doesn't replace 2nd occurence
-//		text = text.replace(/<div class="bs_emptyline"[^>]*>(.*?)<\/div>/gmi, "<div>@@br_emptyline@@</div>");//file 10
+//		text = text.replace(/<div class="mw_emptyline"[^>]*>&nbsp;<\/div>/gmi, '<div>@@br_emptyline@@</div>'); // TinyMCE 4
+//		text = text.replace(/<div class="mw_emptyline"[^>]*>(.*?\S+.*?)<\/div>/gmi, "<div>$1</div>"); //doesn't replace 2nd occurence
+//		text = text.replace(/<div class="mw_emptyline"[^>]*>(.*?)<\/div>/gmi, "<div>@@br_emptyline@@</div>");//file 10
 		text = text.replace(/<br mce_bogus="1"\/>/gmi, "");
 		//DC added next line to remove stray bougs data placeholders
 		text = text.replace(/<br data-mce-bogus="1">/gmi, "");
@@ -1869,9 +1868,9 @@ debugger;
 			switch (text.substr(nextPos, 2).toLowerCase()) {
 				case '<p' :
 					// Todo: putting these lines straight in row might lead to strange behaviour
-					currentPos = text.search(/<p[^>]*>(<span[^>]*bs_comment[^>]*>[\s\S]*?<\/span>[\s\S]*?)<\/p>/mi);
+					currentPos = text.search(/<p[^>]*>(<span[^>]*mw_comment[^>]*>[\s\S]*?<\/span>[\s\S]*?)<\/p>/mi);
 					if (currentPos === nextPos) {
-						text = text.replace(/<p[^>]*>(<span[^>]*bs_comment[^>]*>[\s\S]*?<\/span>[\s\S]*?)<\/p>/mi, "$1");
+						text = text.replace(/<p[^>]*>(<span[^>]*mw_comment[^>]*>[\s\S]*?<\/span>[\s\S]*?)<\/p>/mi, "$1");
 					}
 					currentPos = text.search(/<p(\s+[^>]*?)?>\s*(\s|<br ?\/>)\s*<\/p>/mi);
 					if (currentPos === nextPos) {
@@ -2085,7 +2084,7 @@ debugger;
 		// Cleanup am Schluss lÃ¶scht alle ZeilenumbrÃ¼che und Leerzeilen/-Zeichen am Ende.
 		// Important: do not use m flag, since this makes $ react to any line ending instead of text ending
 		text = text.replace(/((<p( [^>]*?)?>(\s|&nbsp;|<br\s?\/>)*?<\/p>)|<br\s?\/>|\s)*$/gi, "");
-		text = text.replace(/<br [^>]*bs_lastline[^>]*>/gmi, '');
+		text = text.replace(/<br [^>]*mw_lastline[^>]*>/gmi, '');
 		text = text.replace(/<br data-attributes="" ?\/?>/gmi, '<br/>');
 		text = text.replace(/<br data-attributes="[^>]*data-mce-bogus[^>]*" ?\/?>/gmi, '');
 		text = text.replace(/<br data-attributes="[^>]*data-attributes[^>]*" ?\/?>/gmi, '<br/>');
@@ -2147,7 +2146,7 @@ debugger;
 		}
 		for (var aSwitch in switches) {
 			switchWikiText= switches[aSwitch];
-			id = "bs_switch:@@@SWT"+ i + "@@@";
+			id = "mw_switch:@@@SWT"+ i + "@@@";
 			var codeAttrs = {
 				'id': id,
 				'class': "mceNonEditable wikimagic switch",
@@ -2223,7 +2222,7 @@ debugger;
 					var displayTagWikiText = encodeURIComponent(tagWikiText);
 
 					var t = Math.floor((Math.random() * 100000) + 100000) + i;
-					var id = "bs_specialtag:@@@ST"+ t + "@@@";
+					var id = "mw_specialtag:@@@ST"+ t + "@@@";
 					var codeAttrs = {
 						'id': id,
 						'class': "mceNonEditable wikimagic tag",
@@ -2360,7 +2359,7 @@ debugger;
 						var displayTemplateWikiText = encodeURIComponent(templateWikiText);
 
 						var t = Math.floor((Math.random() * 100000) + 100000) + i;
-						var id = "bs_template:@@@TPL"+ t + "@@@";
+						var id = "mw_template:@@@TPL"+ t + "@@@";
 						var codeAttrs = {
 							'id': id,
 							'class': "mceNonEditable wikimagic template",
@@ -2400,7 +2399,7 @@ debugger;
 		i = 0;
 		cmt = '';
 		while ((cmt = matcher.exec(mtext)) !== null) {
-			id = "bs_switch:@@@CMT"+ i + "@@@";
+			id = "mw_switch:@@@CMT"+ i + "@@@";
 			var codeAttrs = {
 				'id': id,
 				'class': "mceNonEditable wikimagic comment",
@@ -2518,7 +2517,7 @@ debugger;
 				switchText = switchText.replace(/<a.*\/a>/gmi,'');
 				switchText = switchText.replace(/"data-mce-href=".*"/gmi,'');
 //				text = text.replace(switchText, switches[i].attributes["data-mw-wikitext"].value);
-				text = text.replace(switchText, '<br class="bs_emptyline">' + switches[i].attributes["data-mw-wikitext"].value);
+				text = text.replace(switchText, '<br class="mw_emptyline">' + switches[i].attributes["data-mw-wikitext"].value);
 			}
 		}
 		return text;
@@ -2533,7 +2532,7 @@ debugger;
 		var i;
 
 		_preTags = false;
-		_preTags = text.match(/<pre[^>]*?(?!bs_pre_from_space)[^>]*?>([\S\s]*?)<\/pre>/gmi);
+		_preTags = text.match(/<pre[^>]*?(?!mw_pre_from_space)[^>]*?>([\S\s]*?)<\/pre>/gmi);
 
 		if (_preTags) {
 			for (i = 0; i < _preTags.length; i++) {
@@ -2543,7 +2542,7 @@ debugger;
 
 		_preTagsSpace = false;
 		// @todo MRG (22.10.10 19:28): This should match pre class="space", narrow down (now matches everything)
-		_preTagsSpace = text.match(/<pre[^>]+bs_pre_from_space[^>]+>([\S\s]*?)<\/pre>/gmi);
+		_preTagsSpace = text.match(/<pre[^>]+mw_pre_from_space[^>]+>([\S\s]*?)<\/pre>/gmi);
 		if (_preTagsSpace) {
 			for (i = 0; i < _preTagsSpace.length; i++) {
 				text = text.replace(_preTagsSpace[i], "<@@@PRE_SPACE" + i + "@@@>");
@@ -2617,8 +2616,8 @@ debugger;
 		}
 
 		// Tiny replaces &nbsp; by space, so we need to undo this
-		text = text.replace(/<span class="bs_htmlentity">[\s\u00a0]<\/span>/gi, '<span class="bs_htmlentity">&nbsp;<\/span>');
-		regex = '<span class="bs_htmlentity">(&[^;]*?;)<\/span>';
+		text = text.replace(/<span class="mw_htmlentity">[\s\u00a0]<\/span>/gi, '<span class="mw_htmlentity">&nbsp;<\/span>');
+		regex = '<span class="mw_htmlentity">(&[^;]*?;)<\/span>';
 		matcher = new RegExp(regex, 'gmi');
 
 		mtext = text;
@@ -2645,8 +2644,8 @@ debugger;
 		_htmlEntities4Wiki = false;
 
 		//cleanup entity markers
-		while (text.match(/<span class="bs_htmlentity">.+?<\/span>/gmi)) {
-				text = text.replace(/(<span class="bs_htmlentity">)(.+?)(<\/span>)/gmi, '$2');
+		while (text.match(/<span class="mw_htmlentity">.+?<\/span>/gmi)) {
+				text = text.replace(/(<span class="mw_htmlentity">)(.+?)(<\/span>)/gmi, '$2');
 		}
 
 		return text;
@@ -2804,7 +2803,7 @@ debugger;
 				_preTagsSpace[i] = _preTagsSpace[i].replace( /\n/g, "").substr(1, _preTagsSpace[i].length);
 				text = text.replace(
 					"<@@@PRE_SPACE" + i + "@@@>",
-					( newlineAtBeginning ? "\n" : "" ) + '<pre class="bs_pre_from_space">' + _preTagsSpace[i] + '</pre>'
+					( newlineAtBeginning ? "\n" : "" ) + '<pre class="mw_pre_from_space">' + _preTagsSpace[i] + '</pre>'
 				);
 			}
 		}
@@ -2824,7 +2823,7 @@ debugger;
 		var innerPre, innerPreLines;
 		var text = e.content;
 
-		_preTagsSpace = text.match(/<pre[^>]+bs_pre_from_space[^>]+>([\S\s]*?)<\/pre>/gmi);
+		_preTagsSpace = text.match(/<pre[^>]+mw_pre_from_space[^>]+>([\S\s]*?)<\/pre>/gmi);
 
 		if (_preTagsSpace) {
 			for (var i = 0; i < _preTagsSpace.length; i++) {
@@ -2849,7 +2848,7 @@ debugger;
 
 	function __preserveSingleLinebreaks($0, $1, $2, $3) {
 		// hr table heading comment div end-table | ol ul dl dt comment cell row
-		// there was bs_comment:@@@ in there: |@@@PRE.*?@@@$|\|$|bs_comment:@@@|^
+		// there was mw_comment:@@@ in there: |@@@PRE.*?@@@$|\|$|mw_comment:@@@|^
 		// DC add in html tags that are allowed in wikicode eg </ol>, </ul>, </li> so far
 //		if ($2.match(/(----$|\|\}$|=$|-->$|<\/div>$|<\/pre>$|<@@@PRE.*?@@@>$|<@@@TAG.*?@@@>$|<@@@CMT.*?@@@>$|\|$|^(#|\*|:|;|<\!--|\|\||\|-)|<\/ol>|<\/ul>|<\/li>|(^\s*$))/i)) {
 		if ($2.match(/(----$|\|\}$|=$|-->$|<\/div>$|<\/pre>$|<@@@PRE.*?@@@>$|\|$|^(#|\*|:|;|<\!--|\|\||\|-)|(^\s*$))/i)) {
@@ -2952,11 +2951,11 @@ debugger;
 		text = text.replace(/(\|-[^\n]*?)\n+/gmi, "$1\n");
 
 		// cleanup old entity markers
-		while (text.match(/<span class="bs_htmlentity">.+?<\/span>/gmi)) {
-			text = text.replace(/(<span class="bs_htmlentity">)(.+?)(<\/span>)/gmi, '$2');
+		while (text.match(/<span class="mw_htmlentity">.+?<\/span>/gmi)) {
+			text = text.replace(/(<span class="mw_htmlentity">)(.+?)(<\/span>)/gmi, '$2');
 		}
 
-		text = text.replace(/(<span class="bs_htmlentity">)/gmi, '');
+		text = text.replace(/(<span class="mw_htmlentity">)/gmi, '');
 
 		while (text.match(/(<span ([^>]*?)>)(\1)[^>]*?<\/span><\/span>/gmi)) {
 			text = text.replace(/(<span [^>]*?>)(\1)([^>]*?)(<\/span>)<\/span>/gmi, '$1$3$4');
@@ -3001,12 +3000,12 @@ debugger;
 
 //DC TODO check what next clause does, but didn't work for html list entities!
 		//preserve entities that were orignially html entities
-		text = text.replace(/(&[^\s;]+;)/gmi, '<span class="bs_htmlentity">$1</span>');
+		text = text.replace(/(&[^\s;]+;)/gmi, '<span class="mw_htmlentity">$1</span>');
 
 		// remove replacement in external links. this must be done in a loop since there might be more
 		// & in an url
-		while (text.match(/(\[[^\]]+?)<span class="bs_htmlentity">(.+?)<\/span>([^\]]+?])/gmi)) {
-			text = text.replace(/(\[[^\]]+?)<span class="bs_htmlentity">(.+?)<\/span>([^\]]+?])/gmi, '$1$2$3');
+		while (text.match(/(\[[^\]]+?)<span class="mw_htmlentity">(.+?)<\/span>([^\]]+?])/gmi)) {
+			text = text.replace(/(\[[^\]]+?)<span class="mw_htmlentity">(.+?)<\/span>([^\]]+?])/gmi, '$1$2$3');
 		}
 
 		text = _convertPreWithSpacesToTinyMce(text);
@@ -3117,7 +3116,7 @@ debugger;
 	function _onLoadContent(ed, o) {
 		var internalLinks = [];
 		var internalLinksTitles = [];
-		$(this.dom.doc).find('a.bs-internal-link').each(function(){
+		$(this.dom.doc).find('a.mw-internal-link').each(function(){
 			var href = $(this).attr('data-mce-href');
 			if( !href ) {
 				href = $(this).attr('href');
@@ -3182,7 +3181,7 @@ debugger;
 	this.init = function(ed, url) {
 		_userThumbsize = _thumbsizes[ mw.user ? mw.user.options.get('thumbsize') : 3 ];
 		_imageDummyUrl = '/'/*dc removed this dependency on BS bs.em.paths.get('BlueSpiceFoundation')
-			+'/resources/bluespice/images/bs-ajax-loader-pik-blue.gif'*/;
+			+'/resources/bluespice/images/mw-ajax-loader-pik-blue.gif'*/;
 		_ed = ed;
 		var editClass = ed.getParam("noneditable_editable_class", "mceEditable"); // Currently unused
 		var nonEditClass = ed.getParam("noneditable_noneditable_class", "mceNonEditable");
