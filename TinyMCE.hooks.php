@@ -178,7 +178,7 @@ class TinyMCEHooks {
 		$vars['wgTinyMCEDirectionality'] = $directionality;
 		$vars['wgCheckFileExtensions'] = $wgCheckFileExtensions;
 		$vars['wgStrictFileExtensions'] = $wgStrictFileExtensions;
-		$vars['wgFileExtensions'] = $wgFileExtensions;  
+		$vars['wgFileExtensions'] = $wgFileExtensions;
 		$vars['wgFileBlacklist'] = $wgFileBlacklist;
 		$vars['wgEnableUploads'] = $wgEnableUploads;
 
@@ -227,6 +227,33 @@ class TinyMCEHooks {
 			);
 		}
 		$vars['wgTinyMCEMacros'] = $jsMacroArray;
+
+		return true;
+	}
+
+	/**
+	 * Adds an "edit" link for TinyMCE, and renames the current "edit"
+	 * link to "edit source", for all sections on the page, if it's
+	 * editable with TinyMCE in the first place.
+	 */
+	public static function addEditSectionLink( $skin, $title, $section, $tooltip, &$links, $lang ) {
+		if ( !isset( $title ) || !$title->userCan( 'edit' ) ) {
+			return true;
+		}
+
+		$context = $skin->getContext();
+		if ( !TinyMCEHooks::enableTinyMCE( $title, $context ) ) {
+			return true;
+		}
+
+		foreach ( $links as &$link ) {
+			if ( $link['query']['action'] == 'edit' ) {
+				$newLink = $link;
+				$link['text'] = $skin->msg( 'tinymce-editsectionsource' )->parse();
+			}
+		}
+		$newLink['query']['action'] = 'tinymceedit';
+		$links = array_merge( array( 'tinymceeditsection' => $newLink ), $links );
 
 		return true;
 	}

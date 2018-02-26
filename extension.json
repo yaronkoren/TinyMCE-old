@@ -124,6 +124,7 @@
 	"Hooks": {
 		"MakeGlobalVariablesScript": "TinyMCEHooks::setGlobalJSVariables",
 		"SkinTemplateNavigation": "TinyMCEAction::displayTab",
+		"SkinEditSectionLinks": "TinyMCEHooks::addEditSectionLink",
 		"EditPageBeforeEditToolbar": "TinyMCEHooks::removeDefaultToolbar",
 		"EditPage::showEditForm:initial": "TinyMCEHooks::addToEditPage",
 		"WikiEditorDisable": "TinyMCEHooks::disableWikiEditor",
