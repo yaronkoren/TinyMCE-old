@@ -46,9 +46,10 @@ class TinyMCEAction extends Action {
 	 * Adds an "action" (i.e., a tab) to edit the current article with
 	 * TinyMCE.
 	 */
-	static function displayTab( $obj, &$content_actions ) {
+	static function displayTab( $obj, &$links ) {
 		global $wgRequest;
 
+		$content_actions = &$links['views'];
 		$title = $obj->getTitle();
 		$context = $obj->getContext();
 
@@ -103,16 +104,6 @@ class TinyMCEAction extends Action {
 		}
 
 		return true; // always return true, in order not to stop MW's hook processing!
-	}
-
-	/**
-	 * Like displayTab(), but called with a different hook - this one is
-	 * called for the 'Vector' skin, and some others.
-	 */
-	static function displayTab2( $obj, &$links ) {
-		// the old '$content_actions' array is thankfully just a
-		// sub-array of this one
-		return self::displayTab( $obj, $links['views'] );
 	}
 
 }

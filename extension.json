@@ -123,8 +123,7 @@
 	},
 	"Hooks": {
 		"MakeGlobalVariablesScript": "TinyMCEHooks::setGlobalJSVariables",
-		"SkinTemplateTabs": "TinyMCEAction::displayTab",
-		"SkinTemplateNavigation": "TinyMCEAction::displayTab2",
+		"SkinTemplateNavigation": "TinyMCEAction::displayTab",
 		"EditPageBeforeEditToolbar": "TinyMCEHooks::removeDefaultToolbar",
 		"EditPage::showEditForm:initial": "TinyMCEHooks::addToEditPage",
 		"WikiEditorDisable": "TinyMCEHooks::disableWikiEditor",
