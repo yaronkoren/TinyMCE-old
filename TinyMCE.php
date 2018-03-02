@@ -67,6 +67,8 @@ $GLOBALS['wgTinyMCEIP'] = dirname( __FILE__ );
 
 //$GLOBALS['wgHooks']['ResourceLoaderRegisterModules'][] = 'TinyMCEHooks::registerModules';
 $GLOBALS['wgHooks']['MakeGlobalVariablesScript'][] = 'TinyMCEHooks::setGlobalJSVariables';
+$GLOBALS['wgHooks']['SkinTemplateNavigation'][] = 'TinyMCEAction::displayTab';
+$GLOBALS['wgHooks']['SkinEditSectionLinks'][] = 'TinyMCEHooks::addEditSectionLink';
 $GLOBALS['wgHooks']['EditPageBeforeEditToolbar'][] = 'TinyMCEHooks::removeDefaultToolbar';
 $GLOBALS['wgHooks']['EditPage::showEditForm:initial'][] = 'TinyMCEHooks::addToEditPage';
 $GLOBALS['wgHooks']['WikiEditorDisable'][] = 'TinyMCEHooks::disableWikiEditor';
@@ -155,6 +157,10 @@ $GLOBALS['wgResourceModules'] += array(
 			'tinymce-upload-confirm-file-not-on-wiki',
 			'tinymce-upload-confirm-ignore-warnings',
 			'tinymce-upload-menu-item-text',
+			'tinymce-wikicode-alert-image-not-found-on-wiki',
+			'tinymce-wikicode-alert-image-request-invalid',
+			'tinymce-wikicode-alert-image-request-unknown-error',
+			'tinymce-wikicode-alert-infinte-loop',
 			'tinymce-openlink',
 			'tinymce-wikimagic',
 			'tinymce-wikimagic-title',
