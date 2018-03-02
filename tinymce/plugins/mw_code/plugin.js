@@ -14,7 +14,7 @@
 tinymce.PluginManager.add('wikisourcecode', function(editor) {
 	function showDialog() {
 		var win = editor.windowManager.open({
-			title: "Source code",
+			title: message = mw.msg("tinymce-wikisourcecode"),
 			body: {
 				type: 'textbox',
 				name: 'code',
