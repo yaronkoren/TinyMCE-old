@@ -501,20 +501,20 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 				if (dialogData.src == 'false') dialogData.src = '';
 				dialogData.dest = '';
 				dialogData.summary = '';
-				dialogData.link = dom.getAttrib(imgElm, 'data-bs-link');
+				dialogData.link = dom.getAttrib(imgElm, 'data-mw-link');
 				if (dialogData.link == 'false') dialogData.link = '';
-				dialogData.alt = dom.getAttrib(imgElm, 'data-bs-alt');
+				dialogData.alt = dom.getAttrib(imgElm, 'data-mw-alt');
 				if ( dialogData.alt == 'false') dialogData.height = '';
 				if (dialogData.constrain != false) dialogData.constrain = true;
-				dialogData.width = dom.getAttrib(imgElm, 'data-bs-sizewidth');
+				dialogData.width = dom.getAttrib(imgElm, 'data-mw-sizewidth');
 				if ( dialogData.width == 'false') dialogData.width = null;
-				dialogData.height = dom.getAttrib(imgElm, 'data-bs-sizeheight');
+				dialogData.height = dom.getAttrib(imgElm, 'data-mw-sizeheight');
 				if ( dialogData.height == 'false') dialogData.height = null;
-				dialogData.horizontalalignment = dom.getAttrib(imgElm, 'data-bs-align');
+				dialogData.horizontalalignment = dom.getAttrib(imgElm, 'data-mw-align');
 				if ( dialogData.horizontalalignment == 'false') dialogData.horizontalalignment = null;
-				dialogData.verticalalignment = dom.getAttrib(imgElm, 'data-bs-verticalalign');
+				dialogData.verticalalignment = dom.getAttrib(imgElm, 'data-mw-verticalalign');
 				if ( dialogData.verticalalignment == 'false') dialogData.verticalalignment = null;
-				dialogData.format = dom.getAttrib(imgElm, 'data-bs-format');
+				dialogData.format = dom.getAttrib(imgElm, 'data-mw-format');
 				if ( dialogData.format == 'false') dialogData.format = null;
 			}
 
@@ -975,14 +975,14 @@ debugger;
 				class: 'mw-image',
 				contentEditable: 'false',
 				id: nodeID,
-				"data-bs-src": uploadResult,
-				"data-bs-link": submittedData.link,
-				"data-bs-alt": submittedData.alt,
-				"data-bs-sizewidth": width,
-				"data-bs-sizeheight": height,
-				"data-bs-align": submittedData.horizontalalignment,
-				"data-bs-verticalalign": submittedData.verticalalignment,
-				"data-bs-format": submittedData.format
+				"data-mw-src": uploadResult,
+				"data-mw-link": submittedData.link,
+				"data-mw-alt": submittedData.alt,
+				"data-mw-sizewidth": width,
+				"data-mw-sizeheight": height,
+				"data-mw-align": submittedData.horizontalalignment,
+				"data-mw-verticalalign": submittedData.verticalalignment,
+				"data-mw-format": submittedData.format
 			};
 
 			if (imgElm) { //update existing node
