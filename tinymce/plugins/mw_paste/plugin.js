@@ -283,16 +283,108 @@ define("tinymce/pasteplugin/SmartPaste", [
 ], function (Tools) {
 
 	function uploadImages(editor,text) {
-/* var imageTags = text.getElementsByTagName("img"); // Returns array of <img> DOM nodes
-		var images = text.match(/(<a([^>]*?)>)?<img([^>]*?)\/>(<\/a>)?/gi);*/
+		var scriptPath = mw.config.get( 'wgScriptPath' );
+		var _srccontent,
+			_userThumbsize = 3,
+			_thumbsizes = ['120', '150', '180', '200', '250', '300'];
+	
+		_userThumbsize = _thumbsizes[ mw.user ? mw.user.options.get('thumbsize') : 3 ];
+
+		function doUpload(fileType, fileToUpload, fileName, fileSummary, ignoreWarnings){
+			var uploadData = new FormData();
+			uploadData.append("action", "upload");
+			uploadData.append("filename", fileName);
+			uploadData.append("text", fileSummary);
+			uploadData.append("token", mw.user.tokens.get( 'editToken' ) );
+			uploadData.append("ignorewarnings", ignoreWarnings );
+			if (fileType == 'File') uploadData.append("file", fileToUpload);
+			if (fileType == 'URL') uploadData.append("url", fileToUpload);
+			uploadData.append("format", 'json');
+			var url = scriptPath + '/api.php';
+			var uploadDetails;
+			//as we now have created the data to send, we send it...
+			$.ajax( { //http://stackoverflow.com/questions/6974684/how-to-send-formdata-objects-with-ajax-requests-in-jquery
+				url: url, //url to api.php
+				contentType:false,
+				processData:false,
+				type:'POST',
+				async: false,
+				data: uploadData,//the formdata object we created above
+				success:function(data){
+					uploadDetails = data.upload;
+				},
+				error:function(xhr,status, error){
+					console.log(error)
+				}
+			});
+			return uploadDetails;
+		}
+		
+		// check upload succesful or report errors and warnings
+		function checkUploadDetail(uploadDetails, ignoreWarnings) {
+			var message,
+				result;
+				
+			if (typeof uploadDetails == "undefined") {
+				editor.windowManager.alert(mw.msg("tinymce-upload-alert-unknown-error-uploading"));
+				result = false;
+			} else if (typeof uploadDetails.error != "undefined") {
+				message = mw.msg("tinymce-upload-alert-error-uploading",uploadDetails.error.info);
+				editor.windowManager.alert(message);
+				result = false;
+			} else if (typeof uploadDetails.warnings != "undefined" && (!ignoreWarnings)) {
+				message = mw.msg("tinymce-upload-alert-warnings-encountered") + "\n\n" ;  
+				result = 'warning';
+				for (warning in uploadDetails.warnings) {
+					warningDetails = uploadDetails.warnings[warning];
+					if (warning == 'badfilename') {
+						message = message + "	" + mw.msg("tinymce-upload-alert-destination-filename-not-allowed") + "\n";
+						result = false;
+					} else if (warning == 'exists') {
+						// this warning will also be trapped by destchange so just return warning
+						message = message + "	" + mw.msg("tinymce-upload-alert-destination-filename-already-exists") + "\n";
+						result = false;
+					} else if (warning == 'duplicate') {
+						duplicate = warningDetails[0];
+						message = message + "	" + mw.msg("tinymce-upload-alert-duplicate-file",duplicate) + "\n"
+					} else {
+						message = message + "	" + mw.msg("tinymce-upload-alert-other-warning",warning) + "\n"
+						result = false;
+					}
+				}
+				if (result == 'warning') {
+					result = false;
+					message = message + "\n" + mw.msg("tinymce-upload-confirm-ignore-warnings");
+					editor.windowManager.confirm(message,
+						function(ok) {
+							if (ok) {
+								result = 'ignore_warning';
+							} else {
+								result = false;
+							}
+						}
+					);
+				} else {
+					message = message + "\n" + mw.msg("tinymce-upload-alert-correct-and-try-again");
+					editor.windowManager.alert(message);		
+					result = false;
+				}
+			} else if (typeof uploadDetails.imageinfo != "undefined") {
+				result = uploadDetails.imageinfo.url;
+			}
+			return result;
+		}
+
 		var images = text.match( /<img.*?src="([^">]*\/([^">]*?))".*?>/g);
+
 		if (!images)
 			return text;
 
 		for (var i = 0; i < images.length; i++) {
-			var image, htmlImageObject, wikiImageObject, dropSrc,
+			var image, htmlImageObject, wikiImageObject, fileSummary,
 				attributes, attribute, wikiText, imageCaption,
 				size, property, value, xhr, formData, editorid = editor.id;
+				
 			image = images[i];
 
 			htmlImageObject = $(image);
@@ -305,12 +397,10 @@ define("tinymce/pasteplugin/SmartPaste", [
 			}
 */
 			attributes = htmlImageObject[0].attributes;
-			dropSrc = "";
-			//TODO: maybe use bs.util.unprefixDataAttributeObject
 
 			for (var j = 0; j < attributes.length; j++) {
 				attribute = attributes[j].name;
-				if (attribute.startsWith('data-bs-') === false) {
+				if (attribute.startsWith('data-mw-') === false) {
 					property = attribute;
 				} else {
 					property = attribute.substr(8, attribute.length); 
@@ -322,33 +412,49 @@ define("tinymce/pasteplugin/SmartPaste", [
 			}
 			// Use the original location as the alt text in case download doesn't work
 			htmlImageObject[0].attributes["alt"] = wikiImageObject["src"];
-			htmlImageObject.attr("class", "bs-ve-image");
+			htmlImageObject.attr("class", "mw-ve-image");
 			htmlImageObject.attr("contenteditable", "false");
 
+			var protocol = srcName.split('/')[0].toLowerCase();
 			var dstName = srcName.split('/').pop().split('#')[0].split('?')[0];
-			var scriptPath = mw.config.get( 'wgScriptPath' );
-
-	                var uploadform = scriptPath + '/index.php?title=Special:TinyMCEUploadWindow&pfInputID=' + editorid + '&pfEditor=tinymce' +'&pfDropSrc=' + wikiImageObject["src"] + '&wpWidth=' + wikiImageObject["width"] + '&wpHeight=' + wikiImageObject["height"] + '&wpAltText=' + wikiImageObject["alt"] + '&wpTitle=' + wikiImageObject["title"] + '&wpUploadFileURL=' + wikiImageObject["src"] + '&wpDestFile=' + dstName + '&wpSourceType=Url';
-
- 			var jqueryXHR = $.ajax({
-                    		'type': 'POST',
-		    		'async': false,
-                 		'url': uploadform,
-                    		'dataType': 'json',
-		    		'success' : function(status) {
-					/* this function only runs if an error was encounterred 
-					trying to upload the file, despite its name!! */
-					editor.windowManager.alert(status);
-					text = text.replace(image,"<div class='pfMceUploadFail' style='position: relative; width: " +wikiImageObject["width"] + "; height: " + wikiImageObject["height"] + " ;'><div class='pfMceUploadFailTxt mceNonEditable ' style='position: absolute; background-color:orange; z-index: 1;'>Image " + wikiImageObject['src'] + " failed to load. Try downloading to a local disk and then uploading from there. </div><div class='pfMceUploadFailImg' style='position: relative; z-index: 0; opacity:0.3'>" + image + "</div></div>");	
-
-		    		},
-		    		'failure' : function() {
-					/* this function only execute if the ajax query failed to run.  
-					TODO make language sensitive */
-					editor.windowManager.alert("The automatic process for loading files when they are pasted or dragged into the editor window has failed.  Try downloading the file to a local disk and using the upload menu button instead" );
-		   		 }
-        		}) ;
-			text = text.replace(image,htmlImageObject[0].outerHTML);
+			var fileType, uploadDetails, uploadResult, ignoreWarnings = true;
+			var nodeID = "TinyMCE" + (Math.floor((Math.random() * 100000) + 100000));
+			
+			if ((protocol == 'https:') || (protocol == 'http:')) {
+				fileType = 'URL';
+			} else {
+				fileType = 'File';
+			}
+			
+			uploadDetails = doUpload(fileType, srcName, dstName, fileSummary, ignoreWarnings);
+			uploadResult = checkUploadDetail(uploadDetails, ignoreWarnings);
+			
+			//set up node data for inserting or updating in editor window
+			var data = {
+				src: uploadResult,
+				alt: htmlImageObject[0].attributes["alt"],
+				width: htmlImageObject[0].attributes["width"],
+				height: htmlImageObject[0].attributes["height"],
+				link: htmlImageObject[0].attributes["link"],
+				horizontalalignment: htmlImageObject[0].attributes["horizontalalignment"],
+				verticalalignment: htmlImageObject[0].attributes["verticalalignment"],
+				format: htmlImageObject[0].attributes["format"],
+				style: htmlImageObject[0].attributes["style"],
+				class: 'mw-image',
+				contentEditable: 'false',
+				id: nodeID,
+				"data-mw-src": uploadResult,
+				"data-mw-link": htmlImageObject[0]["link"],
+				"data-mw-alt": htmlImageObject[0]["alt"],
+				"data-mw-sizewidth": htmlImageObject[0]["width"],
+				"data-mw-sizeheight": htmlImageObject[0]["height"],
+				"data-mw-align": htmlImageObject[0]["horizontalalignment"],
+				"data-mw-verticalalign": htmlImageObject[0]["verticalalignment"],
+				"data-mw-format": htmlImageObject[0]["format"]
+			};
+			if (uploadResult != false) {
+				text = text.replace(image,htmlImageObject[0].outerHTML);
+			}
 		}
 	return text;
 	}
