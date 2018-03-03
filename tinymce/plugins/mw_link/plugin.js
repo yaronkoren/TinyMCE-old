@@ -324,7 +324,7 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 				name: 'text',
 				type: 'textbox',
 				size: 40,
-				label: 'Text to display',
+				label: mw.msg("tinymce-link-display-text-label"),
 				onchange: function() {
 					data.text = this.value();
 				}
@@ -334,13 +334,13 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 		if (linkList) {
 			linkListCtrl = {
 				type: 'listbox',
-				label: 'Link list',
+				label: mw.msg("tinymce-link-link-list-label"),
 				values: buildListItems(
 					linkList,
 					function(item) {
 						item.value = editor.convertURL(item.value || item.url, 'href');
 					},
-					[{text: 'None', value: ''}]
+					[{text: mw.msg("tinymce-link-link-list-none"), value: ''}]
 				),
 				onselect: linkListChangeHandler,
 				value: editor.convertURL(data.href, 'href'),
@@ -354,15 +354,15 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 		if (editor.settings.target_list !== false) {
 			if (!editor.settings.target_list) {
 				editor.settings.target_list = [
-					{text: 'None', value: ''},
-					{text: 'New window', value: '_blank'}
+					{text: mw.msg("tinymce-link-target-none"), value: ''},
+					{text: mw.msg("tinymce-link-target-new-window"), value: '_blank'}
 				];
 			}
 
 			targetListCtrl = {
 				name: 'target',
 				type: 'listbox',
-				label: 'Target',
+				label: mw.msg("tinymce-link-target-label"),
 				values: buildListItems(editor.settings.target_list)
 			};
 		}
@@ -371,7 +371,7 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 			relListCtrl = {
 				name: 'rel',
 				type: 'listbox',
-				label: 'Rel',
+				label: mw.msg("tinymce-link-rel-label"),
 				values: buildListItems(editor.settings.rel_list)
 			};
 		}
@@ -380,7 +380,7 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 			classListCtrl = {
 				name: 'class',
 				type: 'listbox',
-				label: 'Type',
+				label: mw.msg("tinymce-link-type-label"),
 				value: data.class,
 				values: buildListItems(
 					editor.settings.link_class_list,
@@ -399,7 +399,7 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 			linkTitleCtrl = {
 				name: 'title',
 				type: 'textbox',
-				label: 'Title',
+				label: mw.msg("tinymce-link-title-label"),
 				value: data.title
 			};
 		}
@@ -415,7 +415,7 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 					filetype: 'file',
 					size: 40,
 					autofocus: true,
-					label: 'Link url/page',
+					label: mw.msg("tinymce-link-url-page-label"),
 					onchange: urlChange,
 					onkeyup: updateText,
 					onbeforecall: onBeforeCall
@@ -494,7 +494,7 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 									for( var page in pages ) {
 										if ( !(typeof pages[page].missing == "undefined" && typeof pages[page].invalid == "undefined") ) {
 											data["class"] = "internal mw-internal-link mceNonEditable new";
-											linkTarget += " (page does not exist)";
+											linkTarget += " " + mw.msg("tinymce-link-page-not-found");
 										}
 									}
 								}
@@ -571,7 +571,7 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 				// Is email and not //user@domain.com
 				if (href.indexOf('@') > 0 && href.indexOf('//') == -1 && href.indexOf('mailto:') == -1) {
 					delayedConfirm(
-						'The URL you entered seems to be an email address. Do you want to add the required mailto: prefix?',
+						mw.msg("tinymce-link-want-to-link-email"),
 						function(state) {
 							if (state) {
 								href = 'mailto:' + href;
@@ -589,7 +589,7 @@ tinymce.PluginManager.add('wikilink', function(editor) {
                                    ((editor.settings.link_assume_external_targets && !/^\w+:/i.test(href)) ||
 				   (!editor.settings.link_assume_external_targets && /^\s*www[\.|\d\.]/i.test(href)))) {
 					delayedConfirm(
-						'The URL you entered seems to be an external link. Do you want to add the required // prefix?',
+						mw.msg("tinymce-link-want-to-link-external"),
 						function(state) {
 							if (state) {
 								href = '//' + href;
@@ -609,7 +609,7 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 
 	editor.addButton('wikilink', {
 		icon: 'link',
-		tooltip: 'Insert/edit link',
+		tooltip: mw.msg("tinymce-link-link-button-tooltip"),
 		shortcut: 'Meta+K',
 		onclick: createLinkList(showDialog),
 		stateSelector: 'a[href]'
@@ -617,7 +617,7 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 
 	editor.addButton('unlink', {
 		icon: 'unlink',
-		tooltip: 'Remove link',
+		tooltip: mw.msg("tinymce-link-link-remove-button-tooltip"),
 		cmd: 'unlink',
 		stateSelector: 'a[href]'
 	});
@@ -626,13 +626,13 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 	if (editor.addContextToolbar) {
 		editor.addButton('openlink', {
 			icon: 'newtab',
-			tooltip: 'Open link',
+			tooltip: mw.msg("tinymce-link-open-link"),
 			onclick: gotoSelectedLink
 		});
 
 		editor.addContextToolbar(
 			leftClickedOnAHref,
-			'openlink | link unlink'
+			mw.msg("tinymce-link-context-menu")
 		);
 	}
 
@@ -668,7 +668,7 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 
 	editor.addMenuItem('wikilink', {
 		icon: 'link',
-		text: 'Link',
+		text: mw.msg('tinymce-link'),
 		shortcut: 'Meta+K',
 		onclick: createLinkList(showDialog),
 		stateSelector: 'a[href]',
@@ -676,7 +676,7 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 		prependToContext: true
 	});
 
-	// Add option to double-click on nlink to get
+	// Add option to double-click on link to get
 	// "link" popup.
 	editor.on('dblclick', function(e) {
 		if (e.target.className.includes("mw-internal-link") || e.target.className.includes("mw-external-link")) {
