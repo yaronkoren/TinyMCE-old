@@ -512,9 +512,18 @@ tinymce.PluginManager.add('wikimagic', function(editor) {
 		onclick: showDialog
 	});
 
+	editor.addCommand('mceWikimagic', showDialog);
+
+	// Add option to double-click on switches to get
+	// "wikimagic" popup.
+	editor.on('dblclick', function(e) {
+		if (e.target.className.includes("wikimagic")) {
+			tinyMCE.activeEditor.execCommand('mceWikimagic');
+		}
+	});
+
 	// Add option to double-click on non-editable overlay to get
 	// "wikimagic" popup.
-	editor.addCommand('mceWikimagic', showDialog);
 	editor.on('dblclick', function(e) {
 		if (e.target.className == 'mceNonEditableOverlay' ) {
 			tinyMCE.activeEditor.execCommand('mceWikimagic');
