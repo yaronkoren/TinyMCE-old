@@ -73,6 +73,7 @@ $GLOBALS['wgHooks']['EditPageBeforeEditToolbar'][] = 'TinyMCEHooks::removeDefaul
 $GLOBALS['wgHooks']['EditPage::showEditForm:initial'][] = 'TinyMCEHooks::addToEditPage';
 $GLOBALS['wgHooks']['WikiEditorDisable'][] = 'TinyMCEHooks::disableWikiEditor';
 $GLOBALS['wgHooks']['GetPreferences'][] = 'TinyMCEHooks::addPreference';
+$GLOBALS['wgHooks']['PageForms::addRLModules'][] = 'TinyMCEHooks::addRLModules';
 
 $GLOBALS['wgAutoloadClasses']['TinyMCEHooks'] = __DIR__ . '/TinyMCE.hooks.php';
 $GLOBALS['wgAutoloadClasses']['TinyMCEUploadForm'] = __DIR__ . '/upload/TinyMCEUploadForm.php';
@@ -91,17 +92,20 @@ $GLOBALS['wgResourceModules'] += array(
 	'ext.tinymce' => $wgTinyMCEResourceTemplate + array(
 		'scripts' => 'MW_tinymce.js',
 		'styles' => 'MW_tinymce.css',
-		'dependencies' => 'ext.tinymce.fancybox',
+		'dependencies' => array(
+			'ext.tinymce.core',
+			'ext.tinymce.fancybox'
+		),
 		'messages' => array(
 			'tinymce-upload',
 			'tinymce-upload-title',
 			'tinymce-upload-title-general',
 			'tinymce-upload-title-image',
 			'tinymce-upload-type-label',
-                        'tinymce-upload-type-label-file',
-                        'tinymce-upload-type-label-url',
-                        'tinymce-upload-type-label-wiki',
-                        'tinymce-upload-type-tooltip',
+			'tinymce-upload-type-label-file',
+			'tinymce-upload-type-label-url',
+			'tinymce-upload-type-label-wiki',
+			'tinymce-upload-type-tooltip',
 			'tinymce-upload-source-label',
 			'tinymce-upload-source-tooltip',
 			'tinymce-upload-destination-label',
@@ -186,6 +190,9 @@ $GLOBALS['wgResourceModules'] += array(
 			'tinymce-link',
 			'tinymce-insert-linebreak',
 		)
+	),
+	'ext.tinymce.core' => $wgTinyMCEResourceTemplate + array(
+		'scripts' => 'tinymce/tinymce.js'
 	),
 	'ext.tinymce.fancybox' => $wgTinyMCEResourceTemplate + array(
 		'scripts' => 'fancybox/jquery.fancybox.js',

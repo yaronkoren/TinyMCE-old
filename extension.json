@@ -31,7 +31,10 @@
 		"ext.tinymce": {
 			"scripts": "MW_tinymce.js",
 			"styles": "MW_tinymce.css",
-			"dependencies": "ext.tinymce.fancybox",
+			"dependencies": [
+				"ext.tinymce.core",
+				"ext.tinymce.fancybox"
+			],
 			"messages": [
 				"tinymce-upload",
 				"tinymce-upload-title",
@@ -127,6 +130,9 @@
 				"tinymce-insert-linebreak"
 			]
 		},
+		"ext.tinymce.core": {
+			"scripts": "tinymce/tinymce.js"
+		},
 		"ext.tinymce.fancybox": {
 			"scripts": "fancybox/jquery.fancybox.js",
 			"styles": "fancybox/jquery.fancybox.css",
@@ -147,7 +153,8 @@
 		"EditPageBeforeEditToolbar": "TinyMCEHooks::removeDefaultToolbar",
 		"EditPage::showEditForm:initial": "TinyMCEHooks::addToEditPage",
 		"WikiEditorDisable": "TinyMCEHooks::disableWikiEditor",
-		"GetPreferences": "TinyMCEHooks::addPreference"
+		"GetPreferences": "TinyMCEHooks::addPreference",
+		"PageForms::addRLModules": "TinyMCEHooks::addRLModules"
 	},
 	"Actions": {
 		"tinymceedit": "TinyMCEAction"

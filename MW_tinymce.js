@@ -9,8 +9,7 @@ if ( tinyMCELanguage !== 'en' ) {
 var tinyMCEDirectionality = mw.config.get( 'wgTinyMCEDirectionality' );
 var tinyMCEMacros = mw.config.get( 'wgTinyMCEMacros' );
 
-jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
-  function() {
+window.mwTinyMCEInit = function( tinyMCESelector ) {
 /*
 	$('.tinymce').each( function() {
 		$(this).before("<p><a class=\"toggleMCE\" data-current-state=\"enabled\" data-input-id=\"" +
@@ -33,7 +32,7 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 
       window.tinymce.init({ 
 //          selector: '.tinymce',
-          selector: '#wpTextbox1, .tinymce',
+          selector: tinyMCESelector,
 	  branding: false,
 //	  relative_urls: false,
 //	  remove_script_host: false,
@@ -297,4 +296,6 @@ jQuery.getScript( scriptPath + '/extensions/TinyMCE/tinymce/tinymce.js',
 		input.click();
 	}
     });
-});
+};
+
+mwTinyMCEInit( '#wpTextbox1' );

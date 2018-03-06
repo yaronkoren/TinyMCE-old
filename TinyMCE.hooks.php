@@ -339,4 +339,9 @@ class TinyMCEHooks {
 		return true;
 	}
 
+	public static function addRLModules( &$otherModules ) {
+		$otherModules[] = 'ext.tinymce';
+		return true;
+	}
+
 }
