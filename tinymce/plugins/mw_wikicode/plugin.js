@@ -109,7 +109,9 @@ var MwWikiCode = function() {
 		 *
 		 * @type TinyMCE
 		 */
-		_ed = null;
+		_ed = null,
+		_useNrnlCharacter,
+		_slb;
 
 	var me = this,
 		scriptPath = mw.config.get( 'wgScriptPath' );
@@ -2748,7 +2750,8 @@ debugger;
 		if (_nowikiTags) {
 				for (i = 0; i < _nowikiTags.length; i++) {
 						text = text.replace(_nowikiTags[i], "<@@@NOWIKI" + i + "@@@>");
-						_nowikiTags[i] = _nowikiTags[i].replace( "\n", "<span class='single_linebreak' title='single linebreak'>&para;<\/span> " );
+//						_nowikiTags[i] = _nowikiTags[i].replace( "\n", "<span class='single_linebreak' title='single linebreak'>&para;<\/span>" );
+						_nowikiTags[i] = _nowikiTags[i].replace( "\n", _slb );
 				}
 		}
 		return text;
@@ -3045,8 +3048,11 @@ debugger;
 			return $0;
 		}
 		_processFlag = true;
-		//return $1 + $2 + "<span class='single_linebreak' title='single linebreak'>&para;<\/span>" + $3;
-		return $1 + $2 + $3;
+		if (_useNrnlCharacter) {
+			return $1 + $2 + _slb + $3;
+		} else {
+			return $1 + $2 + $3;
+		}
 	}
 
 	/*
@@ -3191,20 +3197,71 @@ debugger;
 		});
 	}
 
-	this.getInfo = function() {
-		var info = {
-			longname: 'TinyMCE WikiCode Parser',
-			author: 'Hallo Welt! GmbH & Duncan Crane at Aoxomoxoa Limited',
-			authorurl: 'http://www.hallowelt.biz, https://www.aoxomoxoa.co.uk',
-			infourl: 'http://www.hallowelt.biz, https://www.aoxomoxoa.co.uk'
-		};
-		return info;
-	};
+	function insertSingleLinebreak() {
+		var args,
+
+		args = {format: 'raw'};
+		_ed.undoManager.transact(function(){
+			_ed.focus();
+			_ed.selection.setContent(_slb,args);
+			_ed.undoManager.add();
+		});
+	}
+	
+	function showWikiMagicDialog() {
+		var selectedNode = _ed.selection.getNode();
+		var nodeType = '';
+		var isWikimagic = '';
+		var value = '';
+		if (typeof(selectedNode.attributes["data-mw-type"]) !== "undefined" ) {
+			nodeType = selectedNode.attributes["data-mw-type"].value;
+			isWikimagic = 
+				nodeType == "template" || 
+				nodeType == "switch" || 
+				nodeType == "tag" ||
+				nodeType == "comment" ;	
+		}
+
+		if (isWikimagic) {
+			value = selectedNode.attributes["data-mw-wikitext"].value;
+			value = decodeURIComponent(value);
+		} else {
+			value = _ed.selection.getContent({format : 'text'});
+		}
+		
+		_ed.windowManager.open({
+			title: mw.msg('tinymce-wikimagic-title'),
+			body: {
+				type: 'textbox', 
+				name: 'code', 
+				size: 40, 
+				label: 'Code value', 
+				multiline: true,
+				minWidth: _ed.getParam("code_dialog_width", 600),
+				minHeight: _ed.getParam("code_dialog_height", 
+				Math.min(tinymce.DOM.getViewPort().h - 200, 500)),
+				spellcheck: false,
+				style: 'direction: ltr; text-align: left',
+				value: value},
+			onsubmit: function(e) {
+				var text = e.data.code;
+				e.content = text;	
+				text = _wiki2html(e);				
+				_ed.undoManager.transact(function(){
+					_ed.focus();
+					_ed.selection.setContent(text, {format: 'raw'});
+					_ed.undoManager.add();
+					_ed.format = 'raw';
+				});
+				return;
+			}
+		});
+	}
 
 	this.init = function(ed, url) {
-		_userThumbsize = _thumbsizes[ mw.user ? mw.user.options.get('thumbsize') : 3 ];
-		_imageDummyUrl = '/'/*dc removed this dependency on BS bs.em.paths.get('BlueSpiceFoundation')
-			+'/resources/bluespice/images/mw-ajax-loader-pik-blue.gif'*/;
+//		_userThumbsize = _thumbsizes[ mw.user ? mw.user.options.get('thumbsize') : 3 ];
+//		_imageDummyUrl = '/'/*dc removed this dependency on BS bs.em.paths.get('BlueSpiceFoundation')
+//			+'/resources/bluespice/images/mw-ajax-loader-pik-blue.gif'*/;
 		_ed = ed;
 		var editClass = ed.getParam("noneditable_editable_class", "mceEditable"); // Currently unused
 		var nonEditClass = ed.getParam("noneditable_noneditable_class", "mceNonEditable");
@@ -3212,18 +3269,71 @@ debugger;
 		ed.on('beforeSetContent', _onBeforeSetContent);
 		ed.on('getContent', _onGetContent);
 		ed.on('loadContent', _onLoadContent);
-/*		ed.on('keyPress', function (evt) {
-debugger;
-//				if(evt.shiftKey && evt.keyCode == 13) {
-				if(evt.keyCode == 13) {
-                	evt.preventDefault();
-                	evt.stopPropagation();
-					console.log('Key press event: ' + evt.keyCode)
 
-					//alert('shift + enter key');
-					return;
-				}
-			})*/
+		// add in non rendered new line functionality
+		_useNrnlCharacter = ed.getParam("wiki_non_rendering_newline_charcter"),
+		_slb = "<span class='single_linebreak' title='single linebreak'>" + _useNrnlCharacter + "</span>";
+
+		if (_useNrnlCharacter) {
+			ed.addButton('singlelinebreak', {
+				icon: 'visualchars',
+				tooltip: mw.msg("tinymce-insert-linebreak"),
+				onclick:  insertSingleLinebreak
+			});
+	
+			ed.addMenuItem('singlelinebreak', {
+				icon: 'visualchars',
+				text: 'Single linebreak',
+				tooltip: mw.msg("tinymce-insert-linebreak"),
+				context: 'insert',
+				onclick: insertSingleLinebreak
+			});
+		}
+		
+		// add in wikimagic functionality
+		ed.addButton('wikimagic', {
+			icon: 'codesample',
+			stateSelector: '.wikimagic',
+			tooltip: mw.msg( 'tinymce-wikimagic' ),
+			onclick: showWikiMagicDialog/*,
+			stateSelector: 'a:not([href])'*/
+		});
+
+		ed.addMenuItem('wikimagic', {
+			icon: 'codesample',
+			text: 'Wikimagic',
+			tooltip: mw.msg( 'tinymce-wikimagic' ),
+			context: 'insert',
+			onclick: showWikiMagicDialog
+		});
+	  
+		ed.addCommand('mceWikimagic', showWikiMagicDialog);
+	  
+		// Add option to double-click on switches to get
+		// "wikimagic" popup.
+		ed.on('dblclick', function(e) {
+			if (e.target.className.includes("wikimagic")) {
+				tinyMCE.activeEditor.execCommand('mceWikimagic');
+			}
+		});
+	  
+		// Add option to double-click on non-editable overlay to get
+		// "wikimagic" popup.
+		ed.on('dblclick', function(e) {
+			if (e.target.className == 'mceNonEditableOverlay' ) {
+				tinyMCE.activeEditor.execCommand('mceWikimagic');
+			}
+		});
+	};
+
+	this.getInfo = function() {
+		var info = {
+			longname: 'TinyMCE WikiCode Parser',
+			author: 'Hallo Welt! GmbH, Duncan Crane at Aoxomoxoa Limited & Yaron Koren at Wikiworks',
+			authorurl: 'http://www.hallowelt.biz, https://www.aoxomoxoa.co.uk, https://wikiworks.com/', 
+			infourl: 'http://www.hallowelt.biz, https://www.aoxomoxoa.co.uk, https://wikiworks.com/'
+		};
+		return info;
 	};
 
 	this.getSpecialTagList = function() {
