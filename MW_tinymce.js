@@ -10,32 +10,12 @@ var tinyMCEDirectionality = mw.config.get( 'wgTinyMCEDirectionality' );
 var tinyMCEMacros = mw.config.get( 'wgTinyMCEMacros' );
 
 window.mwTinyMCEInit = function( tinyMCESelector ) {
-/*
-	$('.tinymce').each( function() {
-		$(this).before("<p><a class=\"toggleMCE\" data-current-state=\"enabled\" data-input-id=\"" +
-			$(this).attr('id') + "\" href=\"javascript:void(0)\">Switch to basic editor</a></p>");
-	});
-	$('.toggleMCE').click( function() {
-		tinymce.EditorManager.execCommand('mceToggleEditor', true, $(this).attr('data-input-id'));
-		var currentState = $(this).attr('data-current-state');
-		if ( currentState === 'enabled' ) {
-			$(this).attr('data-current-state', 'disabled')
-				.html("Switch to advanced editor");
-		} else {
-			$(this).attr('data-current-state', 'enabled')
-				.html("Switch to basic editor");
-		}
-		// Prevent reload of the page.
-		return false;
-	});
-*/
-
 	window.tinymce.init({ 
-//          selector: '.tinymce',
+//		selector: '.tinymce',
 		selector: tinyMCESelector,
 		branding: false,
-//	  relative_urls: false,
-//	  remove_script_host: false,
+//		relative_urls: false,
+//		remove_script_host: false,
 		document_base_url: mw.config.get( "wgServer" ),
 		automatic_uploads: true,
 		paste_data_images: true,
@@ -44,7 +24,7 @@ window.mwTinyMCEInit = function( tinyMCESelector ) {
 		skin_url: scriptPath + '/extensions/TinyMCE/tinymce/skins/lightgray',
 		paste_word_valid_elements: 'b,strong,i,em,h1,h2,h3,h4,h5,table,thead,tfoot,tr,th,td,ol,ul,li,a,sub,sup,strike,br,del,div,p',
 		invalid_elements: 'tbody',
-		wiki_non_rendering_newline_charcter: '&para;', // set to false if you don't use non-rendering single new lines in wiki
+		wiki_non_rendering_newline_character: '&para;', // set to false if you don't use non-rendering single new lines in wiki
 		wiki_tags_list: mw.config.get('wgTinyMCETagList'), 
 		additional_wiki_tags: '|ol|ul|li|h1|h2|h3|h4|h5|h6',
 		browser_spellcheck: true,
@@ -57,7 +37,7 @@ window.mwTinyMCEInit = function( tinyMCESelector ) {
 			{title: 'External', value: 'external bs-external-link mceNonEditable'},
 			{title: 'Internal', value: 'internal bs-internal-link mceNonEditable'},
 		],
-		visual_table_class : "",
+		visual_table_class : "wikitable",
 		table_default_attributes: {
 			class: 'wikitable'
 		},
@@ -122,7 +102,7 @@ window.mwTinyMCEInit = function( tinyMCESelector ) {
 			'wikilink': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_link/plugin.js',
 //			'wikimagic': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_wikimagic/plugin.js',
 			'wikipaste': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_paste/plugin.js',
-			'wikisourcecode': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_code/plugin.js'
+//			'wikisourcecode': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_code/plugin.js'
 		},
 		menubar: false, //'edit insert view format table tools',
 		removed_menuitems: 'media',
