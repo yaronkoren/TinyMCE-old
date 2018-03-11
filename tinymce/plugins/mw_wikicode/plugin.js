@@ -85,11 +85,6 @@ var MwWikiCode = function() {
 		 */
 		_thumbsizes = ['120', '150', '180', '200', '250', '300'],
 		/**
-		 * Needed to fetch image urls from the server
-		 * @type String
-		 */
-		_imageDummyUrl = '',
-		/**
 		 * One of the thumbnail sizes, choosen by the user in Special:Preferences
 		 * @default 3
 		 * @type Number
@@ -116,7 +111,7 @@ var MwWikiCode = function() {
 	var me = this,
 		scriptPath = mw.config.get( 'wgScriptPath' );
 
-	_userThumbsize = _thumbsizes[ mw.user ? mw.user.options.get('thumbsize') : _userThumbsize ];
+//	_userThumbsize = _thumbsizes[ mw.user ? mw.user.options.get('thumbsize') : _userThumbsize ];
 	
 
 	this.makeWikiImageDataObject = function() {
@@ -485,21 +480,7 @@ var MwWikiCode = function() {
 		//We can not use [[/]] because this might cause double parsing!
 		htmlImageObject.attr('data-mw-wikitext', link);
 
-/*DEPRECATED use of dummy url, instead look up directly
-		//We set a dummy url which contains the original filename as
-		//querystring parameter
-		imgParts = parts[0].split(':');
-		imgParts.shift(); //Throw away leading namespace prefix
-		imgName = imgParts.join(':'); //Reassemble image name
-		src = _imageDummyUrl + '?' + imgName;
-
-		//We have to save the name and url of the image to allow post process
-		//replacement of dummyUrls
-		_images.push({ imageName: imgName, dummySrc: src });*/
-		
-		
 		// see if file already on wiki and return details if it is
-		
 		$.when(getFileDetailsFromWiki(parts[0]), $.ready).then( function(a1){
 			src = a1;
 		});
@@ -766,44 +747,6 @@ var MwWikiCode = function() {
 			anchorFormat = '<a href="{0}" data-mce-href="{5}" title="{6}" data-mw-type="{2}" class="{3}" data-mw-wikitext="{4}" contenteditable= "false" >{1} </a>';
 
 		links = text.match(/\[\[([^\]]*?)\]\]/gi);
-/*DEORECATED does the preceding text match achive the same thing as following bit of code?
-		var pos = 0;
-		var squareBraceDepth = 0;
-		var checkedBraces = new Array();
-		var linkDepth = 0;
-		var tempTemplate = '';
-		var squareBraceFirst = false;
-		var _links = new Array();
-		for (pos = 0; pos < text.length; pos++) {
-			if (text[pos] === '[') {
-				squareBraceDepth++;
-				if ( checkedBraces.indexOf(pos) == -1 && text[pos + 1] === '[') {
-					checkedBraces.push(pos + 1);
-					linkDepth++;
-				}
-			}
-
-			// Caution: this matches only from the second curly brace.
-			if (linkDepth && !squareBraceFirst) {
-				if (linkDepth > 1 && text[pos] == '|' ) tempTemplate = tempTemplate + '@@PIPE@@';
-				//if (text[pos] == '|' ) tempTemplate = tempTemplate + '@@PIPE@@';
-				else tempTemplate = tempTemplate + text[pos];
-			}
-			if (text[pos] === ']') {
-				squareBraceDepth--;
-				if ( checkedBraces.indexOf(pos-1) == -1 && text[pos - 1] === ']') {
-					checkedBraces.push(pos);
-					linkDepth--;
-				}
-				if (linkDepth === 0 && !squareBraceFirst) {
-					if (tempTemplate !== '')
-						_links.push(tempTemplate);
-					tempTemplate = '';
-				}
-			}
-		}
-debugger;
-		links = _links;*/
 
 		if (links) {
 			for (var i = 0; i < links.length; i++) {
@@ -1038,7 +981,6 @@ debugger;
 		while (text.match(/(\<[^\>]*?)(\|)([^\>]*?\>)/g)) {
 			text = text.replace(/(\<[^\>]*?)(\|)([^\>]*?\>)/g, "$1@@pipe@@$3");
 		}
-
 		lines = text.split(/\n/);
 		for (var i = 0; i < lines.length; i++) {
 			line = lines[i].match(/^\{\|(.*)/gi);
@@ -1225,14 +1167,12 @@ debugger;
 			}
 		}
 		text = lines.join("\n");
-//		text = text.replace(/@@blindline@@/gmi, '');
 		text = text.replace(/@@pipe@@/gmi, '|');
 		return text;
 	}
 
 	function _tables2wiki(e) {
 		var text = e.content;
-
 		// save some effort if no tables
 		if (!text.match(/\<table/g)) return text;
 		
@@ -1289,7 +1229,7 @@ debugger;
 		var emptyLine;
 		tableparser.addNodeFilter('td', function(nodes, name) {
 			function processText(text, block) {
-				if (text == "@@br_emptyline@@") return text; // cell is empty
+				if ((text == "@@br_emptyline@@") || (text == "<@@1nl@@>") ) return "@@br_emptyline@@"; // cell is empty
 				text = text.replace(/@@br_emptyline_first@@/gmi, "@@br_emptyline@@");
 				var lines = text.split("@@br_emptyline@@");
 
@@ -1337,15 +1277,20 @@ debugger;
 		text = text.replace(/<(\/)?tfoot([^>]*)>/gmi, "");
 //		text = text.replace(/\n?<table([^>]*)>/gmi, "<@@tnl@@>{" + pipeText + "$1");
 		text = text.replace(/\n?(<div>)?<table([^>]*)>/gmi, "<@@tnl@@>{" + pipeText + "$1");
+//		text = text.replace(/\n?<table([^>]*)>/gmi, "{" + pipeText + "$1");
 //		text = text.replace(/\n?<\/table([^>]*)>/gi, "<@@tnl@@>" + pipeText + "}<@@tnl@@>");
 		text = text.replace(/\n?<\/table([^>]*)>(<\/div>)?/gi, "<@@tnl@@>" + pipeText + "}<@@tnl@@>");
 
 		// remove spurious new lines at start and end of tables
+		// this is a bit of a hack -should try and stop the being put there
+		// in the first place!
 //		text = text.replace(/<td><@@tnl@@>\{\|/gmi, "<td>{|"); // before table in table
 //		text = text.replace(/<td><@@tnl@@>\{\{\{!\}\}/gmi, "<td>{{{!}}"); // before table in table
 		text = text.replace(/^(<@@tnl@@>{)/, "{");//before table at start of text
 		text = text.replace(/(@@br_emptyline@@)<@@tnl@@>\{\|/gmi, "<@@tnl@@>{|"); // before table
 		text = text.replace(/(@@br_emptyline@@)<@@tnl@@>\{\{\{!\}\}/gmi, "<@@tnl@@>{{{!}}"); // before table
+		text = text.replace(/<@@nl@@><@@tnl@@>\{\|/gmi, "<@@tnl@@>{|"); // before table
+		text = text.replace(/<@@nl@@><@@tnl@@>\{\{\{!\}\}/gmi, "<@@tnl@@>{{{!}}"); // before table
 		text = text.replace(/\|\}<@@tnl@@><\/td>/gmi, "|}<\/td>"); // after table in table
 		text = text.replace(/\{\{!\}\}\}<@@tnl@@><\/td>/gmi, "{{!}}}<\/td>"); // after table in table
 		text = text.replace(/\|\}<@@tnl@@>@@br_emptyline@@/gmi, "|}<@@tnl@@>"); // after table
@@ -1660,7 +1605,6 @@ debugger;
 		}
 
 		text = text.replace(/(<span class="mw_htmlentity">)/gmi, '');
-
 		// cleanup spans
 		while (text.match(/(<span ([^>]*?)>)(\1)[^>]*?<\/span><\/span>/gmi)) {
 			text = text.replace(/(<span [^>]*?>)(\1)([^>]*?)(<\/span>)<\/span>/gmi, '$1$3$4');
@@ -1800,7 +1744,10 @@ debugger;
 		text = text.replace(/(<[^!][^>]+?)(\n)([^<]+?>)/gi, "$1$3");
 
 		//preserve single line breaks
-		text = text.replace(/(^|\n|>| )([^\n]+)\n([^\n]{1,5})/gi, __preserveSingleLinebreaks);
+		do {
+			_processFlag = false;
+			text = text.replace(/(^|\n|>| )([^\n]+)\n([^\n]{1,5})/gi, __preserveSingleLinebreaks);
+		} while (_processFlag);
 		
 		//normalize line endings to \n
 		text = text.replace(/\r\n/gi, '\n');
@@ -1976,9 +1923,9 @@ debugger;
 	}
 	
 	function _blocks2wiki (text) {
-		var listTag, currentPos, nextPos, oldText;
-		listTag = '';
+		var listTag, currentPos, nextPos, oldText, message;
 
+		listTag = '';
 		text = text.replace(/@@br_emptyline_first@@/gi, "<br />");
 
 		// careful in the upcoming code: .*? does not match newline, however, [\s\S] does.
@@ -3206,6 +3153,8 @@ debugger;
 			_ed.selection.setContent(_slb,args);
 			_ed.undoManager.add();
 		});
+//		_ed.selection.setCursorLocation();
+//		_ed.nodeChanged();
 	}
 	
 	function showWikiMagicDialog() {
@@ -3257,22 +3206,54 @@ debugger;
 			}
 		});
 	}
+	
+	function showWikiSourceCodeDialog() {
+		var win = _ed.windowManager.open({
+			title: mw.msg("tinymce-wikisourcecode"),
+			body: {
+				type: 'textbox',
+				name: 'code',
+				multiline: true,
+				minWidth: _ed.getParam("code_dialog_width", 600),
+				minHeight: _ed.getParam("code_dialog_height", Math.min(tinymce.DOM.getViewPort().h - 200, 500)),
+				spellcheck: false,
+				style: 'direction: ltr; text-align: left'
+			},
+			onSubmit: function(e) {
+				// We get a lovely "Wrong document" error in IE 11 if we
+				// don't move the focus to the editor before creating an undo
+				// transation since it tries to make a bookmark for the current selection
+				_ed.focus();
+
+				_ed.undoManager.transact(function() {
+					e.load = true;
+					_ed.setContent(e.data.code,e);
+				});
+				_ed.selection.setCursorLocation();
+				_ed.nodeChanged();
+			}
+		});
+
+		// Gecko has a major performance issue with textarea
+		// contents so we need to set it when all reflows are done
+		win.find('#code').value(_ed.getContent({source_view: true}));
+	}
 
 	this.init = function(ed, url) {
-//		_userThumbsize = _thumbsizes[ mw.user ? mw.user.options.get('thumbsize') : 3 ];
-//		_imageDummyUrl = '/'/*dc removed this dependency on BS bs.em.paths.get('BlueSpiceFoundation')
-//			+'/resources/bluespice/images/mw-ajax-loader-pik-blue.gif'*/;
-		_ed = ed;
 		var editClass = ed.getParam("noneditable_editable_class", "mceEditable"); // Currently unused
 		var nonEditClass = ed.getParam("noneditable_noneditable_class", "mceNonEditable");
+		_userThumbsize = _thumbsizes[ mw.user ? mw.user.options.get('thumbsize') : _userThumbsize ];
+		_ed = ed;
 
 		ed.on('beforeSetContent', _onBeforeSetContent);
 		ed.on('getContent', _onGetContent);
 		ed.on('loadContent', _onLoadContent);
 
+		//
 		// add in non rendered new line functionality
-		_useNrnlCharacter = ed.getParam("wiki_non_rendering_newline_charcter"),
-		_slb = "<span class='single_linebreak' title='single linebreak'>" + _useNrnlCharacter + "</span>";
+		//
+		_useNrnlCharacter = ed.getParam("wiki_non_rendering_newline_character"),
+		_slb = "<span class='single_linebreak' title='single linebreak' contenteditable='false'>" + _useNrnlCharacter + "</span>";
 
 		if (_useNrnlCharacter) {
 			ed.addButton('singlelinebreak', {
@@ -3290,7 +3271,9 @@ debugger;
 			});
 		}
 		
+		//
 		// add in wikimagic functionality
+		//
 		ed.addButton('wikimagic', {
 			icon: 'codesample',
 			stateSelector: '.wikimagic',
@@ -3324,6 +3307,25 @@ debugger;
 				tinyMCE.activeEditor.execCommand('mceWikimagic');
 			}
 		});
+		
+		//
+		// add in wiki source code functionality
+		//
+		ed.addCommand("mceWikiCodeEditor", showWikiSourceCodeDialog);
+
+		ed.addButton('wikisourcecode', {
+			icon: 'code',
+			tooltip: mw.msg('tinymce-wikisourcecode'),
+			onclick: showWikiSourceCodeDialog
+		});
+	
+		ed.addMenuItem('wikisourcecode', {
+			icon: 'code',
+			text: mw.msg('tinymce-wikisourcecode-title'),
+			context: 'tools',
+			onclick: showWikiSourceCodeDialog
+		});
+
 	};
 
 	this.getInfo = function() {
@@ -3336,21 +3338,6 @@ debugger;
 		return info;
 	};
 
-	this.getSpecialTagList = function() {
-		return _specialtags;
-	};
-
-	this.pushSpecialTagList = function( item ) {
-		_specialtags.push( item );
-	}
-
-	this.getTemplateList = function() {
-		return _templates;
-	};
-
-	this.getSwitchList = function() {
-		return _switches;
-	};
 };
 
 tinymce.PluginManager.add('wikicode', MwWikiCode);
