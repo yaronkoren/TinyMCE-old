@@ -100,9 +100,7 @@ window.mwTinyMCEInit = function( tinyMCESelector ) {
 			'wikicode': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_wikicode/plugin.js',
 			'wikiupload': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_upload/plugin.js',
 			'wikilink': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_link/plugin.js',
-//			'wikimagic': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_wikimagic/plugin.js',
 			'wikipaste': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_paste/plugin.js',
-//			'wikisourcecode': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_code/plugin.js'
 		},
 		menubar: false, //'edit insert view format table tools',
 		removed_menuitems: 'media',
