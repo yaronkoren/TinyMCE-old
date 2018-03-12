@@ -259,6 +259,44 @@ class TinyMCEHooks {
 	}
 
 	/**
+	 * Sets broken/red links to point to TinyMCE edit page, if they
+	 * haven't been customized already.
+	 *
+	 * @param Linker $linker
+	 * @param Title $target
+	 * @param array $options
+	 * @param string $text
+	 * @param array &$attribs
+	 * @param bool &$ret
+	 * @return true
+	 */
+	static function changeRedLink( $linker, $target, $options, $text, &$attribs, &$ret ) {
+		// If it's not a broken (red) link, exit.
+		if ( !in_array( 'broken', $options, true ) ) {
+			return true;
+		}
+		// If the link is to a special page, exit.
+		if ( $target->getNamespace() == NS_SPECIAL ) {
+			return true;
+		}
+
+		// This link may have been modified already by Page Forms or
+		// some other extension - if so, leave it as it is.
+		if ( strpos( $attribs['href'], 'action=edit&' ) === false ) {
+			return true;
+		}
+
+		global $wgOut;
+		if ( !TinyMCEHooks::enableTinyMCE( $target, $wgOut->getContext() ) ) {
+			return true;
+		}
+
+		$attribs['href'] = $target->getLinkURL( array( 'action' => 'tinymceedit', 'redlink' => '1' ) );
+
+		return true;
+	}
+
+	/**
 	 * Is there a less hacky way to do this, like stopping the toolbar
 	 * creation before it starts?
 	 */
