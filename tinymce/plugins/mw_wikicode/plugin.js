@@ -2981,9 +2981,9 @@ var MwWikiCode = function() {
 	function __preserveSingleLinebreaks($0, $1, $2, $3) {
 		// hr table heading comment div end-table | ol ul dl dt comment cell row
 		// there was mw_comment:@@@ in there: |@@@PRE.*?@@@$|\|$|mw_comment:@@@|^
-		// DC add in html tags that are allowed in wikicode eg </ol>, </ul>, </li> so far
+		// DC add in html tags that are allowed in wikicode eg </ol>, </ul>, </li>, <br />so far
 //		if ($2.match(/(----$|\|\}$|=$|-->$|<\/div>$|<\/pre>$|<@@@PRE.*?@@@>$|<@@@TAG.*?@@@>$|<@@@CMT.*?@@@>$|\|$|^(#|\*|:|;|<\!--|\|\||\|-)|<\/ol>|<\/ul>|<\/li>|(^\s*$))/i)) {
-		if ($2.match(/(----$|\|\}$|=$|-->$|<\/div>$|<\/pre>$|<@@@PRE.*?@@@>$|\|$|^(#|\*|:|;|<\!--|\|\||\|-)|(^\s*$))/i)) {
+		if ($2.match(/(----$|\|\}$|=$|-->$|<\/div>$|<\/pre>$|<@@@PRE.*?@@@>$|\|$|^(#|\*|:|;|<\!--|\|\||\|-)|<br \/>|(^\s*$))/i)) {
 			return $0;
 		}
 		// careful: only considers the first 5 characters in a line
@@ -3252,7 +3252,7 @@ var MwWikiCode = function() {
 		//
 		// add in non rendered new line functionality
 		//
-		_useNrnlCharacter = ed.getParam("wiki_non_rendering_newline_character"),
+		_useNrnlCharacter = ed.getParam("wiki_non_rendering_newline_character");
 		_slb = "<span class='single_linebreak' title='single linebreak' contenteditable='false'>" + _useNrnlCharacter + "</span>";
 
 		if (_useNrnlCharacter) {
