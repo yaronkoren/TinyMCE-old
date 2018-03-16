@@ -1813,6 +1813,9 @@ var MwWikiCode = function() {
 	}
 
 	function _textStyles2wiki (text) {
+
+		text = text.replace(/<span id="_mce_caret" data-mce-bogus="true">(.*?)<\/span>/gi, "$1");
+		text = text.replace(/data-mce-style="(.*?)"/gi, "");
 		text = text.replace(/<strong>(.*?)<\/strong>/gmi, "'''$1'''");
 		text = text.replace(/<b>(.*?)<\/b>/gmi, "'''$1'''");
 		text = text.replace(/<em>(.*?)<\/em>/gmi, "''$1''");
@@ -2168,6 +2171,7 @@ var MwWikiCode = function() {
 	 * @returns {String}
 	 */
 	function _html2wiki(e) {
+
 		var text = e.content;
 		// save some work, if the text is empty
 		if (text === '') {
@@ -3086,7 +3090,10 @@ var MwWikiCode = function() {
 		e.content = _convertHtmlEntities(e);
 		//recover special tags to wiki code from placeholders
 		e.content = _recoverTags2Wiki(e);
+		// recover templates to wiki code from placeholders
 		e.content = _recoverTemplates2Wiki(e);
+		//get rid of blank lines at end of text
+		e.content = tinymce.util.Tools.trim(e.content);
 	}
 
 	function _onLoadContent(ed, o) {
@@ -3153,8 +3160,6 @@ var MwWikiCode = function() {
 			_ed.selection.setContent(_slb,args);
 			_ed.undoManager.add();
 		});
-//		_ed.selection.setCursorLocation();
-//		_ed.nodeChanged();
 	}
 	
 	function showWikiMagicDialog() {
