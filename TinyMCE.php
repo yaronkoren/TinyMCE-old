@@ -77,10 +77,13 @@ $GLOBALS['wgHooks']['GetPreferences'][] = 'TinyMCEHooks::addPreference';
 $GLOBALS['wgHooks']['PageForms::addRLModules'][] = 'TinyMCEHooks::addRLModules';
 
 $GLOBALS['wgAutoloadClasses']['TinyMCEHooks'] = __DIR__ . '/TinyMCE.hooks.php';
+$GLOBALS['wgAutoloadClasses']['TinyMCEAction'] = __DIR__ . '/TinyMCEAction.php';
 $GLOBALS['wgAutoloadClasses']['TinyMCEUploadForm'] = __DIR__ . '/upload/TinyMCEUploadForm.php';
 $GLOBALS['wgAutoloadClasses']['TinyMCEUploadSourceField'] = __DIR__ . '/upload/TinyMCEUploadSourceField.php';
 $GLOBALS['wgAutoloadClasses']['TinyMCEUploadWindow'] = __DIR__ . '/upload/TinyMCEUploadWindow.php';
 $GLOBALS['wgSpecialPages']['TinyMCEUploadWindow'] = 'TinyMCEUploadWindow';
+
+$GLOBALS['wgActions']['tinymceedit'] = 'TinyMCEAction';
 
 $GLOBALS['wgMessagesDirs']['TinyMCE'] = __DIR__ . '/i18n';
 
