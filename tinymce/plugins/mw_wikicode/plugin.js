@@ -1813,9 +1813,28 @@ var MwWikiCode = function() {
 	}
 
 	function _textStyles2wiki (text) {
+		var styleSpan,
+		searchText,
+		replaceText;
+		var styleSpans = tinymce.util.Tools.grep(_ed.dom.select('span'), function(elm) {
+			return elm && elm.id === "_mce_caret";
+		});
+		
+		if (styleSpans.length > 0) {
+			for (styleSpan in styleSpans) {
+				searchText = styleSpans[styleSpan].outerHTML;
+				searchText = searchText.replace(/[^A-Za-z0-9_]/g, '\\$&');
+				searchText = new RegExp(searchText, 'm');
+				replaceText = styleSpans[styleSpan].innerHTML;
+				text = text.replace(
+					searchText,
+					replaceText
+				);
+			}
+		}
 
-		text = text.replace(/<span id="_mce_caret" data-mce-bogus="true">(.*?)<\/span>/gi, "$1");
-		text = text.replace(/data-mce-style="(.*?)"/gi, "");
+		text = text.replace(/<span id="_mce_caret" data-mce-bogus="true">(.*?)<\/span>/gmi, "$1");
+		text = text.replace(/data-mce-style="(.*?)"/gmi, "");
 		text = text.replace(/<strong>(.*?)<\/strong>/gmi, "'''$1'''");
 		text = text.replace(/<b>(.*?)<\/b>/gmi, "'''$1'''");
 		text = text.replace(/<em>(.*?)<\/em>/gmi, "''$1''");
