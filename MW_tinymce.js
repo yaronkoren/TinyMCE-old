@@ -1,5 +1,4 @@
 var scriptPath = mw.config.get( 'wgScriptPath' );
-
 var tinyMCELanguage = mw.config.get( 'wgTinyMCELanguage' );
 var tinyMCELangURL = null;
 if ( tinyMCELanguage !== 'en' ) {
@@ -14,7 +13,7 @@ window.mwTinyMCEInit = function( tinyMCESelector ) {
 //		selector: '.tinymce',
 		selector: tinyMCESelector,
 		branding: false,
-//		relative_urls: false,
+		relative_urls: false,
 //		remove_script_host: false,
 		document_base_url: mw.config.get( "wgServer" ),
 		automatic_uploads: true,
