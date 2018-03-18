@@ -135,13 +135,6 @@ class TinyMCEHooks {
 		return 'en';
 	}
 
-	/**
-	 * Compiles a list of tags that must be passed by the editor.
-	 * @global Language $wgLang
-	 * @global OutputPage $wgOut
-	 * @param Parser $oParser MediaWiki parser object.
-	 * @return bool Allow other hooked methods to be executed. Always true.
-	 */
 	static function setGlobalJSVariables( &$vars, $out ) {
 		global $wgTinyMCEEnabled, $wgTinyMCEMacros;
 		global $wgParser, $wgCheckFileExtensions, $wgStrictFileExtensions;
