@@ -1813,36 +1813,12 @@ var MwWikiCode = function() {
 	}
 
 	function _textStyles2wiki (text) {
-		var styleSpan,
-		searchText,
-		replaceText;
-		var styleSpans = tinymce.util.Tools.grep(_ed.dom.select('span'), function(elm) {
-			return elm && elm.id === "_mce_caret";
-		});
-		
-		if (styleSpans.length > 0) {
-			for (styleSpan in styleSpans) {
-				searchText = styleSpans[styleSpan].outerHTML;
-				searchText = searchText.replace(/[^A-Za-z0-9_]/g, '\\$&');
-				searchText = new RegExp(searchText, 'm');
-				replaceText = styleSpans[styleSpan].innerHTML;
-				text = text.replace(
-					searchText,
-					replaceText
-				);
-			}
-		}
-
-		text = text.replace(/<span id="_mce_caret" data-mce-bogus="true">(.*?)<\/span>/gmi, "$1");
-		text = text.replace(/data-mce-style="(.*?)"/gmi, "");
 		text = text.replace(/<strong>(.*?)<\/strong>/gmi, "'''$1'''");
 		text = text.replace(/<b>(.*?)<\/b>/gmi, "'''$1'''");
 		text = text.replace(/<em>(.*?)<\/em>/gmi, "''$1''");
 		text = text.replace(/<i>(.*?)<\/i>/gmi, "''$1''");
 		//underline needs no conversion
 		text = text.replace(/<strike>(.*?)<\/strike>/gi, "<s>$1</s>");
-/*		text = text.replace(/<span style="text-decoration: line-through;">(.*?)<\/span>/gi, "<s>$1</s>");
-		text = text.replace(/<span style="text-decoration: underline;">(.*?)<\/span>/gi, "<u>$1</u>");*/
 		//sub and sup need no conversion
 		
 		text = text.replace(/\n?<p style="([^"]*?)">(.*?)<\/p>/gmi, "\n<div style='$1'>$2</div><@@nl@@>");
@@ -1863,10 +1839,10 @@ var MwWikiCode = function() {
 
 	function _preserveNewLines4wiki (text) {
 		//TODO make this work whatever the forced_root_ block element is, even false
-		var frb, findText, replaceText, ed, currentPos, nextPos;
-
-		ed = tinymce.activeEditor;
-		frb = ed.getParam("forced_root_block")
+		var findText, 
+			replaceText, 
+			currentPos, 
+			nextPos;
 
 		//Remove \nl as they are not part of html formatting
 		text = text.replace(/\n/gi, "");
@@ -1918,7 +1894,7 @@ var MwWikiCode = function() {
 //		text = text.replace(/<div class="mw_emptyline"[^>]*>(.*?\S+.*?)<\/div>/gmi, "<div>$1</div>"); //doesn't replace 2nd occurence
 //		text = text.replace(/<div class="mw_emptyline"[^>]*>(.*?)<\/div>/gmi, "<div>@@br_emptyline@@</div>");//file 10
 		text = text.replace(/<br mce_bogus="1"\/>/gmi, "");
-		//DC added next line to remove stray bougs data placeholders
+		// remove stray bogus data placeholders
 		text = text.replace(/<br data-mce-bogus="1">/gmi, "");
 
 		text = text.replace(/<br.*?>/gi, function(match, offset, string) {
@@ -1932,11 +1908,11 @@ var MwWikiCode = function() {
 		return text;
 	}
 
-	function _variableAndSpecialSpans2wiki (text) {
+/*	function _variableAndSpecialSpans2wiki (text) {
 		text = text.replace(/(<span class="variable">(.*?)<\/span>)/gmi, "$2");
 		text = text.replace(/(<span class="special">(.*?)<\/span>)/gmi, "$2");
 		return text;
-	}
+	}*/
 
 	function _divs2wiki (text) {
 		text = text.replace(/<\/div>\n?/gmi, "</div>\n");
@@ -2213,8 +2189,6 @@ var MwWikiCode = function() {
 		text = _textStyles2wiki(text);
 		// preserve new lines
 		text = _preserveNewLines4wiki(text);
-		// convert variable and specia spans
-		text = _variableAndSpecialSpans2wiki(text);
 		// convert images
 		text = _image2wiki(text);
 		//convert links
@@ -2771,7 +2745,7 @@ var MwWikiCode = function() {
 	 * @param {String} text
 	 * @returns {String}
 	 */
-	function _convertHtmlEntities(e) {
+	function _convertHtmlEntities2Wiki(e) {
 		var regex, matcher, mtext, i, ent;
 		var text = e.content;
 
@@ -2974,7 +2948,7 @@ var MwWikiCode = function() {
 	 * @param {String} text
 	 * @returns {String}
 	 */
-	function _convertTinyMceToPreWithSpaces(e) {
+	function _convertHtmlPres2Wiki(e) {
 		var innerPre, innerPreLines;
 		var text = e.content;
 
@@ -3035,13 +3009,30 @@ var MwWikiCode = function() {
 		var text = e.content;
 		var $dom = $( "<div id='tinywrapper'>" + text + "</div>" );
 
-		// perform the actual preprocessing
+		text = text.replace(/(<span class="variable">(.*?)<\/span>)/gmi, "$2");
+		text = text.replace(/(<span class="special">(.*?)<\/span>)/gmi, "$2");
+		// replace spans for underlining with u tags
+		// replace spans of class variable with their contents
+		$dom.find( "span[class*='variable']" ).replaceWith( function() {
+			return $( this ).html();
+		} );
+		// replace spans of class special with their contents
+		$dom.find( "span[class*='special']" ).replaceWith( function() {
+			return $( this ).html();
+		} );
 		$dom.find( "span[style*='text-decoration: underline']" ).replaceWith( function() {
 			return "<u>" + $( this ).html() + "</u>";
 		} );
+		// replace spans for strikethrough with u tags
 		$dom.find( "span[style*='text-decoration: line-through']" ).replaceWith( function() {
 			return "<s>" + $( this ).html() + "</s>";
 		} );
+		//replace style span wrappers with inner html
+		while ($dom.find( "span[id*='_mce_caret']" ).length > 0 ) {
+			$dom.find( "span[id*='_mce_caret']" ).replaceWith( function() {
+				return $( this ).html();
+			} );
+		}
 
 		// convert DOM to html text
 		text = $dom.html();
@@ -3090,6 +3081,7 @@ var MwWikiCode = function() {
 			var ed = tinymce.get(e.target.id);
 			e.content= ed.getContent({source_view: true, no_events: true, format: 'raw'});
 		}
+		e.content = tinymce.util.Tools.trim(e.content);
 		//preserve special tags eg nodes with wiki templates, tags, comments and switches
 		//these are replaced with placeholders which are replaced later on.  This is done
 		//now to avoid the inner html in the tags being incorrectly procesed by _Html2Wiki
@@ -3099,14 +3091,14 @@ var MwWikiCode = function() {
 		e.content = _convertComments2Wiki(e);
 		// convert switches to wiki
 		e.content = _convertSwitches2Wiki(e);
-		// convert underlines strikethroughs and entities within attributes to wiki code
+		// preprocess spans in html
 		e.content = _preprocessHtml2Wiki(e);
 		// convert the html to wikicode
 		e.content = _html2wiki(e);
 		// convert <pre>s inserted in Tiny MCE to lines with spaces in front
-		e.content = _convertTinyMceToPreWithSpaces(e);
+		e.content = _convertHtmlPres2Wiki(e);
 		// convert hrml entities in wiki code
-		e.content = _convertHtmlEntities(e);
+		e.content = _convertHtmlEntities2Wiki(e);
 		//recover special tags to wiki code from placeholders
 		e.content = _recoverTags2Wiki(e);
 		// recover templates to wiki code from placeholders
@@ -3116,13 +3108,17 @@ var MwWikiCode = function() {
 	}
 
 	function _onLoadContent(ed, o) {
-		var internalLinks = [];
-		var internalLinksTitles = [];
+		var internalLinks = [],
+			internalLinksTitles = [],
+			titles;
+		
 		$(this.dom.doc).find('a.mw-internal-link').each(function(){
 			var href = $(this).attr('data-mce-href');
+			
 			if( !href ) {
 				href = $(this).attr('href');
 			}
+			
 			internalLinksTitles.push( decodeURIComponent(href).replace("_"," ") );
 			internalLinks.push($(this));
 		});
@@ -3134,7 +3130,8 @@ var MwWikiCode = function() {
 		]);
 
 		if( internalLinksTitles.length == 0 ) return;
-		var titles = decodeURIComponent(internalLinksTitles[0]).replace("_"," ");
+		
+		titles = decodeURIComponent(internalLinksTitles[0]).replace("_"," ");
 		for( var i = 1; i < internalLinksTitles.length; i++ ) {
 			titles += "|" + decodeURIComponent(internalLinksTitles[i].replace("_"," "));
 		}
@@ -3182,10 +3179,11 @@ var MwWikiCode = function() {
 	}
 	
 	function showWikiMagicDialog() {
-		var selectedNode = _ed.selection.getNode();
-		var nodeType = '';
-		var isWikimagic = '';
-		var value = '';
+		var selectedNode = _ed.selection.getNode(),
+			nodeType = '',
+			isWikimagic = '',
+			value = '';
+			
 		if (typeof(selectedNode.attributes["data-mw-type"]) !== "undefined" ) {
 			nodeType = selectedNode.attributes["data-mw-type"].value;
 			isWikimagic = 
@@ -3266,6 +3264,7 @@ var MwWikiCode = function() {
 	this.init = function(ed, url) {
 		var editClass = ed.getParam("noneditable_editable_class", "mceEditable"); // Currently unused
 		var nonEditClass = ed.getParam("noneditable_noneditable_class", "mceNonEditable");
+
 		_userThumbsize = _thumbsizes[ mw.user ? mw.user.options.get('thumbsize') : _userThumbsize ];
 		_ed = ed;
 
