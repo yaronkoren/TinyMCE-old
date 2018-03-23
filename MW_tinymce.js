@@ -25,7 +25,7 @@ window.mwTinyMCEInit = function( tinyMCESelector ) {
 		invalid_elements: 'tbody',
 		wiki_non_rendering_newline_character: '&para;', // set to false if you don't use non-rendering single new lines in wiki
 		wiki_tags_list: mw.config.get('wgTinyMCETagList'), 
-		additional_wiki_tags: '|ol|ul|li|h1|h2|h3|h4|h5|h6',
+		additional_wiki_tags: '|ol|ul|li|h1|h2|h3|h4|h5|h6|sup|sub',
 		browser_spellcheck: true,
 		wikimagic_context_toolbar: true,
 		contextmenu: "undo redo | cut copy paste insert | link wikimagic inserttable | styleselect removeformat ",
