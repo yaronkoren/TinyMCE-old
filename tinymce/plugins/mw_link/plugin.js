@@ -178,7 +178,7 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 	}
 
 	function showDialog(linkList) {
-		var data = {}, selection = editor.selection, dom = editor.dom, selectedElm, anchorElm, initialText;
+		var data = {}, selection = editor.selection, dom = editor.dom, selectedElm, anchorElm, initialText, linkParts = [];
 		var win, onlyText, textListCtrl, linkListCtrl, relListCtrl, targetListCtrl, classListCtrl, linkTitleCtrl, value;
 
 		function linkListChangeHandler(e) {
@@ -291,7 +291,32 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 		anchorElm = dom.getParent(selectedElm, 'a[href]');
 		onlyText = isOnlyTextSelected();
 
-		data.text = initialText = anchorElm ? (anchorElm.innerText || anchorElm.textContent) : selection.getContent({format: 'text'});
+		if ((value = dom.getAttrib(anchorElm, 'data-mw-type'))) {
+			data.type = value;
+		}
+
+		value = decodeURI(dom.getAttrib(anchorElm, 'data-mw-wikitext'));
+		if (data.type == 'internal_link') {
+			value = value.substr(2, value.length - 4);
+			linkParts = value.split("|");
+			if (linkParts.length > 1) {
+				value = linkParts[1];
+			} else {
+				value = '';
+			}
+		} else if (data.type == 'external_link') {
+			value = value.substr(1, value.length - 2);
+			linkParts = value.split(" ");
+			if (linkParts.length > 1) {
+				linkParts.shift();
+				value = linkParts.join(" ");
+			} else {
+				value = '';
+			}
+		}
+		data.text = value;
+
+//		data.text = initialText = anchorElm ? (anchorElm.innerText || anchorElm.textContent) : selection.getContent({format: 'text'});
 		data.href = anchorElm ? dom.getAttrib(anchorElm, 'href').replace(/%20/g,' ') : '';
 
 		if (anchorElm) {
@@ -306,8 +331,8 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 
 		if ((value = dom.getAttrib(anchorElm, 'class'))) {
 			data['class'] = value;
-			if (data["class"] == "internal mw-internal-link mceNonEditable new") {
-				data["class"] = "internal mw-internal-link mceNonEditable" ;
+			if (data["class"] == "link internal mw-internal-link mceNonEditable new") {
+				data["class"] = "link internal mw-internal-link mceNonEditable" ;
 			}
 		}
 
@@ -470,12 +495,13 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 					//This is necessary to avoid the bswikicode parser from breaking the markup
 					var code = data.code.replace(/(^.*?\[|\].*?$|\r\n|\r|\n)/gm, ''); //first layer of '[...]' //external-, file- and mailto- links
 					code = code.replace(/(^.*?\[|\].*?$|\r\n|\r|\n)/gm, ''); //potential second layer of '[[...]]' //internal and interwiki links*/
-
 					data.type = "";
 					var apage = decodeURIComponent(data.href).replace("_"," ");
 					var linkTarget = apage;
-					if ((data["class"] == "internal mw-internal-link mceNonEditable") || 
-						(data["class"] == "internal mw-internal-link mceNonEditable new")) {
+					var newClass = data["class"];
+					
+					if ((data["class"] == "link internal mw-internal-link mceNonEditable") || 
+						(data["class"] == "link internal mw-internal-link mceNonEditable new")) {
 
 						/*DC now go and check the links to see if pages exist */
 						var server = mw.config.get( "wgServer" ) ;
@@ -486,31 +512,43 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 							url: script,
 							data: ajaxdata,
 							async: false, 
-							success: function(ajaxdata) {
-								if (typeof ajaxdata.query.pages == "undefined") {
-									data["class"] = "internal mw-internal-link mceNonEditable new";
+							success: function(data) {
+								if (typeof data.query.pages == "undefined") {
+									newClass = "link internal mw-internal-link mceNonEditable new";
 								} else {
-									var pages = ajaxdata.query.pages;
+									var pages = data.query.pages;
 									for( var page in pages ) {
-										if ( !(typeof pages[page].missing == "undefined" && typeof pages[page].invalid == "undefined") ) {
-											data["class"] = "internal mw-internal-link mceNonEditable new";
-											linkTarget += " " + mw.msg("tinymce-link-page-not-found");
+										if (page == -1) {
+											if (pages[page].title) {
+												//error in lookup
+												if ((typeof pages[page].missing != "undefined") ) {
+													title = pages[page].title;
+													message = mw.msg("tinymce-wikicode-alert-image-not-found-on-wiki",title);
+												} else if (typeof pages[page].invalid != "undefined") {
+													message = mw.msg("tinymce-wikicode-alert-image-request-invalid",filename);								
+												} else {
+													message = mw.msg("tinymce-wikicode-alert-image-request-unknown-error",filename);								
+												}
+												linkTarget += " " + message;
+												newClass = "link internal mw-internal-link mceNonEditable new";
+											}
 										}
 									}
 								}
 							}
 						});
+						data["class"] = newClass;
 						data.type = "internal_link" ;
-					} else if (data["class"] == "external mw-external-link mceNonEditable") {
+					} else if (data["class"] == "link external mw-external-link mceNonEditable") {
 						data.type = "external_link" ; 
 					}
 					data.wikitext = apage ;
 					var linkText = decodeURIComponent(data.text).replace("_"," ");
 					if (data.text) {
 						if (data.type == "internal_link") {
-							data.wikitext += "|" + linkText;
+							data.wikitext = "[[" + data.wikitext + "|" + linkText + "]]";
 						} else if (data.type == "external_link") {
-							data.wikitext += "%20" + linkText;
+							data.wikitext = "[" + data.wikitext + "%20" + linkText + "]";
 						}
 					}
 
@@ -523,6 +561,7 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 						rel: data.rel ? data.rel : null,
 						"class": data["class"] ? data["class"] : null,
 						title: linkTarget ? linkTarget : null
+//						title: apage ? apage : null
 					};
 
 					if (!editor.settings.allow_unsafe_link_target) {
@@ -535,8 +574,9 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 					}
 					if (anchorElm) {
 						editor.focus();
-
-						if (onlyText && data.text != initialText) {
+						if (!data.text) data.text = apage;
+//						if (onlyText && data.text != initialText) {
+						if (onlyText && data.text ) {
 							if ("innerText" in anchorElm) {
 								anchorElm.innerText = data.text;
 							} else {
@@ -585,9 +625,16 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 				}
 
 				// Is not protocol prefixed
-				if ((data["class"] == "external mw-external-link mceNonEditable") &&
-                                   ((editor.settings.link_assume_external_targets && !/^\w+:/i.test(href)) ||
-				   (!editor.settings.link_assume_external_targets && /^\s*www[\.|\d\.]/i.test(href)))) {
+				var hasUrl,
+				urlProtocolMatch = "/^" + mw.config.get( 'wgUrlProtocols' ) + "/i";
+				urlProtocolMatch = urlProtocolMatch.replace(/\|/g,"|^");
+				if (href.match(urlProtocolMatch) ||
+					href.substr(0,2) === "//" ) {
+					hasUrl = true;
+				}
+				
+				if ((data["class"] == "link external mw-external-link mceNonEditable") &&
+					(editor.settings.link_assume_external_targets && !hasUrl)) {
 					delayedConfirm(
 						mw.msg("tinymce-link-want-to-link-external"),
 						function(state) {
