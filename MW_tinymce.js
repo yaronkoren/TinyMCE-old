@@ -13,7 +13,7 @@ window.mwTinyMCEInit = function( tinyMCESelector ) {
 //		selector: '.tinymce',
 		selector: tinyMCESelector,
 		branding: false,
-		relative_urls: false,
+//		relative_urls: false,
 //		remove_script_host: false,
 		document_base_url: mw.config.get( "wgServer" ),
 		automatic_uploads: true,
@@ -25,7 +25,7 @@ window.mwTinyMCEInit = function( tinyMCESelector ) {
 		invalid_elements: 'tbody',
 		wiki_non_rendering_newline_character: '&para;', // set to false if you don't use non-rendering single new lines in wiki
 		wiki_tags_list: mw.config.get('wgTinyMCETagList'), 
-		additional_wiki_tags: '|ol|ul|li|h1|h2|h3|h4|h5|h6|sup|sub',
+		additional_wiki_tags: '|ol|ul|li|h1|h2|h3|h4|h5|h6',
 		browser_spellcheck: true,
 		wikimagic_context_toolbar: true,
 		contextmenu: "undo redo | cut copy paste insert | link wikimagic inserttable | styleselect removeformat ",
@@ -33,8 +33,8 @@ window.mwTinyMCEInit = function( tinyMCESelector ) {
 		link_title: false,
 		link_assume_external_targets: true,
 		link_class_list: [
-			{title: 'External', value: 'external bs-external-link mceNonEditable'},
-			{title: 'Internal', value: 'internal bs-internal-link mceNonEditable'},
+			{title: 'External', value: 'link external mw-external-link mceNonEditable'},
+			{title: 'Internal', value: 'link internal mw-internal-link mceNonEditable'},
 		],
 		visual_table_class : "wikitable",
 		table_default_attributes: {
