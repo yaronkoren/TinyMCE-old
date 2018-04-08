@@ -765,7 +765,7 @@ var MwWikiCode = function() {
 			linkTargetParts, 
 			protocol, 
 			namespaces = mw.config.get( 'wgNamespaceIds' ),
-			anchorFormat = '<a href="{0}" data-mce-href="{5}" title="{6}" data-mw-type="{2}" class="{3}" data-mw-wikitext="{4}" contenteditable= "false" >{1} </a>',
+			anchorFormat = '<a href="{0}" data-mce-href="{5}" title="{6}" data-mw-type="{2}" class="{3}" data-mw-wikitext="{4}" contenteditable= "false" >{1}<div class="mceNonEditableOverlay"></div></a>',
 			squareBraceDepth = 0,
 			linkDepth = 0,
 			linkStart = 0,
@@ -2197,7 +2197,6 @@ var MwWikiCode = function() {
 	 * @returns {String}
 	 */
 	function _html2wiki(e) {
-
 		var text = e.content;
 		// save some work, if the text is empty
 		if (text === '') {
