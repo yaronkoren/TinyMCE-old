@@ -287,7 +287,6 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 		}
 
 		selectedElm = selection.getNode();
-
 		anchorElm = dom.getParent(selectedElm, 'a[href]');
 		onlyText = isOnlyTextSelected();
 
@@ -317,7 +316,7 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 		data.text = value;
 
 //		data.text = initialText = anchorElm ? (anchorElm.innerText || anchorElm.textContent) : selection.getContent({format: 'text'});
-		data.href = anchorElm ? dom.getAttrib(anchorElm, 'href').replace(/%20/g,' ') : '';
+		data.href = decodeURI(anchorElm ? dom.getAttrib(anchorElm, 'href').replace(/%20/g,' ') : '');
 
 		if (anchorElm) {
 			data.target = dom.getAttrib(anchorElm, 'target');
@@ -341,7 +340,7 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 		}
 
 		if ((value = dom.getAttrib(anchorElm, 'data-mw-wikitext'))) {
-			data.wikitext = value;
+			data.wikitext = decodeURI(value);
 		}
 
 		if (onlyText) {
@@ -543,7 +542,7 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 						data.type = "external_link" ; 
 					}
 					data.wikitext = apage ;
-					var linkText = decodeURIComponent(data.text).replace("_"," ");
+					var linkText = decodeURI(data.text).replace("_"," ");
 					if (data.text) {
 						if (data.type == "internal_link") {
 							data.wikitext = "[[" + data.wikitext + "|" + linkText + "]]";
