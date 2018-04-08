@@ -220,9 +220,9 @@ var MwWikiCode = function() {
 									title = pages[page].title;
 									message = mw.msg("tinymce-wikicode-alert-image-not-found-on-wiki",title);
 								} else if (typeof pages[page].invalid != "undefined") {
-									message = mw.msg("tinymce-wikicode-alert-image-request-invalid",filename);								
+									message = mw.msg("tinymce-wikicode-alert-image-request-invalid",fileName);								
 								} else {
-									message = mw.msg("tinymce-wikicode-alert-image-request-unknown-error",filename);								
+									message = mw.msg("tinymce-wikicode-alert-image-request-unknown-error",fileName);								
 								}
 								fileDetails["error"] = message;
 							}
@@ -3328,7 +3328,12 @@ var MwWikiCode = function() {
 		// "wikimagic" popup.
 		ed.on('dblclick', function(e) {
 			if (e.target.className == 'mceNonEditableOverlay' ) {
-				tinyMCE.activeEditor.execCommand('mceWikimagic');
+				if (e.target.parentNode.className.includes("wikimagic")) {
+					tinyMCE.activeEditor.execCommand('mceWikimagic');
+				} else if (e.target.parentNode.className.includes("mw-internal-link") 
+					|| e.target.parentNode.className.includes("mw-external-link")) {
+					tinyMCE.activeEditor.execCommand('mceLink');
+				}
 			}
 		});
 		
