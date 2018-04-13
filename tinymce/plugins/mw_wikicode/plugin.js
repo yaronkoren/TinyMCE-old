@@ -513,7 +513,7 @@ var MwWikiCode = function() {
 
 		//Create linked images
 		if (wikiImageObject.link !== false) {
-			htmlImageObject.wrap('<a style="display:inline-block"></a>'); //IE needs closing tag
+			htmlImageObject.wrap('<a style="display:inline-block" class="mw-image-link"></a>'); //IE needs closing tag
 			htmlImageObject = htmlImageObject.parent();
 			htmlImageObject.attr('href', wikiImageObject.link);
 		}
@@ -526,225 +526,17 @@ var MwWikiCode = function() {
 			attributes, attribute, wikiText, imageCaption,
 			size, property, value;
 
-		var images = text.match(/(<a([^>]*?)>)?<img([^>]*?)\/?>(<\/a>)?/gi);
-		if (!images)
-			return text;
+		// convert text to dom
+		var $dom = $( "<div id='tinywrapper'>" + text + "</div>" );
 
-		for (var i = 0; i < images.length; i++) {
-			image = images[i];
-			htmlImageObject = $(image);
-			wikiImageObject = {};
+		// replace html links with wikitext
+		$dom.find( "img[class*='mw-image']" ).replaceWith( function() {
+			var wikiText = this.getAttribute("data-mw-wikitext");
+			return decodeURI(wikiText);
+		} );
 
-			//process if link
-			if (htmlImageObject[0].nodeName.toUpperCase() === 'A') {
-				wikiImageObject.link = htmlImageObject.attr('href');
-				htmlImageObject = htmlImageObject.find('img').first();
-			}
-
-			attributes = htmlImageObject[0].attributes;
-			// populate the wiki image object attributes
-			// strip the data-mw prefix from attribute names
-			for (var j = 0; j < attributes.length; j++) {
-				attribute = attributes[j].name;
-				if (attribute.startsWith('data-mw-') === false) {
-					property = attribute;
-				} else {
-					property = attribute.substr(8, attribute.length);
-				}
-				if ( !( property == 'width' || !property == 'height' )) {
-					wikiImageObject[property] = attributes[j].value;
-				}
-			}
-			//Update things that might have changed in markup but not in "data"
-			//Check if wikiImageObject.imagename is set,
-			//if not set it to the name of the source file
-			if (!wikiImageObject.imagename) {
-				var src = wikiImageObject.src;
-				var dstName = src.split('/').pop().split('#')[0].split('?')[0];
-				var srcfile = "File:" + dstName;
-				wikiImageObject.imagename = srcfile;
-			}
-			//Check if wikiImageObject.style is set
-			if (wikiImageObject.style) {
-				var stylestring = wikiImageObject.style;
-				stylestring = stylestring.replace(/\s/g, "");
-				var properties = stylestring.split(';');
-				var stylearray = {};
-				properties.forEach(function(property) {
-					var option = property.split(':');
-					stylearray[option[0]] = option [1];
-				});
-				var stylestring = JSON.stringify(stylearray);
-				var style = JSON.parse(stylestring);
-				if (style['display'] === 'block' &&
-					style['margin-left'] === 'auto' &&
-					style['margin-right'] === 'auto') {
-					wikiImageObject.align = 'center';
-				}
-				if (style['width']) {
-					var stylewidth = style['width'].replace('px', '');
-					if ( stylewidth !== "0" ) {
-						wikiImageObject.sizewidth = stylewidth ;
-					}
-				}
-				if (style['height']) {
-					var styleheight = style['height'].replace('px', '');
-					if ( styleheight !== "0" ) {
-						wikiImageObject.sizeheight = styleheight ;
-					}
-				}
-				if (style['float']) {
-					if (style['float'] === 'left') {
-						wikiImageObject.left = true;
-						wikiImageObject.align = 'left';
-					} else if (style['float'] === 'right') {
-						wikiImageObject.right = true;
-						wikiImageObject.align = 'right';
-					}
-				}
-				if (style['vertical-align']) {
-					wikiImageObject.verticalalign = style['vertical-align'];
-				}
-			}
-			if (wikiImageObject.class) {
-				if (wikiImageObject.class.indexOf("thumbborder") >= 0) {
-					wikiImageObject.border = "true";
-				}
-				if (wikiImageObject.class.indexOf("thumbimage") >= 0) {
-					wikiImageObject.frame = "true";
-				}
-				if (wikiImageObject.class.indexOf("thumbthumb") >= 0) {
-					wikiImageObject.thumb = "true";
-				}
-			}
-			if (htmlImageObject.css('display') === 'block' &&
-				htmlImageObject.css('margin-left') === 'auto' &&
-				htmlImageObject.css('margin-right') === 'auto') {
-				wikiImageObject.align = 'center';
-			}
-			if (htmlImageObject.attr('width')
-				&& htmlImageObject.attr('width') !== wikiImageObject.sizewidth) {
-				wikiImageObject.sizewidth = htmlImageObject.attr( 'width' );
-			}
-			if (htmlImageObject.attr('height')
-				&& htmlImageObject.attr('height') !== wikiImageObject.sizeheight) {
-				wikiImageObject.sizeheight = htmlImageObject.attr( 'height' );
-			}
-			if (htmlImageObject.attr( 'caption' )) {
-				wikiImageObject.caption = htmlImageObject.attr( 'caption' );
-			}
-			if (htmlImageObject.attr( 'link' )) {
-				wikiImageObject.link = htmlImageObject.attr( 'link' );
-			}
-			if (htmlImageObject.css( 'width' )) {
-				var csswidth = htmlImageObject.css( 'width' ).replace('px', '');
-				if ( csswidth !== "0" ) {
-					wikiImageObject.sizewidth = csswidth;
-				}
-			}
-			if (htmlImageObject.css( 'height' )) {
-				var cssheight = htmlImageObject.css( 'height' ).replace('px', '');
-				if ( cssheight !== "0" ) {
-					wikiImageObject.sizeheight = cssheight;
-				}
-			}
-			if (htmlImageObject.css('float')) {
-				if (htmlImageObject.css('float') === 'left') {
-					wikiImageObject.left = true;
-					wikiImageObject.align = 'left';
-				} else if (htmlImageObject.css('float') === 'right') {
-					wikiImageObject.right = true;
-					wikiImageObject.align = 'right';
-				}
-			}
-
-			// Build wikitext
-			wikiText = [];
-			wikiText.push(wikiImageObject.imagename);
-			for (property in wikiImageObject) {
-				if ($.inArray(property, ['imagename', 'thumbsize']) !== -1) {
-					continue; //Filter non-wiki data
-				}
-				if ($.inArray(property, ['left', 'right', 'center', 'nolink']) !== -1) {
-					continue; //Not used stuff
-				}
-				value = wikiImageObject[property];
-
-				//"link" may be intentionally empty. Therefore we have to
-				//check it _before_ "value is empty?"
-				if ( property === 'link' ) {
-					//If the 'nolink' flag is set, we need to discard a
-					//maybe set value of 'link'
-					if( wikiImageObject.nolink === 'true' ) {
-						wikiText.push( property + '=' );
-						continue;
-					}
-					if ( value === 'false' || value === false ) {
-						continue;
-					}
-					wikiText.push( property + '=' + value );
-					continue;
-				}
-
-				if( value == null || value == false
-					|| value == "" || typeof value == "undefined" ) continue;
-				//TODO: of short if(!value) ?
-
-				if (property === 'sizewidth' ) {
-					size = '';
-					if (wikiImageObject.sizewidth && wikiImageObject.sizewidth !== "false") {
-						size = wikiImageObject.sizewidth;
-					}
-					if (wikiImageObject.sizeheight && wikiImageObject.sizeheight !== "false") {
-						size += 'x' + wikiImageObject.sizeheight;
-					}
-					if (size.length == 0 || size == "auto") continue;
-					size += 'px';
-					wikiText.push(size);
-					continue;
-				}
-				if (property == 'alt') {
-					wikiText.push(property + '=' + value);
-					continue;
-				}
-				if ( property == 'align' ) {
-					wikiText.push(value);
-					continue;
-				}
-				if ( property == 'verticalalign' ) {
-					wikiText.push(value);
-					continue;
-				}
-				if ( property == 'title' ) {
-					imageCaption = value;
-					continue;
-				}
-				if ( property == 'caption' ) {
-					imageCaption = value;
-					continue;
-				}
-				if ( property == 'thumb' && value === "true" ) {
-					wikiText.push( 'thumb' );
-					continue;
-				}
-				if ( property == 'frame' && value === "true") {
-					wikiText.push( 'frame' );
-					continue;
-				}
-				if ( property == 'border' && value === "true" ) {
-					wikiText.push( 'border' );
-					continue;
-				}
-			}
-
-			// make sure image caption comes in the end
-			if ( imageCaption ) {
-				wikiText.push( imageCaption );
-			}
-
-			text = text.replace(image, '[[' + wikiText.join('|').replace("@@PIPE@@", '|') + ']]');
-		}
-
+		// convert dom back to text
+		text = $dom.html();
 		return text;
 	}
 
@@ -942,9 +734,13 @@ var MwWikiCode = function() {
 	function _links2wiki(text) {
 		var links, linkwiki, type, target, label,
 			link, hrefAttr, inner, typeAttr, validProtocol, wikitext;
-			
 		// convert text to dom
 		var $dom = $( "<div id='tinywrapper'>" + text + "</div>" );
+
+		// replace html image links with inneml htl
+		$dom.find( "a[class*='mw-image-link']" ).replaceWith( function() {
+			return $( this ).html();
+		} );
 
 		// replace html links with wikitext
 		$dom.find( "a[class*='link']" ).replaceWith( function() {
@@ -3225,7 +3021,6 @@ var MwWikiCode = function() {
 	
 	function showWikiSourceCodeDialog() {
 		var originalValue = _ed.getContent({source_view: true});
-
 		var win = _ed.windowManager.open({
 			title: mw.msg("tinymce-wikisourcecode"),
 			body: {
