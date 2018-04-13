@@ -875,7 +875,6 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 							duplicate = warningDetails[0];
 							message = message + "	" + mw.msg("tinymce-upload-alert-duplicate-file",duplicate) + "\n"
 						} else {
-debugger;
 							message = message + "	" + mw.msg("tinymce-upload-alert-other-warning",warning) + "\n"
 							result = false;
 						}
@@ -914,7 +913,6 @@ debugger;
 				editor.windowManager.alert(mw.msg("tinymce-upload-alert-destination-filename-needed"));
 				return;
 			}
-
 			submittedData = cleanSubmittedData(submittedData);
 			dimensions = recalcSize();
 			width = dimensions['width'];
@@ -962,6 +960,39 @@ debugger;
 			}
 
 			//set up node data for inserting or updating in editor window
+			var wikitext = '';
+			var srcfile = uploadResult.split('/').pop().split('#')[0].split('?')[0];
+			
+			srcfile = "File:" + srcfile;
+			wikitext += "[[" + srcfile;
+			if (width) {
+				wikitext += "|" + width;
+				if (height) {
+					wikitext += "x" + height + "px";
+				} else {
+				wikitext += "px"
+				}
+			} else if (height) {
+				wikitext += "|x" + height + "px";
+			}
+			if (submittedData.link) {
+				wikitext += "|link=" + submittedData.link;
+			}
+			if (submittedData.alt) {
+				wikitext += "|alt=" + submittedData.alt;
+			}
+			if (submittedData.horizontalalignment) {
+				wikitext += "|alt=" + submittedData.horizontalalignment;
+			}
+			if (submittedData.verticalalignment) {
+				wikitext += "|" + submittedData.verticalalignment;
+			}
+			if (submittedData.format) {
+				wikitext += "|alt=" + submittedData.format;
+			}
+			wikitext += "]]";
+			wikitext = encodeURI(wikitext);	
+					
 			var data = {
 				src: uploadResult,
 				alt: submittedData.alt,
@@ -982,7 +1013,8 @@ debugger;
 				"data-mw-sizeheight": height,
 				"data-mw-align": submittedData.horizontalalignment,
 				"data-mw-verticalalign": submittedData.verticalalignment,
-				"data-mw-format": submittedData.format
+				"data-mw-format": submittedData.format,
+				"data-mw-wikitext": wikitext
 			};
 
 			if (imgElm) { //update existing node
