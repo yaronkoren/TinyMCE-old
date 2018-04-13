@@ -550,6 +550,7 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 							data.wikitext = "[" + data.wikitext + "%20" + linkText + "]";
 						}
 					}
+					data.wikitext = encodeURI(data.wikitext);
 
 					var linkAttrs = {
 						href: href,
