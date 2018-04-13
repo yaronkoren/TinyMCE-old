@@ -958,7 +958,7 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 					uploadResult = submittedData.alternatesrc;
 				}
 			}
-
+debugger;
 			//set up node data for inserting or updating in editor window
 			var wikitext = '';
 			var srcfile = uploadResult.split('/').pop().split('#')[0].split('?')[0];
@@ -982,13 +982,13 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 				wikitext += "|alt=" + submittedData.alt;
 			}
 			if (submittedData.horizontalalignment) {
-				wikitext += "|alt=" + submittedData.horizontalalignment;
+				wikitext += "|" + submittedData.horizontalalignment;
 			}
 			if (submittedData.verticalalignment) {
 				wikitext += "|" + submittedData.verticalalignment;
 			}
 			if (submittedData.format) {
-				wikitext += "|alt=" + submittedData.format;
+				wikitext += "|" + submittedData.format;
 			}
 			wikitext += "]]";
 			wikitext = encodeURI(wikitext);	
