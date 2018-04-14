@@ -114,6 +114,8 @@ $GLOBALS['wgResourceModules'] += array(
 			'tinymce-upload-source-tooltip',
 			'tinymce-upload-destination-label',
 			'tinymce-upload-destination-tooltip',
+			'tinymce-upload-title-label',
+			'tinymce-upload-title-tooltip',
 			'tinymce-upload-summary-label',
 			'tinymce-upload-summary-tooltip',
 			'tinymce-upload-link-label',
