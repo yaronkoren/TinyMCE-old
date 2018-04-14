@@ -133,6 +133,10 @@ var MwWikiCode = function() {
 			link: false,
 			sizewidth: false,
 			sizeheight: false,
+			src: '',
+			page: '',
+			thumbnail: '',
+			title: '',
 			class: ''
 		};
 	};
@@ -189,6 +193,7 @@ var MwWikiCode = function() {
 		queryData.append("action", "query");
 		queryData.append("prop", "imageinfo");
 		queryData.append("iiprop", "url");
+		queryData.append("iiurlwidth", _userThumbsize);
 		queryData.append("titles", fileName);
 		queryData.append("format", "json");
 		
@@ -229,9 +234,10 @@ var MwWikiCode = function() {
 						} else {
 							title = pages[page].title;
 							imageInfo = pages[page].imageinfo;
+							imageURL = imageInfo[0].thumburl;
 							if (typeof imageInfo == "undefined") {
 								imageURL = title;
-							} else {
+							} else if (!imageURL) {
 								imageURL = imageInfo[0].url;
 							}
 							if (title.replace(/_/g," ").toLowerCase() == fileName.replace(/_/g," ").toLowerCase()) {
@@ -380,6 +386,7 @@ var MwWikiCode = function() {
 			kvpair = part.split('=');
 			if (kvpair.length === 1) {
 				wikiImageObject.caption = part; //hopefully
+				wikiImageObject.title = wikiImageObject.caption;
 				continue;
 			}
 
@@ -393,11 +400,13 @@ var MwWikiCode = function() {
 
 			if ($.inArray(key, ['title']) !== -1) {
 				wikiImageObject.caption = value;
+				wikiImageObject.title = wikiImageObject.caption;
 				continue;
 			}
 
 			if ($.inArray(key, ['caption']) !== -1) {
 				wikiImageObject.caption = value;
+				wikiImageObject.title = wikiImageObject.caption;
 				continue;
 			}
 
@@ -410,6 +419,11 @@ var MwWikiCode = function() {
 				wikiImageObject.alt = value;
 				continue;
 			}
+		}
+
+		if (wikiImageObject.caption) {
+			htmlImageObject.attr('caption', wikiImageObject.caption);
+			htmlImageObject.attr('title', wikiImageObject.caption);
 		}
 
 		if (wikiImageObject.alt) {
@@ -499,12 +513,14 @@ var MwWikiCode = function() {
 		// encountered an error trying to access the api
 		// set src to filename instead of url on wiki
 		if (typeof src.error != 'undefined' ) {
+			editor.windowManager.alert(mw.msg("tinymce-upload-alert-error-uploading-to-wiki"));
 			return src;
 		}
-		
 		// image
 		if (src) {
 			htmlImageObject.attr('src', src);
+			htmlImageObject.attr('data-mw-page', (parts[0]) );
+			htmlImageObject.attr('data-mw-thumbnail', src);
 		}
 
 		// make contenteditable false so image can be selected correctly
@@ -732,6 +748,7 @@ var MwWikiCode = function() {
 	}
 
 	function _links2wiki(text) {
+debugger;
 		var links, linkwiki, type, target, label,
 			link, hrefAttr, inner, typeAttr, validProtocol, wikitext;
 		// convert text to dom
