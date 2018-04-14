@@ -62,6 +62,8 @@
 	"tinymce-upload-source-tooltip": "Enter the full file path of file you wish to upload: a local file which is on your device or a file located at a URL on the internet or a file which has already been uploaded onto this wiki",
 	"tinymce-upload-destination-label": "Destination filename",
 	"tinymce-upload-destination-tooltip": "Enter the full filename for storing this file on this wiki",
+	"tinymce-upload-title-label": "Title/caption",
+	"tinymce-upload-title-tooltip": "Enter text to be used as the title/caption for this file/image",
 	"tinymce-upload-summary-label": "Summary",
 	"tinymce-upload-summary-tooltip": "Enter text to be added to the file's page on this wiki",
 	"tinymce-upload-link-label": "Link to",
