@@ -104,6 +104,7 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 			if (!submittedData.type) submittedData.type = '';
 			if (!submittedData.src) submittedData.src = '';
 			if (!submittedData.alternatesrc) submittedData.alternatesrc = '';
+			if (!submittedData.title) submittedData.alt = '';
 			if (!submittedData.summary) submittedData.summary = '';
 			if (!submittedData.alt) submittedData.alt = '';
 			if (!submittedData.link) submittedData.link = '';
@@ -256,6 +257,7 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 			queryData.append("action", "query");
 			queryData.append("prop", "imageinfo");
 			queryData.append("iiprop", "url");
+			queryData.append("iiurlwidth", _userThumbsize);
 			queryData.append("titles", fileName);
 			queryData.append("format", "json");
 			var url = scriptPath + '/api.php';
@@ -277,7 +279,7 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 							if ((typeof pages[page].missing == "undefined") && (typeof pages[page].invalid == "undefined") ) {
 								var pageTitle = pages[page].title
 								var imageInfo = pages[page].imageinfo;
-								var imageURL = imageInfo[0].url;
+								var imageURL = imageInfo[0].thumburl;
 								if (pageTitle.replace(/_/g," ").toLowerCase() == fileName.replace(/_/g," ").toLowerCase()) {
 									fileDetails = imageURL;
 								}
@@ -485,6 +487,7 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 			if (!dialogData.type) dialogData.type = 'File';
 			if (!dialogData.src) dialogData.src = '';
 			if (!dialogData.dest) dialogData.dest = dialogData.src;
+			if (!dialogData.title) dialogData.title = '';
 			if (!dialogData.summary) dialogData.summary = '';
 			if (!dialogData.link) dialogData.link = '';
 			if (!dialogData.alt) dialogData.alt = '';
@@ -497,14 +500,16 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 
 			if (imgElm) { //Populate form with details of existing upload
 				dialogData.type = 'Wiki';
-				dialogData.src = dom.getAttrib(imgElm, 'src').split('/').pop().split('#')[0].split('?')[0];
+				dialogData.src = dom.getAttrib(imgElm, 'data-mw-page').split('/').pop().split('#')[0].split('?')[0];
 				if (dialogData.src == 'false') dialogData.src = '';
 				dialogData.dest = '';
 				dialogData.summary = '';
+				dialogData.title = dom.getAttrib(imgElm, 'data-mw-title');
+				if ( dialogData.title == 'false') dialogData.title = '';
 				dialogData.link = dom.getAttrib(imgElm, 'data-mw-link');
 				if (dialogData.link == 'false') dialogData.link = '';
 				dialogData.alt = dom.getAttrib(imgElm, 'data-mw-alt');
-				if ( dialogData.alt == 'false') dialogData.height = '';
+				if ( dialogData.alt == 'false') dialogData.alt = '';
 				if (dialogData.constrain != false) dialogData.constrain = true;
 				dialogData.width = dom.getAttrib(imgElm, 'data-mw-sizewidth');
 				if ( dialogData.width == 'false') dialogData.width = null;
@@ -583,6 +588,14 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 				tooltip: mw.msg("tinymce-upload-destination-tooltip"),
 				value: dialogData.dest,
 				onchange: destChange,
+			};
+
+			titleTextCtrl = {
+				name: 'title',
+				label: mw.msg("tinymce-upload-title-label"),
+				tooltip: mw.msg("tinymce-upload-title-tooltip"),
+				type: 'textbox',
+				value: dialogData.title,
 			};
 
 			summaryTextCtrl = {
@@ -725,6 +738,7 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 
 				var generalFormItems = [
 					srcTextDisplay,
+					titleTextCtrl,
 					linkTextCtrl,
 					altTextCtrl,
 					imageDimensionsCtrl,
@@ -738,6 +752,7 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 					typeListCtrl,
 					srcTextCtrl,
 					destTextCtrl,
+					titleTextCtrl,
 					summaryTextCtrl,
 				];
 
@@ -850,7 +865,7 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 			// check upload succesful or report errors and warnings
 			function checkUploadDetail(uploadDetails, ignoreWarnings) {
 				var message,
-					result;
+					result = [];
 					
 				if (typeof uploadDetails == "undefined") {
 					editor.windowManager.alert(mw.msg("tinymce-upload-alert-unknown-error-uploading"));
@@ -897,7 +912,8 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 						result = false;
 					}
 				} else if (typeof uploadDetails.imageinfo != "undefined") {
-					result = uploadDetails.imageinfo.url;
+					result["url"] = uploadDetails.imageinfo.url;
+					result["page"] = uploadDetails.imageinfo.canonicaltitle;
 				}
 				return result;
 			}
@@ -919,12 +935,17 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 			height = dimensions['height'];
 			style = updateStyle();
 			uploadDetails = [];
+			result = [];
 			uploadResult = '';
+			uploadPage = '';
+			uploadThumb = '';
 			ignoreWarnings = false;
 
 			if (imgElm) {		//Editing image node so skip upload
 				nodeID = imgElm.id
-				uploadResult = imgElm.src;
+				uploadResult = dom.getAttrib(imgElm, 'data-mw-src');
+				uploadPage = dom.getAttrib(imgElm, 'data-mw-page');
+				uploadThumb = dom.getAttrib(imgElm, 'data-mw-thumbnail');
 			} else {
 				if ((submittedData.type == 'File') || (submittedData.type == 'URL')) {
 					if (submittedData.type == 'File') {
@@ -939,7 +960,13 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 					if ((fileContent) && (fileName)) {
 						do {
 							uploadDetails = doUpload(fileType, fileContent, fileName, fileSummary, ignoreWarnings);
-							uploadResult = checkUploadDetail(uploadDetails, ignoreWarnings);
+							result = checkUploadDetail(uploadDetails, ignoreWarnings);
+							uploadResult = result["url"];
+							uploadPage = result["page"];
+							uploadThumb = getFileDetailsFromWiki(uploadPage);
+							if (!uploadThumb) {
+								uploadThumb = uploadResult;
+							}
 							if (uploadResult == 'ignore_warning') {
 								ignoreWarnings = true;
 							} else {
@@ -956,15 +983,14 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 				} else if (submittedData.type == 'Wiki') {
 					fileName = submittedData.dest;
 					uploadResult = submittedData.alternatesrc;
+					uploadPage = "File:" + fileName;
+					uploadThumb = uploadResult;					
 				}
 			}
-debugger;
 			//set up node data for inserting or updating in editor window
 			var wikitext = '';
-			var srcfile = uploadResult.split('/').pop().split('#')[0].split('?')[0];
-			
-			srcfile = "File:" + srcfile;
-			wikitext += "[[" + srcfile;
+
+			wikitext += "[[" + uploadPage;
 			if (width) {
 				wikitext += "|" + width;
 				if (height) {
@@ -990,11 +1016,15 @@ debugger;
 			if (submittedData.format) {
 				wikitext += "|" + submittedData.format;
 			}
+			if (submittedData.title) {
+				wikitext += "|" + submittedData.title;
+			}
 			wikitext += "]]";
 			wikitext = encodeURI(wikitext);	
 					
 			var data = {
-				src: uploadResult,
+				src: uploadThumb,
+				title: submittedData.title,
 				alt: submittedData.alt,
 				width: width,
 				height: height,
@@ -1007,7 +1037,11 @@ debugger;
 				contentEditable: 'false',
 				id: nodeID,
 				"data-mw-src": uploadResult,
+				"data-mw-page": uploadPage,
+				"data-mw-thumbnail": uploadThumb,
 				"data-mw-link": submittedData.link,
+				"data-mw-title": submittedData.title,
+				"data-mw-caption": submittedData.title,
 				"data-mw-alt": submittedData.alt,
 				"data-mw-sizewidth": width,
 				"data-mw-sizeheight": height,
@@ -1016,7 +1050,6 @@ debugger;
 				"data-mw-format": submittedData.format,
 				"data-mw-wikitext": wikitext
 			};
-
 			if (imgElm) { //update existing node
 				editor.undoManager.transact(function(){
 					editor.focus();
