@@ -278,8 +278,16 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 						for( var page in pages ) {
 							if ((typeof pages[page].missing == "undefined") && (typeof pages[page].invalid == "undefined") ) {
 								var pageTitle = pages[page].title
-								var imageInfo = pages[page].imageinfo;
-								var imageURL = imageInfo[0].thumburl;
+								if (typeof pages[page].imageinfo == "undefined") {
+									imageURL = title;
+								} else {
+									var imageInfo = pages[page].imageinfo;
+									if (typeof imageInfo[0].thumburl == "undefined") {
+										imageURL = imageInfo[0].url;
+									} else {
+										imageURL = imageInfo[0].thumburl;							
+									}
+								}
 								if (pageTitle.replace(/_/g," ").toLowerCase() == fileName.replace(/_/g," ").toLowerCase()) {
 									fileDetails = imageURL;
 								}
