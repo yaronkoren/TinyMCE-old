@@ -188,7 +188,6 @@ var MwWikiCode = function() {
 		var queryData,
 			url = _scriptPath + '/api.php',
 			fileDetails = new Array();
-				
 		queryData = new FormData();
 		queryData.append("action", "query");
 		queryData.append("prop", "imageinfo");
@@ -233,12 +232,15 @@ var MwWikiCode = function() {
 							}
 						} else {
 							title = pages[page].title;
-							imageInfo = pages[page].imageinfo;
-							imageURL = imageInfo[0].thumburl;
-							if (typeof imageInfo == "undefined") {
+							if (typeof pages[page].imageinfo == "undefined") {
 								imageURL = title;
-							} else if (!imageURL) {
-								imageURL = imageInfo[0].url;
+							} else {
+								imageInfo = pages[page].imageinfo;
+								if (typeof imageInfo[0].thumburl == "undefined") {
+									imageURL = imageInfo[0].url;
+								} else {
+									imageURL = imageInfo[0].thumburl;							
+								}
 							}
 							if (title.replace(/_/g," ").toLowerCase() == fileName.replace(/_/g," ").toLowerCase()) {
 								fileDetails = imageURL;
@@ -748,7 +750,6 @@ var MwWikiCode = function() {
 	}
 
 	function _links2wiki(text) {
-debugger;
 		var links, linkwiki, type, target, label,
 			link, hrefAttr, inner, typeAttr, validProtocol, wikitext;
 		// convert text to dom
