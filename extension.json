@@ -20,6 +20,9 @@
 			"i18n"
 		]
 	},
+	"ExtensionMessagesFiles": {
+		"TinyMCEMagic": "TinyMCE.i18n.magic.php"
+	},
 	"AutoloadClasses": {
 		"TinyMCEHooks": "TinyMCE.hooks.php",
 		"TinyMCEAction": "TinyMCEAction.php",
@@ -150,6 +153,8 @@
 	},
 	"Hooks": {
 		"MakeGlobalVariablesScript": "TinyMCEHooks::setGlobalJSVariables",
+		"MagicWordwgVariableIDs": "TinyMCEHooks::addMagicWordVariableIDs",
+		"ParserBeforeTidy": "TinyMCEHooks::handleMagicWords",
 		"SkinTemplateNavigation": "TinyMCEAction::displayTab",
 		"SkinEditSectionLinks": "TinyMCEHooks::addEditSectionLink",
 		"LinkEnd": "TinyMCEHooks::changeRedLink",

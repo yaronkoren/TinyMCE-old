@@ -209,7 +209,7 @@ class TinyMCEHooks {
 				if ( strtolower( substr( $macro['image'], 0, 4 ) ) === 'http' ) {
 					$imageURL = $macro['image'];
 				} else {
-					$imageFile =  wfLocalFile( $macro['image'] );
+					$imageFile = wfLocalFile( $macro['image'] );
 					$imageURL = $imageFile->getURL();
 				}
 			}
@@ -223,6 +223,27 @@ class TinyMCEHooks {
 
 		return true;
 	}
+
+	/**
+	 * Register magic-word variable IDs
+	 */
+	static function addMagicWordVariableIDs( &$magicWordVariableIDs ) {
+		$magicWordVariableIDs[] = 'MAG_NOTINYMCE';
+		return true;
+	}
+
+	/**
+	 * Set a value in the page_props table based on the presence of the
+	 * 'NOTINYMCE' magic word in a page
+	 */
+	static function handleMagicWords( &$parser, &$text ) {
+		$magicWord = MagicWord::get( 'MAG_NOTINYMCE' );
+		if ( $magicWord->matchAndRemove( $text ) ) {
+			$parser->mOutput->setProperty( 'notinymce', 'y' );
+		}
+		return true;
+	}
+
 
 	/**
 	 * Adds an "edit" link for TinyMCE, and renames the current "edit"
@@ -311,6 +332,24 @@ class TinyMCEHooks {
 		}
 
 		if ( !$context->getUser()->getOption( 'tinymce-use' ) ) {
+			return false;
+		}
+
+		// If there's a 'notinymce' property for this page in the
+		// page_props table, regardless of the value, disable TinyMCE.
+		$dbr = wfGetDB( DB_SLAVE );
+		$res = $dbr->select( 'page_props',
+			array(
+				'pp_value'
+			),
+			array(
+				'pp_page' => $title->getArticleID(),
+				'pp_propname' => 'notinymce'
+			)
+		);
+		// First row of the result set.
+		$row = $dbr->fetchRow( $res );
+		if ( $row != null ) {
 			return false;
 		}
 

@@ -67,6 +67,8 @@ $GLOBALS['wgTinyMCEIP'] = dirname( __FILE__ );
 
 //$GLOBALS['wgHooks']['ResourceLoaderRegisterModules'][] = 'TinyMCEHooks::registerModules';
 $GLOBALS['wgHooks']['MakeGlobalVariablesScript'][] = 'TinyMCEHooks::setGlobalJSVariables';
+$GLOBALS['wgHooks']['MagicWordwgVariableIDs'[] = 'TinyMCEHooks::addMagicWordVariableIDs';
+$GLOBALS['wgHooks']['ParserBeforeTidy'[] = 'TinyMCEHooks::handleMagicWords';
 $GLOBALS['wgHooks']['SkinTemplateNavigation'][] = 'TinyMCEAction::displayTab';
 $GLOBALS['wgHooks']['SkinEditSectionLinks'][] = 'TinyMCEHooks::addEditSectionLink';
 $GLOBALS['wgHooks']['LinkEnd'][] = 'TinyMCEHooks::changeRedLink';
@@ -86,6 +88,7 @@ $GLOBALS['wgSpecialPages']['TinyMCEUploadWindow'] = 'TinyMCEUploadWindow';
 $GLOBALS['wgActions']['tinymceedit'] = 'TinyMCEAction';
 
 $GLOBALS['wgMessagesDirs']['TinyMCE'] = __DIR__ . '/i18n';
+$wgExtensionMessagesFiles['TinyMCEMagic'] = __DIR__ . '/TinyMCE.i18n.magic.php';
 
 // Register client-side modules.
 $wgTinyMCEResourceTemplate = array(
