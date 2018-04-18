@@ -344,7 +344,6 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 
 		// called when the source for the upload changes
 		function srcChange(e) {
-
 			var typeCtrl = win.find('#type')[0],
 				srcCtrl = win.find('#src')[0],
 				alternateSrcCtrl = win.find('#alternatesrc')[0],
@@ -467,8 +466,6 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 							}
 						});
 					srcCtrl.focus();
-				} else {
-					alternateSrcCtrl.value(destinationFileDetails);
 				}
 			}
 			return;
@@ -838,7 +835,7 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 				fileName,
 				fileSummary,
 				ignoreWarnings;
-
+				
 			// attempt upload of file to wiki
 			function doUpload(fileType, fileToUpload, fileName, fileSummary, ignoreWarnings){
 				uploadData = new FormData();
@@ -931,7 +928,7 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
         	e.stopPropagation();
        		e.stopImmediatePropagation();
 
-			// have to have a destnation name unless editing previous upload
+			// have to have a destination name unless editing previous upload
 			if (!submittedData.dest && !imgElm) {
 				// user may have clicked submit without exiting source field
 				editor.windowManager.alert(mw.msg("tinymce-upload-alert-destination-filename-needed"));
@@ -990,8 +987,44 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 					}
 				} else if (submittedData.type == 'Wiki') {
 					fileName = submittedData.dest;
-					uploadResult = submittedData.alternatesrc;
 					uploadPage = "File:" + fileName;
+
+					// see if file already on wiki and return details if it is
+					$.when(getFileDetailsFromWiki(uploadPage), $.ready).then( function(a1){
+						destinationFileDetails = a1;
+					});
+
+					// encountered an error trying to access the api
+					// shouldn't get here as done this once already
+					if (typeof destinationFileDetails.error != "undefined") {
+							editor.windowManager.alert(mw.msg("tinymce-upload-alert-error-uploading-to-wiki"));
+							srcCtrl.focus();
+							return;
+					}
+
+					// shouldn't get here either as done this once already
+					if (!destinationFileDetails) {
+						editor.windowManager.confirm(mw.msg("tinymce-upload-confirm-file-not-on-wiki"),
+							function(ok) {
+								if (ok) {
+									typeCtrl.value('File');
+									srcCtrl.value('');
+									// enable filpicker and summary input
+									alternateSrcCtrl.visible(false);
+									srcCtrl.visible(true);
+									dummySummaryCtrl.visible(false);
+									summaryCtrl.visible(true);
+									destCtrl.value('');
+								} else {
+									srcCtrl.value('');
+									destCtrl.value('');
+								}
+							});
+						srcCtrl.focus();
+						return
+					}
+
+					uploadResult = destinationFileDetails;
 					uploadThumb = uploadResult;					
 				}
 			}
