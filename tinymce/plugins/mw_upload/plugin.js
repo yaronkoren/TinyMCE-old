@@ -403,9 +403,11 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 				extensionAllowed;
 
 			// see if file already on wiki and return details if it is
-			$.when(getFileDetailsFromWiki(destinationFile), $.ready).then( function(a1){
-				destinationFileDetails = a1;
-			});
+//			$.when(getFileDetailsFromWiki(destinationFile), $.ready).then( function(a1){
+//				destinationFileDetails = a1;
+//			});
+
+			destinationFileDetails = getFileDetailsFromWiki(destinationFile);
 
 			// encountered an error trying to access the api
 			if (typeof destinationFileDetails.error != "undefined") {
@@ -418,19 +420,20 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 				if (destinationFileDetails) { // file of this name already exists on this wiki
 					editor.windowManager.confirm(mw.msg("tinymce-upload-confirm-file-already-exists"),
 						function(ok) {
-							  if (ok) {
-								  typeCtrl.value('Wiki');
-								  alternateSrcCtrl.value(destinationFileDetails);
-								  // disable filepicker and summary inpt
-								  srcCtrl.visible(false);
-								  alternateSrcCtrl.visible(true);
-								  summaryCtrl.visible(false);
-								  dummySummaryCtrl.visible(true);
-								  destCtrl.focus();
-							  } else {
-								  destCtrl.value('');
-								  destCtrl.focus();
-							  }
+							if (ok) {
+								file = destinationFile.split('/').pop().split('#')[0].split('?')[0];
+								typeCtrl.value('Wiki');
+								alternateSrcCtrl.value(file);
+								// disable filepicker and summary inpt
+								srcCtrl.visible(false);
+								alternateSrcCtrl.visible(true);
+								summaryCtrl.visible(false);
+								dummySummaryCtrl.visible(true);
+								destCtrl.focus();
+							} else {
+								destCtrl.value('');
+								destCtrl.focus();
+							}
 						});
 
 					destCtrl.focus();
@@ -990,9 +993,11 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 					uploadPage = "File:" + fileName;
 
 					// see if file already on wiki and return details if it is
-					$.when(getFileDetailsFromWiki(uploadPage), $.ready).then( function(a1){
-						destinationFileDetails = a1;
-					});
+//					$.when(getFileDetailsFromWiki(uploadPage), $.ready).then( function(a1){
+//						destinationFileDetails = a1;
+//					});
+
+					destinationFileDetails = getFileDetailsFromWiki(uploadPage);
 
 					// encountered an error trying to access the api
 					// shouldn't get here as done this once already
@@ -1102,7 +1107,7 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 			} else { //create new node
 				var el = editor.dom.create('img', data);
 				if (submittedData.link) {
-					el = editor.dom.create('a', {href: submittedData.link}, el);
+					el = editor.dom.create('a', {href: submittedData.link, class: "mw-image-link"}, el);
 				}
 				editor.undoManager.transact(function(){
 					editor.focus();
