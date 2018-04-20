@@ -73,6 +73,7 @@ $GLOBALS['wgHooks']['SkinTemplateNavigation'][] = 'TinyMCEAction::displayTab';
 $GLOBALS['wgHooks']['SkinEditSectionLinks'][] = 'TinyMCEHooks::addEditSectionLink';
 $GLOBALS['wgHooks']['LinkEnd'][] = 'TinyMCEHooks::changeRedLink';
 $GLOBALS['wgHooks']['EditPageBeforeEditToolbar'][] = 'TinyMCEHooks::removeDefaultToolbar';
+$GLOBALS['wgHooks']['AlternateEdit'][] = 'TinyMCEHooks::determineIfTinyMCEIsEnabled';
 $GLOBALS['wgHooks']['EditPage::showEditForm:initial'][] = 'TinyMCEHooks::addToEditPage';
 $GLOBALS['wgHooks']['WikiEditorDisable'][] = 'TinyMCEHooks::disableWikiEditor';
 $GLOBALS['wgHooks']['GetPreferences'][] = 'TinyMCEHooks::addPreference';

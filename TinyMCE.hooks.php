@@ -361,23 +361,36 @@ class TinyMCEHooks {
 		return true;
 	}
 
-	public static function addToEditPage( EditPage &$editPage, OutputPage &$output ) {
+	/**
+	 * This code is called separately from addToEditPage() because it needs
+	 * to be called earlier - addToEditPage() is called via the same hook
+	 * (EditPage::showEditForm:initial) as WikiEditor's code for
+	 * determining whether to install WikiEditor - which means that, if
+	 * this code were part of addToEditPage(), whether or not it ran
+	 * correctly would depend on the order in which the extensions were
+	 * called. Instead, for this code we use a hook called earlier -
+	 * AlternateEdit.
+	 */
+	public static function determineIfTinyMCEIsEnabled( EditPage $editPage ) {
 		global $wgTinyMCEEnabled;
 
 		$wgTinyMCEEnabled = false;
 
 		$context = $editPage->getArticle()->getContext();
-		$title = $editPage->getTitle();
 
 		$action = Action::getActionName( $context );
-		if ( $action == 'edit' || $action == 'submit' ) {
+		if ( $action != 'tinymceedit' ) {
 			return true;
 		}
 
-		if ( self::enableTinyMCE( $title, $context ) ) {
-			$wgTinyMCEEnabled = true;
-			$output->addModules( 'ext.tinymce' );
-		}
+		$title = $editPage->getTitle();
+		$wgTinyMCEEnabled = self::enableTinyMCE( $title, $context );
+
+		return true;
+	}
+
+	public static function addToEditPage( EditPage &$editPage, OutputPage &$output ) {
+		global $wgTinyMCEEnabled;
 
 		if ( !$wgTinyMCEEnabled ) {
 			return true;
