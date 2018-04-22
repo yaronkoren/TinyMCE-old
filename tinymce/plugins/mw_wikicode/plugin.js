@@ -15,6 +15,8 @@
 /*global mw:true */
 /*global BlueSpice:true */
 
+//TODO: DC 22/04/2018 retrieves image html from wiki parser so remove processing to create image html
+
 var MwWikiCode = function() {
 
 	"use strict";
@@ -34,11 +36,6 @@ var MwWikiCode = function() {
 		 * @type Array
 		 */
 		_nowikiTags,
-		/**
-		 *
-		 * @type Array
-		 */
-		_templates4Html,
 		/**
 		 *
 		 * @type Array
@@ -73,7 +70,22 @@ var MwWikiCode = function() {
 		 *
 		 * @type Array
 		 */
+		_templates4Html,
+		/**
+		 *
+		 * @type Array
+		 */
 		_templates4Wiki,
+		/**
+		 *
+		 * @type Array
+		 */
+		_images4Html,
+		/**
+		 *
+		 * @type Array
+		 */
+		_images4Wiki,
 		/**
 		 *
 		 * @type Array
@@ -107,7 +119,8 @@ var MwWikiCode = function() {
 		_ed = null,
 		_useNrnlCharacter,
 		_slb,
-		_scriptPath;
+		_wikiApi,
+		_title;
 
 	var me = this;
 
@@ -186,8 +199,8 @@ var MwWikiCode = function() {
 	// get details of file already uploaded to wiki including url
 	function getPageDetailsFromWiki(fileName) {
 		var queryData,
-			url = _scriptPath + '/api.php',
-			fileDetails = new Array();
+			pageDetails = new Array();
+			
 		queryData = new FormData();
 		queryData.append("action", "query");
 		queryData.append("prop", "imageinfo");
@@ -198,7 +211,7 @@ var MwWikiCode = function() {
 		
 		//as we now have created the data to send, we send it...
 		$.ajax( { //http://stackoverflow.com/questions/6974684/how-to-send-formdata-objects-with-ajax-requests-in-jquery
-			url: url, //url to api.php
+			url: _wikiApi, //url to api.php
 			contentType:false,
 			processData:false,
 			type:'POST',
@@ -213,7 +226,7 @@ var MwWikiCode = function() {
 					pages,
 					page;
 				if (typeof data.query == "undefined") {
-					fileDetails = JSON.parse(data)
+					pageDetails = JSON.parse(data)
 				} else if (typeof data.query.pages != "undefined") {
 					pages = data.query.pages;
 					for( page in pages ) {
@@ -228,7 +241,7 @@ var MwWikiCode = function() {
 								} else {
 									message = mw.msg("tinymce-wikicode-alert-image-request-unknown-error",fileName);								
 								}
-								fileDetails["error"] = message;
+								pageDetails["error"] = message;
 							}
 						} else {
 							title = pages[page].title;
@@ -243,7 +256,7 @@ var MwWikiCode = function() {
 								}
 							}
 							if (title.replace(/_/g," ").toLowerCase() == fileName.replace(/_/g," ").toLowerCase()) {
-								fileDetails = imageURL;
+								pageDetails = imageURL;
 							}
 						}
 					}
@@ -252,21 +265,80 @@ var MwWikiCode = function() {
 			error:function(xhr,status, error){
 			}
 		});
-		return fileDetails;
+		return pageDetails;
+	}
+	
+	function _getParsedHtmlFromWiki(wikiText) {
+		var data = {
+				'action': 'parse',
+				'title': _title,
+				'text': wikiText,
+				'prop': 'text|wikitext',
+				'disablelimitreport': '',
+				'disableeditsection': '',
+				'disabletoc': '',
+				'format': 'json',},
+			parserResult = [];
+		
+		$.ajax({
+			dataType: "json",
+			url: _wikiApi,
+			data: data,
+			async: false,
+			success: function(data) {
+				var parsedHtml = data.parse.text["*"],
+					parsedWikiText = data.parse.wikitext["*"];
+
+				// remove leading and trailing spaces
+				parsedHtml = $.trim(parsedHtml);
+				
+				// replace encoded & characters
+				parsedHtml = parsedHtml.replace(/\&amp\;/gmi,'&');
+				
+				// remove href tags in returned html as links will screw up conversions
+				parsedHtml = parsedHtml.replace(/\shref="([^"]*)"/gmi,'');
+
+				// remove leading and trailing <p>
+				parsedWikiText = $.trim(parsedWikiText);
+				if (parsedWikiText.substring(0, 3) == '<p>') {
+					parsedWikiText = parsedWikiText.substring(3, parsedWikiText.length);
+				}
+				if (parsedWikiText.substring(parsedWikiText.length-4,parsedWikiText.length) == '</p>') {
+					parsedWikiText = parsedWikiText.substring(0, parsedWikiText.length-4);
+				}
+				parsedWikiText = $.trim(parsedWikiText);
+				
+				parserResult['parsedWikiText'] = parsedWikiText;
+				parserResult['parsedHtml'] = parsedHtml;		
+			},
+			error:function(xhr,status, error){
+			}
+		});
+		return parserResult;
 	}
 
 	function _image2html(aLink) {
-		// @todo inline stylings taken from MediaWiki and adapted to TinyMCE markup. Not nice...
-		var htmlImageObject = $('<img />').attr( me.makeDefaultImageAttributesObject() ),
-			wikiImageObject = me.makeWikiImageDataObject(),
+		var wikiImageObject = me.makeWikiImageDataObject(),
 			parts,
 			part = '',
-			unsuffixedValue, dimensions, kvpair, key, value, src, imgParts,
-			imgName, imageFileDetails;
+			unsuffixedValue, 
+			dimensions, 
+			kvpair, 
+			key, 
+			value, 
+			src,
+			parserResult = [],
+			imageText,
+			imageHTML,
+			imageWikiText,
+			displayImageWikiText,
+			t,
+			id,
+			el,
+			codeAttrs;
 
 		// remove brackets and split into patrts
 		parts = aLink.substr(2, aLink.length - 4).split("|"); 
-
 		wikiImageObject.imagename = parts[0];
 		for (var i = 1; i < parts.length; i++) {
 			part = parts[i];
@@ -289,99 +361,83 @@ var MwWikiCode = function() {
 				continue;
 			}
 
-			if ($.inArray(part, ['thumb']) !== -1) {
-				wikiImageObject.thumb = true;
-				continue;
-			}
-
 			if ($.inArray(part, ['right']) !== -1) {
-				wikiImageObject.left = false;
-				wikiImageObject.right = true;
-				wikiImageObject.align = 'right';
+				wikiImageObject.horizontalalignment = 'right';
 				continue;
 			}
 
 			if ($.inArray(part, ['left']) !== -1) {
-				wikiImageObject.right = false;
-				wikiImageObject.left = true;
-				wikiImageObject.align = 'left';
+				wikiImageObject.horizontalalignment = 'left';
 				continue;
 			}
 
 			if ($.inArray(part, ['center']) !== -1) {
-				wikiImageObject.right = false;
-				wikiImageObject.left = false;
-				wikiImageObject.center = true;
-				wikiImageObject.align = 'center';
+				wikiImageObject.horizontalalignment = 'center';
+				continue;
+			}
+
+			if ($.inArray(part, ['none']) !== -1) {
+				wikiImageObject.horizontalalignment = 'none';
 				continue;
 			}
 
 			if ($.inArray(part, ['middle']) !== -1) {
-				wikiImageObject.middle = true;
 				wikiImageObject.verticalalign = 'middle';
 				continue;
 			}
 
 			if ($.inArray(part, ['top']) !== -1) {
-				wikiImageObject.top = true;
 				wikiImageObject.verticalalign = 'top';
 				continue;
 			}
 
 			if ($.inArray(part, ['bottom']) !== -1) {
-				wikiImageObject.bottom = true;
 				wikiImageObject.verticalalign = 'bottom';
 				continue;
 			}
 
 			if ($.inArray(part, ['baseline']) !== -1) {
-				wikiImageObject.baseline = true;
 				wikiImageObject.verticalalign = 'baseline';
 				continue;
 			}
 
 			if ($.inArray(part, ['sub']) !== -1) {
-				wikiImageObject.sub = true;
 				wikiImageObject.verticalalign = 'sub';
 				continue;
 			}
 
 			if ($.inArray(part, ['super']) !== -1) {
-				wikiImageObject.super = true;
 				wikiImageObject.verticalalign = 'super';
 				continue;
 			}
 
 			if ($.inArray(part, ['text-top']) !== -1) {
-				wikiImageObject.textTop = true;
 				wikiImageObject.verticalalign = 'text-top';
 				continue;
 			}
 
 			if ($.inArray(part, ['text-bottom']) !== -1) {
-				wikiImageObject.textBottom = true;
 				wikiImageObject.verticalalign = 'text-bottom';
 				continue;
 			}
 
-			if ($.inArray(part, ['none']) !== -1) {
-				wikiImageObject.none = true;
+			if ($.inArray(part, ['thumb']) !== -1) {
+				wikiImageObject.format = 'thumb';
 				continue;
 			}
 
 			if ($.inArray(part, ['frame']) !== -1) {
-				wikiImageObject.frame = true;
+				wikiImageObject.format = 'frame';
 				continue;
 			}
 
 			if ($.inArray(part, ['frameless']) !== -1) {
-				wikiImageObject.frameless = true;
+				wikiImageObject.format = 'frameless';
 				continue;
 			}
 
 			if ($.inArray(part, ['border']) !== -1) {
-				wikiImageObject.border = true;
-				wikiImageObject.mwborder = true;
+				wikiImageObject.format = 'border';
 				continue;
 			}
 
@@ -402,13 +458,13 @@ var MwWikiCode = function() {
 
 			if ($.inArray(key, ['title']) !== -1) {
 				wikiImageObject.caption = value;
-				wikiImageObject.title = wikiImageObject.caption;
+				wikiImageObject.title = value;
 				continue;
 			}
 
 			if ($.inArray(key, ['caption']) !== -1) {
 				wikiImageObject.caption = value;
-				wikiImageObject.title = wikiImageObject.caption;
+				wikiImageObject.title = value;
 				continue;
 			}
 
@@ -423,140 +479,62 @@ var MwWikiCode = function() {
 			}
 		}
 
-		if (wikiImageObject.caption) {
-			htmlImageObject.attr('caption', wikiImageObject.caption);
-			htmlImageObject.attr('title', wikiImageObject.caption);
-		}
+		parserResult = _getParsedHtmlFromWiki(aLink);
+		imageHTML = parserResult['parsedHtml'];
+		imageWikiText = parserResult['parsedWikiText'];
+		
+		displayImageWikiText = encodeURI(aLink);
 
-		if (wikiImageObject.alt) {
-			htmlImageObject.attr('alt', wikiImageObject.alt);
-		}
+		t = Math.floor((Math.random() * 100000) + 100000);
+		id = "<@@@IMG"+ t + "@@@>";
+		codeAttrs = {
+			'id': id,
+			'class': "mw-image",
+			'title': imageWikiText,
+			'data-mw-type': "image",
+			'data-mw-id': t,
+			"data-mw-src": wikiImageObject.imagename,
+			"data-mw-link": wikiImageObject.link,
+			"data-mw-title": wikiImageObject.title,
+			"data-mw-caption": wikiImageObject.caption,
+			"data-mw-alt": wikiImageObject.alt,
+			"data-mw-sizewidth": wikiImageObject.sizewidth,
+			"data-mw-sizeheight": wikiImageObject.sizeheight,
+			"data-mw-horizontalalign": wikiImageObject.horizontalalignment,
+			"data-mw-verticalalign": wikiImageObject.verticalalignment,
+			"data-mw-format": wikiImageObject.format,
+			'data-mw-wikitext': displayImageWikiText,
+			'contenteditable': "false"
+		};
 
-		if (wikiImageObject.sizewidth !== false) {
-			htmlImageObject.width(wikiImageObject.sizewidth);
-		}
+		imageHTML = $.trim(imageHTML);		
+		imageHTML = '<div class="mceNonEditableStart"></div>' + imageHTML + '<div class="mceNonEditableEnd"></div>';
+		el = _ed.dom.create('span', codeAttrs, imageHTML);
+		imageWikiText = imageWikiText.replace(/[^A-Za-z0-9_]/g, '\\$&');
+		imageText = el.outerHTML;
 
-		if (wikiImageObject.sizeheight !== false) {
-			htmlImageObject.height(wikiImageObject.sizeheight);
-		}
-
-		if (wikiImageObject.thumb === true) {
-			htmlImageObject.addClass('thumb');
-			if (wikiImageObject.sizewidth === false) {
-				htmlImageObject.width(wikiImageObject.thumbsize);
-			}
-		}
-
-		//In the first place we have to assume that "thumb" and "frame" floats
-		//right,as this is MW default. May be overridden below.
-		if (wikiImageObject.thumb === true || wikiImageObject.frame === true) {
-			//htmlImageObject.addClass('tright');
-			htmlImageObject.css('border', '1px solid #CCCCCC');
-			if (wikiImageObject.none !== true){
-				htmlImageObject.css('float', 'right');
-				htmlImageObject.css('clear', 'right');
-				htmlImageObject.css('margin-left', '1.4em');
-			}
-		}
-
-		if (wikiImageObject.center === true) {
-			htmlImageObject.addClass('center');
-			if (htmlImageObject.width) {
-				var csswidth = htmlImageObject.width;
-			} else {
-				var csswidth = 'auto';
-			}
-			if (htmlImageObject.height) {
-				var cssheight = htmlImageObject.height;
-			} else {
-				var cssheight = 'auto';
-			}
-			htmlImageObject.css({
-				'float' : 'none', //Those might be set
-				'clear' : 'none', //by thumb'
-				'display': 'block',
-				'margin-left': 'auto',
-				'margin-right': 'auto',
-				'width': csswidth,
-				'height': cssheight
-			});
-
-		} else if (wikiImageObject.right === true) {
-			htmlImageObject.addClass('tright');
-			htmlImageObject.css('float', 'right');
-			htmlImageObject.css('clear', 'right');
-			htmlImageObject.css('margin-left', '1.4em');
-		} else if (wikiImageObject.left === true) {
-			htmlImageObject.addClass('tleft');
-			htmlImageObject.css('float', 'left');
-			htmlImageObject.css('clear', 'left');
-			htmlImageObject.css('margin-right', '1.4em');
-		}
-
-		//We store all parsed properties of the WikiText link within the dom
-		//node to make access by other components more easy
-		//We use $.attr instead of $.data because of issues with IE in older
-		//jQuery versions. This should be subject to further testing.
-
-		htmlImageObject.attr(
-			_makeDataAttributeObject(wikiImageObject)
-		);
-
-		//Let's store the original WikiText as well. This makes it easier for
-		//other extensions to read in the data.
-		//We can not use [[/]] because this might cause double parsing!
-		htmlImageObject.attr('data-mw-wikitext', encodeURI(aLink));
-
-		// see if file already on wiki and return details if it is
-/*		$.when(getPageDetailsFromWiki(parts[0]), $.ready).then( function(a1){
-			src = a1;
-		});*/
-		src = getPageDetailsFromWiki(parts[0]);
-		// encountered an error trying to access the api
-		// set src to filename instead of url on wiki
-		if (typeof src.error != 'undefined' ) {
-			editor.windowManager.alert(mw.msg("tinymce-upload-alert-error-uploading-to-wiki"));
-			return src;
-		}
-		// image
-		if (src) {
-			htmlImageObject.attr('src', src);
-			htmlImageObject.attr('data-mw-page', (parts[0]) );
-			htmlImageObject.attr('data-mw-thumbnail', src);
-		}
-
-		// make contenteditable false so image can be selected correctly
-		htmlImageObject.attr('contentEditable', false);
-		htmlImageObject.attr('id',"<@@@IMG" + (Math.floor((Math.random() * 100000) + 100000)) + "@@@>");
-
-		//Create linked images
-		if (wikiImageObject.link !== false) {
-			htmlImageObject.wrap('<a style="display:inline-block" class="mw-image-link"></a>'); //IE needs closing tag
-			htmlImageObject = htmlImageObject.parent();
-			htmlImageObject.attr('href', wikiImageObject.link);
-		}
-
-		return htmlImageObject[0].outerHTML;
+		return imageText;
 	}
 
-	function _image2wiki(text) {
-		var image, imageHTML, htmlImageObject, wikiImageObject,
+/*	function _image2wiki(text) {
+		var image, imageHTML, , wikiImageObject,
 			attributes, attribute, wikiText, imageCaption,
 			size, property, value;
-
+debugger;
 		// convert text to dom
 		var $dom = $( "<div id='tinywrapper'>" + text + "</div>" );
 
 		// replace html links with wikitext
-		$dom.find( "img[class*='mw-image']" ).replaceWith( function() {
+		$dom.find( "span[class*='mw-image']" ).replaceWith( function() {
+debugger;
 			var wikiText = this.getAttribute("data-mw-wikitext");
 			return decodeURI(wikiText);
 		} );
-
+debugger;
 		// convert dom back to text
 		text = $dom.html();
 		return text;
-	}
+	}*/
 
 	function _links2html(text) {
 
@@ -575,7 +553,7 @@ var MwWikiCode = function() {
 			linkTargetParts, 
 			protocol, 
 			namespaces = mw.config.get( 'wgNamespaceIds' ),
-			anchorFormat = '<a href="{0}" data-mce-href="{5}" title="{6}" data-mw-type="{2}" class="{3}" data-mw-wikitext="{4}" contenteditable= "false" >{1}<div class="mceNonEditableOverlay"></div></a>',
+			anchorFormat = '<a href="{0}" data-mce-href="{5}" title="{6}" data-mw-type="{2}" class="{3}" data-mw-wikitext="{4}" contenteditable= "false" ><div class="mceNonEditableStart"></div>{1}<div class="mceNonEditableOverlay"></div><div class="mceNonEditableEnd"></div></a>',
 			squareBraceDepth = 0,
 			linkDepth = 0,
 			linkStart = 0,
@@ -1532,7 +1510,8 @@ var MwWikiCode = function() {
 				'contenteditable': "false"
 			};
 
-			switchHtml = '&sect;' + '<div class="mceNonEditableOverlay" />';
+			switchHTML = $.trim(switchHTML);
+			switchHtml = '<div class="mceNonEditableStart"></div>' + '&sect;' + '<div class="mceNonEditableOverlay"></div><div class="mceNonEditableEnd"></div>';
 			el = ed.dom.create('span', codeAttrs, switchHtml);
 			var searchText = new RegExp(switchWikiText, 'g');
 			var replaceText = el.outerHTML;
@@ -2038,7 +2017,7 @@ var MwWikiCode = function() {
 		text = _preserveNewLines4wiki(text);
 
 		// convert images
-		text = _image2wiki(text);
+//		text = _image2wiki(text);
 
 		//convert links
 		text = _links2wiki(text);
@@ -2094,20 +2073,16 @@ var MwWikiCode = function() {
 			curlyBraceDepth, squareBraceDepth, templateDepth,
 			squareBraceFirst, tempTemplate, innerText, id, htmlText, el,
 			templateName, templateText, templateResult, templateNameLines,
-			switchWikiText;
-		var server = mw.config.get( "wgServer" ) ;
-		var script = mw.config.get( 'wgScriptPath' ) + '/api.php';
-		var title = mw.config.get( "wgCanonicalNamespace" ) + ':' + mw.config.get( "wgTitle" ) ;
+			switchWikiText, parserResult = [];
+//		var server = mw.config.get( "wgServer" ) ;
+//		var script = mw.config.get( 'wgScriptPath' ) + '/api.php';
+//		var title = mw.config.get( "wgCanonicalNamespace" ) + ':' + mw.config.get( "wgTitle" ) ;
 
 		var ed = tinymce.get(e.target.id);
 		if (ed == null) {
 			ed = tinymce.activeEditor;
 		}
 
-/*		//now process special tags
-		if (!_specialtags) {
-			_specialtags = new Array();
-		}*/
 		// Tags without innerHTML need /> as end marker. Maybe this should be task of a preprocessor,
 		// in order to allow mw style tags without /.
 		regex = '<(' + _specialTagsList + ')[\\S\\s]*?((/>)|(>([\\S\\s]*?<\\/\\1>)))';
@@ -2115,10 +2090,19 @@ var MwWikiCode = function() {
 		mtext = text;
 		i = 0;
 		st = '';
-		var innerText = '';
-		var retValue = false;
-		var moreAttribs = '';
-		var tagName = '';
+		var retValue = false,
+			innerText = '',
+			moreAttribs = '',
+			tagName = '',
+			tagWikiText = '',
+			tagHTML = '',
+			displayTagWikiText = '',
+			t,
+			id,
+			codeAttrs,
+			tagText,
+			searchText,
+			replaceText;
 		
 		if (!_tags4Html) {
 			_tags4Html = new Array();
@@ -2131,7 +2115,40 @@ var MwWikiCode = function() {
 			/*DC now go and get parsed html for this special tag to insert into the edit window
 			as not editable html (TODO addexclusions)*/
 			tagName = st[1];
-			var data = {'action': 'parse',
+			parserResult = _getParsedHtmlFromWiki(st[0]);
+			tagWikiText = parserResult['parsedWikiText'];
+			tagHTML = parserResult['parsedHtml'];
+			
+			displayTagWikiText = encodeURI(tagWikiText);
+
+			t = Math.floor((Math.random() * 100000) + 100000) + i;
+			id = "<@@@TAG"+ t + "@@@>";
+			codeAttrs = {
+				'id': id,
+				'class': "mceNonEditable wikimagic tag",
+				'title': tagWikiText ,
+				'data-mw-type': "tag",
+				'data-mw-id': t,
+				'data-mw-name': tagName,
+				'data-mw-wikitext': displayTagWikiText,
+				'contenteditable': "false"
+			};
+			
+			tagHTML = $.trim(tagHTML);
+			tagHTML = '<div class="mceNonEditableStart"></div>' + tagHTML + '<div class="mceNonEditableOverlay"></div><div class="mceNonEditableEnd"></div>';
+			el = ed.dom.create('span', codeAttrs, tagHTML);
+			tagText = el.outerHTML;
+			tagWikiText = tagWikiText.replace(/[^A-Za-z0-9_]/g, '\\$&');
+			searchText = new RegExp(tagWikiText, 'g');
+			replaceText = id;
+			_tags4Html[id] = tagText;
+			_tags4Wiki[id] = displayTagWikiText;
+			text = text.replace(
+				searchText,
+				replaceText
+			);
+			
+/*			var data = {'action': 'parse',
 				'title': title,
 				'text': st[0],
 				'prop': 'text|wikitext',
@@ -2141,7 +2158,7 @@ var MwWikiCode = function() {
 				'format': 'json',};
 			$.ajax({
 				dataType: "json",
-				url: script,
+				url: _wikiApi,
 				data: data,
 				async: false,
 				success: function(data) {
@@ -2193,7 +2210,7 @@ var MwWikiCode = function() {
 						replaceText
 					);
 				}
-			});
+			});*/
 			i++;
 		}
 		return text;
@@ -2208,7 +2225,8 @@ var MwWikiCode = function() {
 		var mtext, 
 			regex, 
 			matcher, 
-			i, 
+			i,
+			t,
 			pos, 
 			curlyBraceDepth = 0, 
 			squareBraceDepth = 0, 
@@ -2220,14 +2238,21 @@ var MwWikiCode = function() {
 			htmlText, 
 			el,
 			templateName, 
-			templateText, 
+			templateText,
+			templateHTML,
+			templateWikiText,
+			displayTemplateWikiText,
 			templateResult, 
 			templateNameLines,
+			codeAttrs,
+			searchText,
+			replaceText,
 			templates = new Array(),
 			checkedBraces = new Array(),
-			server = mw.config.get( "wgServer" ),
-			script = mw.config.get( 'wgScriptPath' ) + '/api.php',
-			title = mw.config.get( "wgCanonicalNamespace" ) + ':' + mw.config.get( "wgTitle" ),
+			parserResult = [],
+//			server = mw.config.get( "wgServer" ),
+//			script = mw.config.get( 'wgScriptPath' ) + '/api.php',
+//			title = mw.config.get( "wgCanonicalNamespace" ) + ':' + mw.config.get( "wgTitle" ),
 			ed = tinymce.get(e.target.id);
 		
 		if (ed == null) {
@@ -2296,9 +2321,45 @@ var MwWikiCode = function() {
 				if ( templateName.indexOf( "|" ) > 0 ) {
 					templateName = templateName.slice( 0, templateName.indexOf( "|" ));
 				}
-				/*DC now go and get parsed html for this template to insert into the edit window
-				as not editable html (TODO addexclusions)*/
-				var data = {'action': 'parse',
+
+				// get parsed html for this template to insert into the edit window
+				// as not editable html (TODO addexclusions)*/
+				parserResult = _getParsedHtmlFromWiki(templateText);
+				templateHTML = parserResult['parsedHtml'];
+				templateWikiText = parserResult['parsedWikiText'];
+				
+				displayTemplateWikiText = encodeURI(templateWikiText);
+
+				t = Math.floor((Math.random() * 100000) + 100000) + i;
+				id = "<@@@TPL"+ t + "@@@>";
+				codeAttrs = {
+					'id': id,
+					'class': "mceNonEditable wikimagic template",
+					'title': templateWikiText,
+					'data-mw-type': "template",
+					'data-mw-id': t,
+					'data-mw-name': templateName,
+					'data-mw-wikitext': displayTemplateWikiText,
+					'contenteditable': "false"
+				};
+				
+				templateHTML = $.trim(templateHTML);
+				templateHTML = '<div class="mceNonEditableStart"></div>' + templateHTML + '<div class="mceNonEditableOverlay"></div><div class="mceNonEditableEnd"></div>';
+				el = ed.dom.create('span', codeAttrs, templateHTML);
+				templateWikiText = templateWikiText.replace(/[^A-Za-z0-9_]/g, '\\$&');
+				searchText = new RegExp(templateWikiText, 'g');
+				templateText = el.outerHTML;
+				replaceText = id;
+				_templates4Html[id] = templateText;
+				_templates4Wiki[id] = displayTemplateWikiText;
+				text = text.replace(
+					searchText,
+					replaceText
+				)
+				i++;
+				
+				
+/*				var data = {'action': 'parse',
 					'title': title,
 					'text': templateText,
 					'prop': 'text|wikitext',
@@ -2308,7 +2369,7 @@ var MwWikiCode = function() {
 					'format': 'json',};
 				$.ajax({
 					dataType: "json",
-					url: script,
+					url: _wikiApi,
 					data: data,
 					async: false,
 					success: function(data) {
@@ -2367,10 +2428,10 @@ var MwWikiCode = function() {
 						text = text.replace(
 							searchText,
 							replaceText
-						);
+						)
 						i++;
 					}
-				});
+				})*/
 			}
 		}
 		return text;
@@ -2782,11 +2843,11 @@ var MwWikiCode = function() {
 		var text = e.content,
 			$dom,
 			htmlPrefilter = $.htmlPrefilter,
-			regex = 'contenteditable="false">[\\S\\s]*?<div class="mceNonEditableOverlay"></div>',
+			regex = '<div class="mceNonEditableStart"><\/div>[\\S\\s]*?<div class="mceNonEditableEnd"><\/div>',
 			matcher = new RegExp(regex, 'gmi');
 
 		$.htmlPrefilter = function( html ) {
-  			return html.replace(matcher, 'contenteditable="false"><*****>' );
+  			return html.replace(matcher, '<*****>' );
 		};
 
 		text = $.htmlPrefilter(text);
@@ -2822,6 +2883,11 @@ var MwWikiCode = function() {
 		$dom.find( "span[class*='template']" ).replaceWith( function(a) {
 			return this.id;
 		});
+
+		// replace spans of class mw-image with their wikitext
+		$dom.find( "span[class*='mw-image']" ).replaceWith( function() {
+			return decodeURI(this.getAttribute("data-mw-wikitext"));
+		} );
 
 		// replace spans of class comment with their wikitext
 		$dom.find( "span[class*='comment']" ).replaceWith( function(a) {
@@ -2991,7 +3057,7 @@ var MwWikiCode = function() {
 			nodeType = '',
 			isWikimagic = '',
 			value = '';
-			
+
 		if (typeof(selectedNode.attributes["data-mw-type"]) !== "undefined" ) {
 			nodeType = selectedNode.attributes["data-mw-type"].value;
 			isWikimagic = 
@@ -3072,12 +3138,10 @@ var MwWikiCode = function() {
 	}
 
 	this.init = function(ed, url) {
-		var editClass = ed.getParam("noneditable_editable_class", "mceEditable"); // Currently unused
-		var nonEditClass = ed.getParam("noneditable_noneditable_class", "mceNonEditable");
-
 		_userThumbsize = _thumbsizes[ mw.user ? mw.user.options.get('thumbsize') : _userThumbsize ];
 		_ed = ed;
-		_scriptPath = mw.config.get( 'wgScriptPath' );
+		_wikiApi = mw.config.get( 'wgScriptPath' ) + '/api.php',
+		_title = mw.config.get( "wgCanonicalNamespace" ) + ':' + mw.config.get( "wgTitle" );
 		_specialTagsList = _ed.getParam("wiki_tags_list");
 		_specialTagsList += _ed.getParam("additional_wiki_tags");
 
@@ -3089,7 +3153,7 @@ var MwWikiCode = function() {
 		// add in non rendered new line functionality
 		//
 		_useNrnlCharacter = ed.getParam("wiki_non_rendering_newline_character");
-//		_slb = '<span class="single_linebreak" title="single linebreak" contenteditable="false">' + _useNrnlCharacter + '<div class="mceNonEditableOverlay"></div></span>';
+//		_slb = '<span class="single_linebreak" title="single linebreak" contenteditable="false">' + _useNrnlCharacter + '<div class="mceNonEditableOverlay"></div><div class="mceNonEditableEnd"></div></span>';
 		_slb = '<span class="single_linebreak" title="single linebreak">' + _useNrnlCharacter + '</span>';
 
 		if (_useNrnlCharacter) {
@@ -3129,27 +3193,6 @@ var MwWikiCode = function() {
 	  
 		ed.addCommand('mceWikimagic', showWikiMagicDialog);
 	  
-		// Add option to double-click on switches to get
-		// "wikimagic" popup.
-		ed.on('dblclick', function(e) {
-			if (e.target.className.includes("wikimagic")) {
-				tinyMCE.activeEditor.execCommand('mceWikimagic');
-			}
-		});
-	  
-		// Add option to double-click on non-editable overlay to get
-		// "wikimagic" popup.
-		ed.on('dblclick', function(e) {
-			if (e.target.className == 'mceNonEditableOverlay' ) {
-				if (e.target.parentNode.className.includes("wikimagic")) {
-					tinyMCE.activeEditor.execCommand('mceWikimagic');
-				} else if (e.target.parentNode.className.includes("mw-internal-link") 
-					|| e.target.parentNode.className.includes("mw-external-link")) {
-					tinyMCE.activeEditor.execCommand('mceLink');
-				}
-			}
-		});
-		
 		//
 		// add in wiki source code functionality
 		//
@@ -3167,7 +3210,47 @@ var MwWikiCode = function() {
 			context: 'tools',
 			onclick: showWikiSourceCodeDialog
 		});
-
+		
+		// On select if image make sure you get the IMG span
+		// not just the img
+		ed.on('click', function(e) {
+			var selectedNode;
+			if (e.target.tagName == "IMG") {
+				selectedNode = e.target;
+				while ((selectedNode.parentNode != 'undefined') &&
+					(!selectedNode.className.includes("mw-image"))) {
+					selectedNode = selectedNode.parentNode;
+				}
+				if (selectedNode.parentNode != 'undefined') {
+					_ed.selection.select(selectedNode);
+					e.target = selectedNode;
+				}
+			}
+		});	
+	  
+		// Add option to double-click on non-editable overlay to get
+		// "wikimagic" popup.
+		ed.on('dblclick', function(e) {
+			var selectedNode;
+			if (e.target.tagName == "IMG") {
+				selectedNode = e.target;
+				while ((selectedNode.parentNode != 'undefined') &&
+					(!selectedNode.className.includes("mw-image"))) {
+					selectedNode = selectedNode.parentNode;
+				}
+				if (selectedNode.parentNode != 'undefined') {
+					_ed.selection.select(selectedNode);
+					e.target = selectedNode;
+				}
+			} else if (e.target.className == 'mceNonEditableOverlay' ) {
+				if (e.target.parentNode.className.includes("wikimagic")) {
+					tinyMCE.activeEditor.execCommand('mceWikimagic');
+				} else if (e.target.parentNode.className.includes("mw-internal-link") 
+					|| e.target.parentNode.className.includes("mw-external-link")) {
+					tinyMCE.activeEditor.execCommand('mceLink');
+				}
+			}
+		});
 	};
 
 	this.getInfo = function() {
