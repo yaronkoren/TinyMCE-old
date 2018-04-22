@@ -8,7 +8,107 @@
 
 img {
 	contenteditable = "false";
+	border: none;
+	vertical-align: middle;
 }
+
+div.floatright, table.floatright {
+	margin: 0 0 .5em .5em;
+	border: 0;
+}
+
+div.floatright, table.floatright, div.floatleft, table.floatleft {
+	position: relative;
+}
+
+
+div.tright, div.floatright, table.floatright {
+	clear: right;
+	float: right;
+	display: block;
+}
+
+div.floatleft, table.floatleft {
+    margin: 0 .5em .5em 0;
+    border: 0;
+}
+
+div.tleft, div.floatleft, table.floatleft {
+    float: left;
+    clear: left;
+}
+
+div.center {
+	float: none; 	
+	clear: none; 
+/*	display: block;*/
+	margin-left: auto;
+	margin-right: auto;
+	width: 100%;
+	text-align: center;
+}
+
+div.floatnone {
+	display: block;
+}
+
+div.thumb.tnone {
+	margin-bottom: .5em;	
+	width: auto;
+	background-color: transparent;
+}
+
+div.thumbinner {
+	border: 1px solid #ccc;
+	padding: 3px;
+	background-color: #f9f9f9;
+	font-size: 94%;
+	text-align: center;
+	overflow: hidden;
+}
+
+html .thumbimage {
+	border: 1px solid #ccc;
+}
+
+.mw_right {
+	float: right;
+	clear: right';
+    	margin: .5em 0 1.3em 1.4em;
+}
+
+.mw_left {
+	float: left;
+	clear: left;
+    	margin: .5em 1.4em 1.3em 0;
+}
+
+.mw_thumb {
+    margin-bottom: .5em;
+    width: auto;
+    background-color: transparent;
+}
+
+.mw_thumbinner {
+    border: 1px solid #ccc;
+    padding: 3px;
+    background-color: #f9f9f9;
+    font-size: 94%;
+    text-align: center;
+    overflow: hidden;
+}
+
+.mw_thumbimage {
+    border: 1px solid #ccc;
+}
+
+.mw_thumbcaption {
+    border: none;
+    line-height: 1.4em;
+    padding: 3px;
+    font-size: 94%;
+    text-align: left;
+},
 
 .pfMceUploadFail {
 	position:relative;
@@ -32,6 +132,17 @@ img {
 
 .mceNonEditable {
 	display: inline-block;
+	/* Image created at http://www.patternify.com, with a 2-pixel width
+	 * of color #d9f7db on a 10x10 "canvas". */
+	background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAASElEQVQoU2NkgIKb32//BzHVOVUZYWLINFiQkCKQGkZiFMEV4rIO2VlY3YPsNpiNeBUiOwunQnS3Y1WIzYMYCnGFAopCfEEFANTAK18PA4AuAAAAAElFTkSuQmCC");
+	border: #90c693 1px solid;
+	padding: 8px;
+	opacity: 0.7 !important;
+	position: relative;
+}
+
+.mceNonEditableImage {
+	display: block;
 	/* Image created at http://www.patternify.com, with a 2-pixel width
 	 * of color #d9f7db on a 10x10 "canvas". */
 	background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAASElEQVQoU2NkgIKb32//BzHVOVUZYWLINFiQkCKQGkZiFMEV4rIO2VlY3YPsNpiNeBUiOwunQnS3Y1WIzYMYCnGFAopCfEEFANTAK18PA4AuAAAAAElFTkSuQmCC");
