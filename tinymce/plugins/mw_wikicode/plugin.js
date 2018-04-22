@@ -1510,7 +1510,6 @@ debugger;
 				'contenteditable': "false"
 			};
 
-			switchHTML = $.trim(switchHTML);
 			switchHtml = '<div class="mceNonEditableStart"></div>' + '&sect;' + '<div class="mceNonEditableOverlay"></div><div class="mceNonEditableEnd"></div>';
 			el = ed.dom.create('span', codeAttrs, switchHtml);
 			var searchText = new RegExp(switchWikiText, 'g');
