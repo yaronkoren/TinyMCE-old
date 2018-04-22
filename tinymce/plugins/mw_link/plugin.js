@@ -454,7 +454,7 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 			onSubmit: function(e) {
 				/*eslint dot-notation: 0*/
 				var href;
-
+debugger;
 				data = tinymce.extend(data, e.data);
 				href = data.href;
 
@@ -547,7 +547,7 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 						if (data.type == "internal_link") {
 							data.wikitext = "[[" + data.wikitext + "|" + linkText + "]]";
 						} else if (data.type == "external_link") {
-							data.wikitext = "[" + data.wikitext + "%20" + linkText + "]";
+							data.wikitext = "[" + data.wikitext + " " + linkText + "]";
 						}
 					}
 					data.wikitext = encodeURI(data.wikitext);
