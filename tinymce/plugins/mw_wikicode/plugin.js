@@ -687,7 +687,7 @@ debugger;
 			for (var aLink in externalLinks) {
 				link = aLink.substr(1, aLink.length - 2);
 				linkNoWrap = aLink.substr(1, aLink.length - 2);
-
+debugger;
 				link = linkNoWrap.replace(/^\s+|\s+$/gm,'');
 				linkParts = link.split(" ");
 				linkTarget = linkParts[0];
@@ -700,7 +700,7 @@ debugger;
 				protocol= 'none';
 				if( linkTargetParts.length > 1){
 					protocol = linkTargetParts[0];
-				} else if (linkTarget.substr(0,2) = '//' ) {
+				} else if (linkTarget.substr(0,2) == '//' ) {
 					protocol = '//';
 				}
 
