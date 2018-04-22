@@ -14,6 +14,8 @@
 /*global tinymce:true */
 /*global mw:true */
 
+//TODO: DC 22/04/2018 retrieves image html from wiki parser so remove processing to create image html
+
 tinymce.PluginManager.add('wikiupload', function(editor) {
 
 	var me = this,
@@ -28,7 +30,9 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 		return;
 	}*/
 
-	var scriptPath = mw.config.get( 'wgScriptPath' );
+	var scriptPath = mw.config.get( 'wgScriptPath' )
+		_wikiApi = mw.config.get( 'wgScriptPath' ) + '/api.php',
+		_title = mw.config.get( "wgCanonicalNamespace" ) + ':' + mw.config.get( "wgTitle" );
 
 	// display and process upload form
 	function showDialog(dialogData) {
@@ -37,7 +41,6 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 		var imageDimensions = editor.settings.image_dimensions !== false;
 		var userMayUpload = true;
 		var userMayUploadFromURL = false;
-
 		//Check and process upload permissions
 		function checkPermisionsOk() {
 			if (mw.config.get( 'wgReadOnly' )) {
@@ -97,7 +100,6 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 			}
 			return extensionAllowed;
 		}
-
 
 		// cleans submitted data to ensure all datatypes are valid
 		function cleanSubmittedData(submittedData) {
@@ -159,9 +161,6 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 			
 			//if no width or height set and format is thumb, use user thumbsize for width
 			if (newWidth == 0 && newHeight == 0) {
-				if (format == 'thumb') {
-					newWidth = _userThumbsize;
-				}
 			}
 
 			if (win.find('#constrain')[0].checked() && (newWidth)) {
@@ -301,6 +300,55 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 			return fileDetails;
 		}
 
+		function getParsedHtmlFromWiki(wikiText) {
+			var data = {
+					'action': 'parse',
+					'title': _title,
+					'text': wikiText,
+					'prop': 'text|wikitext',
+					'disablelimitreport': '',
+					'disableeditsection': '',
+					'disabletoc': '',
+					'format': 'json',},
+				parserResult = [];
+			
+			$.ajax({
+				dataType: "json",
+				url: _wikiApi,
+				data: data,
+				async: false,
+				success: function(data) {
+					var parsedHtml = data.parse.text["*"],
+						parsedWikiText = data.parse.wikitext["*"];
+	  
+					// remove leading and trailing spaces
+					parsedHtml = $.trim(parsedHtml);
+					
+					// replace encoded & characters
+					parsedHtml = parsedHtml.replace(/\&amp\;/gmi,'&');
+					
+					// remove href tags in returned html as links will screw up conversions
+					parsedHtml = parsedHtml.replace(/\shref="([^"]*)"/gmi,'');
+	  
+					// remove leading and trailing <p>
+					parsedWikiText = $.trim(parsedWikiText);
+					if (parsedWikiText.substring(0, 3) == '<p>') {
+						parsedWikiText = parsedWikiText.substring(3, parsedWikiText.length);
+					}
+					if (parsedWikiText.substring(parsedWikiText.length-4,parsedWikiText.length) == '</p>') {
+						parsedWikiText = parsedWikiText.substring(0, parsedWikiText.length-4);
+					}
+					parsedWikiText = $.trim(parsedWikiText);
+					
+					parserResult['parsedWikiText'] = parsedWikiText;
+					parserResult['parsedHtml'] = parsedHtml;		
+				},
+				error:function(xhr,status, error){
+				}
+			});
+			return parserResult;
+		}
+
 		function onBeforeCall(e) {
 			e.meta = win.toJSON();
 		}
@@ -403,10 +451,6 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 				extensionAllowed;
 
 			// see if file already on wiki and return details if it is
-//			$.when(getFileDetailsFromWiki(destinationFile), $.ready).then( function(a1){
-//				destinationFileDetails = a1;
-//			});
-
 			destinationFileDetails = getFileDetailsFromWiki(destinationFile);
 
 			// encountered an error trying to access the api
@@ -504,13 +548,14 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 			if (!dialogData.height) dialogData.height = null;
 			if (!dialogData.horizontalalignment) dialogData.horizontalalignment = 'right';
 			if (!dialogData.verticalalignment) dialogData.verticalalignment = 'middle';
-			if (!dialogData.format) dialogData.format = 'thumb';
+			if (!dialogData.format) dialogData.format = null;
 
 			if (imgElm) { //Populate form with details of existing upload
+
 				dialogData.type = 'Wiki';
-				dialogData.src = dom.getAttrib(imgElm, 'data-mw-page').split('/').pop().split('#')[0].split('?')[0];
+				dialogData.src = dom.getAttrib(imgElm, 'data-mw-src').split('/').pop().split('#')[0].split('?')[0];
 				if (dialogData.src == 'false') dialogData.src = '';
-				dialogData.dest = '';
+				dialogData.dest = dialogData.src;
 				dialogData.summary = '';
 				dialogData.title = dom.getAttrib(imgElm, 'data-mw-title');
 				if ( dialogData.title == 'false') dialogData.title = '';
@@ -523,7 +568,8 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 				if ( dialogData.width == 'false') dialogData.width = null;
 				dialogData.height = dom.getAttrib(imgElm, 'data-mw-sizeheight');
 				if ( dialogData.height == 'false') dialogData.height = null;
-				dialogData.horizontalalignment = dom.getAttrib(imgElm, 'data-mw-align');
+				dialogData.horizontalalignment = dom.getAttrib(imgElm, 'data-mw-horizontalalign');
+				if (( dialogData.width ) && ( dialogData.height )) dialogData.constrain = false;
 				if ( dialogData.horizontalalignment == 'false') dialogData.horizontalalignment = null;
 				dialogData.verticalalignment = dom.getAttrib(imgElm, 'data-mw-verticalalign');
 				if ( dialogData.verticalalignment == 'false') dialogData.verticalalignment = null;
@@ -678,8 +724,8 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 						maxLength: 5,
 						size: 3,
 						style: "background: #f0f0f0",
-						disabled: true,
-						visible: true
+						disabled: dialogData.constrain,
+						visible: dialogData.constrain
 					},
 					{name: 'height',
 						type: 'textbox',
@@ -688,7 +734,7 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 						value: dialogData.height,
 						maxLength: 5,
 						size: 3,
-						visible: false
+						visible: !dialogData.constrain
 					},
 				]
 			};
@@ -776,20 +822,7 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 			}
 
 			if (imgElm) { // edit existing image display
-				// Parse styles from img
-/*				if (imgElm.style.marginLeft && imgElm.style.marginRight && imgElm.style.marginLeft === imgElm.style.marginRight) {
-					data.hspace = removePixelSuffix(imgElm.style.marginLeft);
-				}
-				if (imgElm.style.marginTop && imgElm.style.marginBottom && imgElm.style.marginTop === imgElm.style.marginBottom) {
-					data.vspace = removePixelSuffix(imgElm.style.marginTop);
-				}
-				if (imgElm.style.borderWidth) {
-					data.border = removePixelSuffix(imgElm.style.borderWidth);
-				}*/
-
-
 				data.style = editor.dom.serializeStyle(editor.dom.parseStyle(editor.dom.getAttrib(imgElm, 'style')));
-
 				win = editor.windowManager.open({
 					title: 'Update image display properties',
 					data: data,
@@ -820,7 +853,6 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 		}
 
 		function onSubmitForm(e) {
-
 			var srcCtrl = win.find('#src')[0],
 				alternateSrcCtrl = win.find('#alternatesrc')[0],
 				destCtrl = win.find('#dest')[0]
@@ -928,15 +960,9 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 
 			// prevent processing of submit in case warnings or errors need to be processed
 			e.preventDefault();
-        	e.stopPropagation();
-       		e.stopImmediatePropagation();
+			e.stopPropagation();
+			e.stopImmediatePropagation();
 
-			// have to have a destination name unless editing previous upload
-			if (!submittedData.dest && !imgElm) {
-				// user may have clicked submit without exiting source field
-				editor.windowManager.alert(mw.msg("tinymce-upload-alert-destination-filename-needed"));
-				return;
-			}
 			submittedData = cleanSubmittedData(submittedData);
 			dimensions = recalcSize();
 			width = dimensions['width'];
@@ -949,19 +975,26 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 			uploadThumb = '';
 			ignoreWarnings = false;
 
+			// have to have a destination name unless editing previous upload
+			if (!submittedData.dest && !imgElm) {
+				// user may have clicked submit without exiting source field
+				editor.windowManager.alert(mw.msg("tinymce-upload-alert-destination-filename-needed"));
+				return;
+			}
+
 			if (imgElm) {		//Editing image node so skip upload
 				nodeID = imgElm.id
 				uploadResult = dom.getAttrib(imgElm, 'data-mw-src');
-				uploadPage = dom.getAttrib(imgElm, 'data-mw-page');
-				uploadThumb = dom.getAttrib(imgElm, 'data-mw-thumbnail');
+				uploadPage = uploadResult;
 			} else {
+
 				if ((submittedData.type == 'File') || (submittedData.type == 'URL')) {
 					if (submittedData.type == 'File') {
 						fileContent = _srccontent;
 					} else {
 						fileContent = submittedData.alternatesrc;
 					}
-					nodeID = "TinyMCE" + (Math.floor((Math.random() * 100000) + 100000));
+					nodeID = "<IMG" + (Math.floor((Math.random() * 100000) + 100000)) + ">";
 					fileType = submittedData.type;
 					fileName = submittedData.dest;
 					fileSummary = submittedData.summary;
@@ -991,50 +1024,12 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 				} else if (submittedData.type == 'Wiki') {
 					fileName = submittedData.dest;
 					uploadPage = "File:" + fileName;
-
-					// see if file already on wiki and return details if it is
-//					$.when(getFileDetailsFromWiki(uploadPage), $.ready).then( function(a1){
-//						destinationFileDetails = a1;
-//					});
-
-					destinationFileDetails = getFileDetailsFromWiki(uploadPage);
-
-					// encountered an error trying to access the api
-					// shouldn't get here as done this once already
-					if (typeof destinationFileDetails.error != "undefined") {
-							editor.windowManager.alert(mw.msg("tinymce-upload-alert-error-uploading-to-wiki"));
-							srcCtrl.focus();
-							return;
-					}
-
-					// shouldn't get here either as done this once already
-					if (!destinationFileDetails) {
-						editor.windowManager.confirm(mw.msg("tinymce-upload-confirm-file-not-on-wiki"),
-							function(ok) {
-								if (ok) {
-									typeCtrl.value('File');
-									srcCtrl.value('');
-									// enable filpicker and summary input
-									alternateSrcCtrl.visible(false);
-									srcCtrl.visible(true);
-									dummySummaryCtrl.visible(false);
-									summaryCtrl.visible(true);
-									destCtrl.value('');
-								} else {
-									srcCtrl.value('');
-									destCtrl.value('');
-								}
-							});
-						srcCtrl.focus();
-						return
-					}
-
-					uploadResult = destinationFileDetails;
-					uploadThumb = uploadResult;					
 				}
 			}
 			//set up node data for inserting or updating in editor window
-			var wikitext = '';
+			var parserResult = [],
+				wikitext = '',
+				innerText = '';
 
 			wikitext += "[[" + uploadPage;
 			if (width) {
@@ -1066,55 +1061,38 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 				wikitext += "|" + submittedData.title;
 			}
 			wikitext += "]]";
-			wikitext = encodeURI(wikitext);	
-					
+
+			parserResult = getParsedHtmlFromWiki(wikitext);
+			innerText = parserResult['parsedHtml']
+			wikitext = encodeURI(parserResult['parsedWikiText']);	
+
 			var data = {
-				src: uploadThumb,
-				title: submittedData.title,
-				alt: submittedData.alt,
-				width: width,
-				height: height,
-				link: submittedData.link,
-				horizontalalignment: submittedData.horizontalalignment,
-				verticalalignment: submittedData.verticalalignment,
-				format: submittedData.format,
-				style: style,
-				class: 'mw-image',
-				contentEditable: 'false',
 				id: nodeID,
-				"data-mw-src": uploadResult,
-				"data-mw-page": uploadPage,
-				"data-mw-thumbnail": uploadThumb,
+				class: 'mw-image',
+				"data-mw-src": uploadPage,
 				"data-mw-link": submittedData.link,
 				"data-mw-title": submittedData.title,
 				"data-mw-caption": submittedData.title,
 				"data-mw-alt": submittedData.alt,
 				"data-mw-sizewidth": width,
 				"data-mw-sizeheight": height,
-				"data-mw-align": submittedData.horizontalalignment,
+				"data-mw-horizontalalign": submittedData.horizontalalignment,
 				"data-mw-verticalalign": submittedData.verticalalignment,
 				"data-mw-format": submittedData.format,
-				"data-mw-wikitext": wikitext
+				"data-mw-wikitext": wikitext,
+				contentEditable: 'false'
 			};
-			if (imgElm) { //update existing node
-				editor.undoManager.transact(function(){
-					editor.focus();
-					editor.dom.setAttribs(imgElm,data);
-					editor.undoManager.add();
-				});
-				editor.selection.select(imgElm);
-				editor.nodeChanged();
-			} else { //create new node
-				var el = editor.dom.create('img', data);
-				if (submittedData.link) {
-					el = editor.dom.create('a', {href: submittedData.link, class: "mw-image-link"}, el);
-				}
-				editor.undoManager.transact(function(){
-					editor.focus();
-					editor.selection.setNode(el);
-					editor.undoManager.add();
-				});
-			}
+
+			innerText = '<div class="mceNonEditableStart"></div>' + innerText + '<div class="mceNonEditableEnd"></div>';
+
+			var el = editor.dom.create('SPAN', data, innerText );
+			editor.undoManager.transact(function(){
+				editor.focus();
+				editor.selection.setNode(el);
+				editor.dom.setHTML(el, innerText );
+				editor.undoManager.add();
+			});
+
 
 			// close the dialog window
 			win.close()
@@ -1134,7 +1112,7 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 		}
 
 		// test if we are modifying an existing upload else set to null
-		if (imgElm && (imgElm.nodeName != 'IMG' || imgElm.getAttribute('data-mce-object') || imgElm.getAttribute('data-mce-placeholder'))) {
+		if (imgElm && (imgElm.className != 'mw-image' || imgElm.getAttribute('data-mce-object') || imgElm.getAttribute('data-mce-placeholder'))) {
 			imgElm = null;
 		}
 
@@ -1177,7 +1155,7 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 		icon: 'image',
 		tooltip: mw.msg("tinymce-upload-menu-item-text"),
 		onclick: showDialog,
-		stateSelector: 'img:not([data-mce-object],[data-mce-placeholder]),figure.image'
+		stateSelector: '.mw-image'
 	});
 
 	editor.addMenuItem('wikiupload', {
@@ -1193,7 +1171,7 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 	// Add option to double-click on file to get
 	// "upload" popup.
 	editor.on('dblclick', function(e) {
-		if (e.target.className.includes("mw-image")) {
+		if (e.target.className == "mw-image") {
 			tinyMCE.activeEditor.execCommand('mceImage');
 		}
 	});
