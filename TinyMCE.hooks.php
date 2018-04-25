@@ -323,18 +323,31 @@ class TinyMCEHooks {
 	}
 
 	public static function enableTinyMCE( $title, $context ) {
-		global $wgTinyMCEDisabledNamespaces;
+		global $wgTinyMCEDisabledNamespaces, $wgTinyMCEUnhandledStrings;
 
 		if ( in_array( $title->getNamespace(), $wgTinyMCEDisabledNamespaces ) ) {
 			return false;
 		}
 
-		if ( $context->getRequest()->getCheck('undo') ) {
+		if ( $context->getRequest()->getCheck( 'undo' ) ) {
 			return false;
 		}
 
 		if ( !$context->getUser()->getOption( 'tinymce-use' ) ) {
 			return false;
+		}
+
+		if ( !empty( $wgTinyMCEUnhandledStrings ) ) {
+			$wikiPage = new WikiPage( $title );
+			$content = $wikiPage->getContent();
+			if ( $content != null ) {
+				$pageText = $content->getNativeData();
+				foreach ( $wgTinyMCEUnhandledStrings as $str ) {
+					if ( strpos( $pageText, $str ) !== false ) {
+						return false;
+					}
+				}
+			}
 		}
 
 		// If there's a 'notinymce' property for this page in the
