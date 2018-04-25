@@ -176,7 +176,8 @@
 	},
 	"config": {
 		"TinyMCEMacros": [],
-		"TinyMCEEnabled": false
+		"TinyMCEEnabled": false,
+		"TinyMCEDisabledNamespaces": [ 10 ]
 	},
 	"manifest_version": 1
 }

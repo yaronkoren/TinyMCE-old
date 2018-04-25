@@ -323,7 +323,9 @@ class TinyMCEHooks {
 	}
 
 	public static function enableTinyMCE( $title, $context ) {
-		if ( $title->getNamespace() == NS_TEMPLATE ) {
+		global $wgTinyMCEDisabledNamespaces;
+
+		if ( in_array( $title->getNamespace(), $wgTinyMCEDisabledNamespaces ) ) {
 			return false;
 		}
 

@@ -222,3 +222,4 @@ $wgDefaultUserOptions['tinymce-use'] = 1;
 
 $GLOBALS['wgTinyMCEEnabled'] = false;
 $GLOBALS['wgTinyMCEMacros'] = array();
+$GLOBALS['wgTinyMCEDisabledNamespaces'] = array( NS_TEMPLATE );
