@@ -177,7 +177,7 @@
 	"config": {
 		"TinyMCEMacros": [],
 		"TinyMCEEnabled": false,
-		"TinyMCEDisabledNamespaces": [ 10 ],
+		"TinyMCEDisabledNamespaces": [ 8, 10 ],
 		"TinyMCEUnhandledStrings": []
 	},
 	"manifest_version": 1
