@@ -1083,7 +1083,7 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 				contentEditable: 'false'
 			};
 
-			innerText = '<div class="mceNonEditableStart"></div>' + innerText + '<div class="mceNonEditableEnd"></div>';
+			innerText = '<mwspan>' + innerText + '</mwspan>';
 
 			var el = editor.dom.create('SPAN', data, innerText );
 			editor.undoManager.transact(function(){
