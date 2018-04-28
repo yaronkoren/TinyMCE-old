@@ -454,7 +454,6 @@ tinymce.PluginManager.add('wikilink', function(editor) {
 			onSubmit: function(e) {
 				/*eslint dot-notation: 0*/
 				var href;
-debugger;
 				data = tinymce.extend(data, e.data);
 				href = data.href;
 
