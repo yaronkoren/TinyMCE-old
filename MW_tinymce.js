@@ -5,8 +5,8 @@ if ( tinyMCELanguage !== 'en' ) {
 	tinyMCELangURL = scriptPath + '/extensions/TinyMCE/tinymce/langs/' +
 		tinyMCELanguage + '.js';
 }
-var tinyMCEDirectionality = mw.config.get( 'wgTinyMCEDirectionality' );
-var tinyMCEMacros = mw.config.get( 'wgTinyMCEMacros' );
+//var tinyMCEDirectionality = mw.config.get( 'wgTinyMCEDirectionality' );
+//var tinyMCEMacros = mw.config.get( 'wgTinyMCEMacros' );
 
 window.mwTinyMCEInit = function( tinyMCESelector ) {
 	window.tinymce.init({ 
@@ -15,7 +15,8 @@ window.mwTinyMCEInit = function( tinyMCESelector ) {
 		branding: false,
 //		relative_urls: false,
 //		remove_script_host: false,
-		document_base_url: mw.config.get( "wgServer" ),
+		document_base_url: mw.config.get( 'wgServer' ),
+		tinyMCEMacros: mw.config.get( 'wgTinyMCEMacros' ),
 		automatic_uploads: true,
 		paste_data_images: true,
 		content_css: scriptPath + '/extensions/TinyMCE/MW_tinymce.css',
@@ -27,8 +28,8 @@ window.mwTinyMCEInit = function( tinyMCESelector ) {
 		wiki_tags_list: mw.config.get('wgTinyMCETagList'), 
 		additional_wiki_tags: '|ol|ul|li|h1|h2|h3|h4|h5|h6',
 		browser_spellcheck: true,
-		wikimagic_context_toolbar: true,
-		contextmenu: "undo redo | cut copy paste insert | link wikimagic inserttable | styleselect removeformat ",
+//		wikimagic_context_toolbar: true,
+//		contextmenu: "undo redo | cut copy paste insert | link wikimagic inserttable | styleselect removeformat ",
 		convert_fonts_to_spans: true,
 		link_title: false,
 		link_assume_external_targets: true,
@@ -43,7 +44,7 @@ window.mwTinyMCEInit = function( tinyMCESelector ) {
 		height: 400,
 		statusbar: false,
 		// the default text direction for the editor
-		directionality: tinyMCEDirectionality,
+		directionality: mw.config.get( 'wgTinyMCEDirectionality' ),
 		// default language
 		//language: 'en',
 		language_url: tinyMCELangURL,
@@ -93,15 +94,16 @@ window.mwTinyMCEInit = function( tinyMCESelector ) {
 			'preview': scriptPath + '/extensions/TinyMCE/tinymce/plugins/preview/plugin.js',
 			'save': scriptPath + '/extensions/TinyMCE/tinymce/plugins/save/plugin.js',
 			'searchreplace': scriptPath + '/extensions/TinyMCE/tinymce/plugins/searchreplace/plugin.js',
-			'table': scriptPath + '/extensions/TinyMCE/tinymce/plugins/table/plugin.js',
 			'textcolor': scriptPath + '/extensions/TinyMCE/tinymce/plugins/textcolor/plugin.js',
 			'visualblocks': scriptPath + '/extensions/TinyMCE/tinymce/plugins/visualblocks/plugin.js',
 			'wikicode': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_wikicode/plugin.js',
 			'wikiupload': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_upload/plugin.js',
 			'wikilink': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_link/plugin.js',
 			'wikipaste': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_paste/plugin.js',
+			'table': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_table/plugin.js',
 		},
 		menubar: false, //'edit insert view format table tools',
+//		contextmenu_never_use_native: false,
 		removed_menuitems: 'media',
 		toolbar1: 'undo redo | cut copy paste insert | bold italic underline strikethrough subscript superscript forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | charmap singlelinebreak wikilink unlink table wikiupload wikimagic wikisourcecode | formatselect removeformat | searchreplace ',
 		style_formats_merge: true,
@@ -126,7 +128,7 @@ window.mwTinyMCEInit = function( tinyMCESelector ) {
 		autoresize_max_height: 400,
 		setup: function(editor) {
 
-		var numMacros = tinyMCEMacros.length;
+/*		var numMacros = tinyMCEMacros.length;
 		for ( var i = 0; i < numMacros; i++ ) {
 			var curMacro = tinyMCEMacros[i];
 			editor.addMenuItem('macro' + i, {
@@ -135,6 +137,7 @@ window.mwTinyMCEInit = function( tinyMCESelector ) {
 				context: 'insert',
 				wikitext: curMacro['text'],
 				onclick: function () {
+
 					// Insert the user-selected text into
 					// the macro text, if the macro text
 					// has a section to be replaced.
@@ -142,23 +145,26 @@ window.mwTinyMCEInit = function( tinyMCESelector ) {
 					// @TODO - handle actual ! marks.
 					var selectedContent = editor.selection.getContent();
 					var insertText = this.settings.wikitext;
-					if ( selectedContent == '' ) {
-						insertText = insertText.replace( /!/g, '' );
-						editor.insertContent( insertText );
-						return;
-					}
 					var replacementStart = insertText.indexOf('!');
 					var replacementEnd = insertText.indexOf('!', replacementStart + 1);
-					if ( replacementStart < 0 || replacementEnd < 0 ) {
-						editor.insertContent( insertText );
-						return;
+					if ( selectedContent == '' ) {
+						insertText = insertText.replace( /!/g, '' );
+					} else if ( replacementStart > 0 && replacementEnd > 0 ) {
+						insertText = insertText.substr( 0, replacementStart ) + selectedContent + insertText.substr( replacementEnd + 1 );
 					}
 
-					insertText = insertText.substr( 0, replacementStart ) + selectedContent + insertText.substr( replacementEnd + 1 );
-					editor.insertContent( insertText );
+				editor.undoManager.transact(function(){
+					editor.focus();
+//					editor.selection.setContent(insertText, {format: 'raw'});
+					editor.selection.setContent(insertText);
+					editor.undoManager.add();
+					editor.format = 'raw';
+					});
+
+					return;
 				}
 			});
-		}
+		}*/
 
 		var minimizeOnBlur = $(editor.getElement()).hasClass( 'mceMinimizeOnBlur' );
 		if ( minimizeOnBlur ) {
