@@ -124,9 +124,6 @@ var MwWikiCode = function() {
 
 	var me = this;
 
-//	_userThumbsize = _thumbsizes[ mw.user ? mw.user.options.get('thumbsize') : _userThumbsize ];
-	
-
 	this.makeWikiImageDataObject = function() {
 		return {
 			imagename: '',
@@ -298,7 +295,17 @@ var MwWikiCode = function() {
 				// remove href tags in returned html as links will screw up conversions
 				parsedHtml = parsedHtml.replace(/\shref="([^"]*)"/gmi,'');
 
-				// remove leading and trailing <p>
+				// remove leading and trailing <p> in parsed html
+				if (parsedHtml.substring(0, 3) == '<p>') {
+					parsedHtml = parsedHtml.substring(3, parsedHtml.length);
+				}
+				if (parsedHtml.substring(parsedHtml.length-4,parsedHtml.length) == '</p>') {
+					parsedHtml = parsedHtml.substring(0, parsedHtml.length-4);
+				}
+				// remove leading and trailing spaces
+				parsedHtml = $.trim(parsedHtml);
+
+				// remove leading and trailing <p> in parsed wikitext
 				parsedWikiText = $.trim(parsedWikiText);
 				if (parsedWikiText.substring(0, 3) == '<p>') {
 					parsedWikiText = parsedWikiText.substring(3, parsedWikiText.length);
@@ -508,7 +515,8 @@ var MwWikiCode = function() {
 		};
 
 		imageHTML = $.trim(imageHTML);		
-		imageHTML = '<div class="mceNonEditableStart"></div>' + imageHTML + '<div class="mceNonEditableEnd"></div>';
+//		imageHTML = '<div class="mceNonEditableStart"></div>' + imageHTML + '<div class="mceNonEditableEnd"></div>';
+		imageHTML = '<mwspan>' + imageHTML + '</mwspan>';
 		el = _ed.dom.create('span', codeAttrs, imageHTML);
 		imageWikiText = imageWikiText.replace(/[^A-Za-z0-9_]/g, '\\$&');
 		imageText = el.outerHTML;
@@ -553,7 +561,8 @@ debugger;
 			linkTargetParts, 
 			protocol, 
 			namespaces = mw.config.get( 'wgNamespaceIds' ),
-			anchorFormat = '<a href="{0}" data-mce-href="{5}" title="{6}" data-mw-type="{2}" class="{3}" data-mw-wikitext="{4}" contenteditable= "false" ><div class="mceNonEditableStart"></div>{1}<div class="mceNonEditableOverlay"></div><div class="mceNonEditableEnd"></div></a>',
+//			anchorFormat = '<a href="{0}" data-mce-href="{5}" title="{6}" data-mw-type="{2}" class="{3}" data-mw-wikitext="{4}" contenteditable= "false" ><div class="mceNonEditableStart"></div>{1}<div class="mceNonEditableOverlay"></div><div class="mceNonEditableEnd"></div></a>',
+			anchorFormat = '<a href="{0}" data-mce-href="{5}" title="{6}" data-mw-type="{2}" class="{3}" data-mw-wikitext="{4}" contenteditable= "false" ><mwspan>{1}<div class="mceNonEditableOverlay"></div></mwspan></a>',
 			squareBraceDepth = 0,
 			linkDepth = 0,
 			linkStart = 0,
@@ -687,7 +696,6 @@ debugger;
 			for (var aLink in externalLinks) {
 				link = aLink.substr(1, aLink.length - 2);
 				linkNoWrap = aLink.substr(1, aLink.length - 2);
-debugger;
 				link = linkNoWrap.replace(/^\s+|\s+$/gm,'');
 				linkParts = link.split(" ");
 				linkTarget = linkParts[0];
@@ -727,7 +735,7 @@ debugger;
 		return text;
 	}
 
-	function _links2wiki(text) {
+/*	function _links2wiki(text) {
 		var links, linkwiki, type, target, label,
 			link, hrefAttr, inner, typeAttr, validProtocol, wikitext;
 		// convert text to dom
@@ -750,7 +758,7 @@ debugger;
 	}
 
 	//Make public available?
-	//this.links2wiki = _links2wiki;
+	//this.links2wiki = _links2wiki;*/
 
 	/**
 	 * Normalizes some MW table syntax shorthand to HTML attributes
@@ -1119,6 +1127,7 @@ debugger;
 		text = text.replace(/\|\}<@@tnl@@><\/td>/gmi, "|}<\/td>"); // after table in table
 		text = text.replace(/\{\{!\}\}\}<@@tnl@@><\/td>/gmi, "{{!}}}<\/td>"); // after table in table
 		text = text.replace(/\|\}<@@tnl@@>@@br_emptyline@@/gmi, "|}<@@tnl@@>"); // after table
+		text = text.replace(/\|\}<@@tnl@@><@@nl@@>/gmi, "|}<@@tnl@@>"); // after table
 		text = text.replace(/\{\{!\}\}\}<@@tnl@@>@@br_emptyline@@/gmi, "{{!}}}<@@tnl@@>"); // after table
 		text = text.replace(/<@@tnl@@><@@tnl@@>/gmi, "<@@tnl@@>");//between tables
 
@@ -1510,7 +1519,8 @@ debugger;
 				'contenteditable': "false"
 			};
 
-			switchHtml = '<div class="mceNonEditableStart"></div>' + '&sect;' + '<div class="mceNonEditableOverlay"></div><div class="mceNonEditableEnd"></div>';
+//			switchHtml = '<div class="mceNonEditableStart"></div>' + '&sect;' + '<div class="mceNonEditableOverlay"></div><div class="mceNonEditableEnd"></div>';
+			switchHtml = '<mwspan>' + '&sect;' + '<div class="mceNonEditableOverlay"></div></mwspan>';
 			el = ed.dom.create('span', codeAttrs, switchHtml);
 			var searchText = new RegExp(switchWikiText, 'g');
 			var replaceText = el.outerHTML;
@@ -1747,7 +1757,6 @@ debugger;
 
 		listTag = '';
 		text = text.replace(/@@br_emptyline_first@@/gi, "<br />");
-
 		// careful in the upcoming code: .*? does not match newline, however, [\s\S] does.
 		nextPos = _htmlFindList(text);
 		while (nextPos !== -1) {
@@ -2019,7 +2028,7 @@ debugger;
 //		text = _image2wiki(text);
 
 		//convert links
-		text = _links2wiki(text);
+//		text = _links2wiki(text);
 
 		// convert divs
 		text = _divs2wiki(text);
@@ -2043,14 +2052,6 @@ debugger;
 		// convert hrml entities in wiki code
 		text = _htmlEntities2Wiki(text);
 		
-		// Cleanup von falschen Image-URLs
-		// TODO MRG (02.11.10 23:44): i18n
-		// TODO DC check if this is needed
-/*		text = text.replace(/\/Image:/g, "Image:");
-		text = text.replace(/\/Bild:/g, "Bild:");
-		text = text.replace(/\/File:/g, "File:");
-		text = text.replace(/\/Datei:/g, "Datei:");*/
-
 		// wrap the text in an object to send it to event listeners
 		textObject = {text: text};
 		// call the event listeners
@@ -2073,9 +2074,6 @@ debugger;
 			squareBraceFirst, tempTemplate, innerText, id, htmlText, el,
 			templateName, templateText, templateResult, templateNameLines,
 			switchWikiText, parserResult = [];
-//		var server = mw.config.get( "wgServer" ) ;
-//		var script = mw.config.get( 'wgScriptPath' ) + '/api.php';
-//		var title = mw.config.get( "wgCanonicalNamespace" ) + ':' + mw.config.get( "wgTitle" ) ;
 
 		var ed = tinymce.get(e.target.id);
 		if (ed == null) {
@@ -2134,7 +2132,8 @@ debugger;
 			};
 			
 			tagHTML = $.trim(tagHTML);
-			tagHTML = '<div class="mceNonEditableStart"></div>' + tagHTML + '<div class="mceNonEditableOverlay"></div><div class="mceNonEditableEnd"></div>';
+//			tagHTML = '<div class="mceNonEditableStart"></div>' + tagHTML + '<div class="mceNonEditableOverlay"></div><div class="mceNonEditableEnd"></div>';
+			tagHTML = '<mwspan>' + tagHTML + '<div class="mceNonEditableOverlay"></div></mwspan>';
 			el = ed.dom.create('span', codeAttrs, tagHTML);
 			tagText = el.outerHTML;
 			tagWikiText = tagWikiText.replace(/[^A-Za-z0-9_]/g, '\\$&');
@@ -2146,70 +2145,6 @@ debugger;
 				searchText,
 				replaceText
 			);
-			
-/*			var data = {'action': 'parse',
-				'title': title,
-				'text': st[0],
-				'prop': 'text|wikitext',
-				'disablelimitreport': '',
-				'disableeditsection': '',
-				'disabletoc': '',
-				'format': 'json',};
-			$.ajax({
-				dataType: "json",
-				url: _wikiApi,
-				data: data,
-				async: false,
-				success: function(data) {
-					var tagHTML = data.parse.text["*"],
-						tagWikiText = data.parse.wikitext["*"],
-						displayTagWikiText,
-						t,
-						id,
-						codeAttrs,
-						el,
-						tagText,
-						searchText,
-						replaceText;
-
-					tagWikiText = $.trim(tagWikiText);
-					if (tagWikiText.substring(0, 3) == '<p>') {
-						tagWikiText = tagWikiText.substring(3, tagWikiText.length);
-					}
-					if (tagWikiText.substring(tagWikiText.length-4,tagWikiText.length) == '</p>') {
-						tagWikiText = tagWikiText.substring(0, tagWikiText.length-4);
-					}
-					tagWikiText = $.trim(tagWikiText);
-					displayTagWikiText = encodeURI(tagWikiText);
-
-					t = Math.floor((Math.random() * 100000) + 100000) + i;
-					id = "<@@@TAG"+ t + "@@@>";
-					codeAttrs = {
-						'id': id,
-						'class': "mceNonEditable wikimagic tag",
-						'title': displayTagWikiText ,
-						'data-mw-type': "tag",
-						'data-mw-id': t,
-						'data-mw-name': tagName,
-						'data-mw-wikitext': displayTagWikiText,
-						'contenteditable': "false"
-					};
-					
-					tagHTML = $.trim(tagHTML);
-					tagHTML += '<div class="mceNonEditableOverlay" />';
-					el = ed.dom.create('span', codeAttrs, tagHTML);
-					tagText = el.outerHTML;
-					tagWikiText = tagWikiText.replace(/[^A-Za-z0-9_]/g, '\\$&');
-					searchText = new RegExp(tagWikiText, 'g');
-					replaceText = id;
-					_tags4Html[id] = tagText;
-					_tags4Wiki[id] = displayTagWikiText;
-					text = text.replace(
-						searchText,
-						replaceText
-					);
-				}
-			});*/
 			i++;
 		}
 		return text;
@@ -2249,9 +2184,6 @@ debugger;
 			templates = new Array(),
 			checkedBraces = new Array(),
 			parserResult = [],
-//			server = mw.config.get( "wgServer" ),
-//			script = mw.config.get( 'wgScriptPath' ) + '/api.php',
-//			title = mw.config.get( "wgCanonicalNamespace" ) + ':' + mw.config.get( "wgTitle" ),
 			ed = tinymce.get(e.target.id);
 		
 		if (ed == null) {
@@ -2343,7 +2275,8 @@ debugger;
 				};
 				
 				templateHTML = $.trim(templateHTML);
-				templateHTML = '<div class="mceNonEditableStart"></div>' + templateHTML + '<div class="mceNonEditableOverlay"></div><div class="mceNonEditableEnd"></div>';
+//				templateHTML = '<div class="mceNonEditableStart"></div>' + templateHTML + '<div class="mceNonEditableOverlay"></div><div class="mceNonEditableEnd"></div>';
+				templateHTML = '<mwspan>' + templateHTML + '<div class="mceNonEditableOverlay"></div></mwspan>';
 				el = ed.dom.create('span', codeAttrs, templateHTML);
 				templateWikiText = templateWikiText.replace(/[^A-Za-z0-9_]/g, '\\$&');
 				searchText = new RegExp(templateWikiText, 'g');
@@ -2355,82 +2288,7 @@ debugger;
 					searchText,
 					replaceText
 				)
-				i++;
-				
-				
-/*				var data = {'action': 'parse',
-					'title': title,
-					'text': templateText,
-					'prop': 'text|wikitext',
-					'disablelimitreport': '',
-					'disableeditsection': '',
-					'disabletoc': '',
-					'format': 'json',};
-				$.ajax({
-					dataType: "json",
-					url: _wikiApi,
-					data: data,
-					async: false,
-					success: function(data) {
-						var templateHTML = data.parse.text["*"],
-							templateWikiText,
-							displayTemplateWikiText,
-							t,
-							id,
-							codeAttrs,
-							el,
-							searchText,
-							replaceText;
-
-						// DC remove leading and trailing <p>
-						templateHTML = $.trim(templateHTML);
-						templateHTML = templateHTML.replace(/<\/?p[^>]*>/g, "");
-
-						templateHTML = $.trim(templateHTML);
-						templateHTML = templateHTML.replace(/\&amp\;/gmi,'&');
-						// DC remove href tags in returned html as links will screw up conversions
-						templateHTML = templateHTML.replace(/\shref="([^"]*)"/gmi,'');
-						templateHTML = templateHTML.replace(/(\r\n|\n|\r)/gm,"");
-
-						templateWikiText = data.parse.wikitext["*"];
-						templateWikiText = $.trim(templateWikiText);
-						if (templateWikiText.substring(0, 3) == '<p>') {
-							templateWikiText = templateWikiText.substring(3, templateWikiText.length);
-						}
-						if (templateWikiText.substring(templateWikiText.length-4,templateWikiText.length) == '</p>') {
-							templateWikiText = templateWikiText.substring(0, templateWikiText.length-4);
-						}
-						templateWikiText = $.trim(templateWikiText);
-						displayTemplateWikiText = encodeURI(templateWikiText);
-
-						t = Math.floor((Math.random() * 100000) + 100000) + i;
-						id = "<@@@TPL"+ t + "@@@>";
-						codeAttrs = {
-							'id': id,
-							'class': "mceNonEditable wikimagic template",
-							'title': templateWikiText,
-							'data-mw-type': "template",
-							'data-mw-id': t,
-							'data-mw-name': templateName,
-							'data-mw-wikitext': displayTemplateWikiText,
-							'contenteditable': "false"
-						};
-						
-						templateHTML += '<div class="mceNonEditableOverlay" />';
-						el = ed.dom.create('span', codeAttrs, templateHTML);
-						templateWikiText = templateWikiText.replace(/[^A-Za-z0-9_]/g, '\\$&');
-						searchText = new RegExp(templateWikiText, 'g');
-						templateText = el.outerHTML;
-						replaceText = id;
-						_templates4Html[id] = templateText;
-						_templates4Wiki[id] = displayTemplateWikiText;
-						text = text.replace(
-							searchText,
-							replaceText
-						)
-						i++;
-					}
-				})*/
+				i++;				
 			}
 		}
 		return text;
@@ -2738,44 +2596,6 @@ debugger;
 		_comments = false;
 		return text;
 	}
-
-
-	/**
-	 *
-	 * @param {String} text
-	 * @returns {String}
-	 */
-/*	function _convertPreWithSpacesToTinyMce(text) {
-		_preTagsSpace = new Array();
-		text = _preservePres4wiki(text);
-
-		// careful: this is greedy and goes on until it finds a line ending.
-		// originally ended in (\n|$), however, this would result in only every other
-		// line being recognized since the regex then matches line endings at the beginning
-		// and at the end.
-		// There is a lookahead for tables: ?!<t
-		_preTagsSpace = text.match(/(^|\n\n?)( +(?!<t)\S[^\n]*)/gi);
-		if (_preTagsSpace) {
-			for (var i = 0; i < _preTagsSpace.length; i++) {
-				//prevent HTML-Tables from being rendered as pre
-				text = text.replace(_preTagsSpace[i], "<@@@PRE_SPACE" + i + "@@@>");
-				// preserve newline at the beginning of a line
-				var newlineAtBeginning = _preTagsSpace[i].charAt(0) == "\n";
-				// trim pre content
-				_preTagsSpace[i] = _preTagsSpace[i].replace( /\n/g, "").substr(1, _preTagsSpace[i].length);
-				text = text.replace(
-					"<@@@PRE_SPACE" + i + "@@@>",
-					( newlineAtBeginning ? "\n" : "" ) + '<pre class="mw_pre_from_space">' + _preTagsSpace[i] + '</pre>'
-				);
-			}
-		}
-
-		// can be pre with a marker attribute "space"
-		text = text.replace(/<\/pre>\s*?<pre[^>]*>/gmi, '\n');
-
-		text = _recoverPres2wiki(text);
-		return text;
-	}*/
 	
 	/**
 	 *
@@ -2849,6 +2669,13 @@ debugger;
   			return html.replace(matcher, '<*****>' );
 		};
 
+			regex = '<mwspan>[\\S\\s]*?<\/mwspan>',
+			matcher = new RegExp(regex, 'gmi');
+
+		$.htmlPrefilter = function( html ) {
+  			return html.replace(matcher, '' );
+		};
+
 		text = $.htmlPrefilter(text);
 		
 		$dom = $( "<div id='tinywrapper'>" + text + "</div>" );
@@ -2888,6 +2715,16 @@ debugger;
 			return decodeURI(this.getAttribute("data-mw-wikitext"));
 		} );
 
+		// replace html image links with inneml htl
+		$dom.find( "a[class*='mw-image-link']" ).replaceWith( function() {
+			return $( this ).html();
+		} );
+
+		// replace html links with wikitext
+		$dom.find( "a[class*='link']" ).replaceWith( function() {
+			return decodeURI(this.getAttribute("data-mw-wikitext"));
+		} );
+
 		// replace spans of class comment with their wikitext
 		$dom.find( "span[class*='comment']" ).replaceWith( function(a) {
 			return decodeURI(this.getAttribute("data-mw-wikitext"));
@@ -2896,6 +2733,11 @@ debugger;
 		// replace spans of class switch with their wikitext
 		$dom.find( "span[class*='switch']" ).replaceWith( function(a) {
 			return decodeURI(this.getAttribute("data-mw-wikitext"));
+		});
+
+		// replace spans of class single_linebreak with a single linebreak placeholder
+		$dom.find( "span[class*='single_linebreak']" ).replaceWith( function(a) {
+			return '<@@nl@@>';
 		});
 
 		//replace style span wrappers with inner html
@@ -3042,7 +2884,6 @@ debugger;
 
 	function insertSingleLinebreak() {
 		var args,
-
 		args = {format: 'raw'};
 		_ed.undoManager.transact(function(){
 			_ed.focus();
@@ -3152,8 +2993,8 @@ debugger;
 		// add in non rendered new line functionality
 		//
 		_useNrnlCharacter = ed.getParam("wiki_non_rendering_newline_character");
-//		_slb = '<span class="single_linebreak" title="single linebreak" contenteditable="false">' + _useNrnlCharacter + '<div class="mceNonEditableOverlay"></div><div class="mceNonEditableEnd"></div></span>';
-		_slb = '<span class="single_linebreak" title="single linebreak">' + _useNrnlCharacter + '</span>';
+//		_slb = '<span class="single_linebreak" title="single linebreak" contenteditable="false"><div class="mceNonEditableStart"></div>' + _useNrnlCharacter + '<div class="mceNonEditableOverlay"></div><div class="mceNonEditableEnd"></div></span>';
+		_slb = '<span class="single_linebreak" title="single linebreak" contenteditable="false"><mwspan>' + _useNrnlCharacter + '</mwspan></span>';
 
 		if (_useNrnlCharacter) {
 			ed.addButton('singlelinebreak', {
@@ -3242,14 +3083,56 @@ debugger;
 					e.target = selectedNode;
 				}
 			} else if (e.target.className == 'mceNonEditableOverlay' ) {
-				if (e.target.parentNode.className.includes("wikimagic")) {
+				if (e.target.parentNode.parentNode.className.includes("wikimagic")) {
 					tinyMCE.activeEditor.execCommand('mceWikimagic');
-				} else if (e.target.parentNode.className.includes("mw-internal-link") 
-					|| e.target.parentNode.className.includes("mw-external-link")) {
+				} else if (e.target.parentNode.parentNode.className.includes("mw-internal-link") 
+					|| e.target.parentNode.parentNode.className.includes("mw-external-link")) {
 					tinyMCE.activeEditor.execCommand('mceLink');
 				}
 			}
 		});
+		
+		// setup MW TinyMCE macros
+		// these are defined in localSettings.php
+		var macros = _ed.getParam("tinyMCEMacros");
+		var numMacros = macros.length;
+		for ( var i = 0; i < numMacros; i++ ) {
+			var curMacro = macros[i];
+			_ed.addMenuItem('macro' + i, {
+				text: curMacro['name'],
+				image: curMacro['image'],
+				context: 'insert',
+				wikitext: curMacro['text'],
+				onclick: function () {
+
+					// Insert the user-selected text into
+					// the macro text, if the macro text
+					// has a section to be replaced.
+					// (Demarcated by '!...!'.)
+					// @TODO - handle actual ! marks.
+					var selectedContent = _ed.selection.getContent();
+					var insertText = this.settings.wikitext;
+					var replacementStart = insertText.indexOf('!');
+					var replacementEnd = insertText.indexOf('!', replacementStart + 1);
+					if ( selectedContent == '' ) {
+						insertText = insertText.replace( /!/g, '' );
+					} else if ( replacementStart > 0 && replacementEnd > 0 ) {
+						insertText = insertText.substr( 0, replacementStart ) + selectedContent + insertText.substr( replacementEnd + 1 );
+					}
+
+				_ed.undoManager.transact(function(){
+					_ed.focus();
+//					_ed.selection.setContent(insertText, {format: 'raw'});
+					_ed.selection.setContent(insertText);
+					_ed.undoManager.add();
+					_ed.format = 'raw';
+					});
+
+					return;
+				}
+			});
+		}
+
 	};
 
 	this.getInfo = function() {
