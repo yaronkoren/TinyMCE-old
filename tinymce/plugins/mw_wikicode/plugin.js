@@ -344,6 +344,13 @@ var MwWikiCode = function() {
 			el,
 			codeAttrs;
 
+		if (!_images4Html) {
+			_images4Html = new Array();
+		}
+		if (!_images4Wiki) {
+			_images4Wiki = new Array();
+		}
+
 		// remove brackets and split into patrts
 		parts = aLink.substr(2, aLink.length - 4).split("|"); 
 		wikiImageObject.imagename = parts[0];
@@ -515,37 +522,17 @@ var MwWikiCode = function() {
 		};
 
 		imageHTML = $.trim(imageHTML);		
-//		imageHTML = '<div class="mceNonEditableStart"></div>' + imageHTML + '<div class="mceNonEditableEnd"></div>';
 		imageHTML = '<mwspan>' + imageHTML + '</mwspan>';
 		el = _ed.dom.create('span', codeAttrs, imageHTML);
 		imageWikiText = imageWikiText.replace(/[^A-Za-z0-9_]/g, '\\$&');
 		imageText = el.outerHTML;
+		_images4Html[id] = imageText;
+		_images4Wiki[id] = displayImageWikiText;
 
-		return imageText;
+		return id;
 	}
 
-/*	function _image2wiki(text) {
-		var image, imageHTML, , wikiImageObject,
-			attributes, attribute, wikiText, imageCaption,
-			size, property, value;
-debugger;
-		// convert text to dom
-		var $dom = $( "<div id='tinywrapper'>" + text + "</div>" );
-
-		// replace html links with wikitext
-		$dom.find( "span[class*='mw-image']" ).replaceWith( function() {
-debugger;
-			var wikiText = this.getAttribute("data-mw-wikitext");
-			return decodeURI(wikiText);
-		} );
-debugger;
-		// convert dom back to text
-		text = $dom.html();
-		return text;
-	}*/
-
 	function _links2html(text) {
-
 		var links, 
 			link, 
 			linkNoWrap, 
@@ -1062,9 +1049,9 @@ debugger;
 		var emptyLine;
 		tableparser.addNodeFilter('td', function(nodes, name) {
 			function processText(text, block) {
-				if ((text == "@@br_emptyline@@") || (text == "<@@1nl@@>") ) return "@@br_emptyline@@"; // cell is empty
-				text = text.replace(/@@br_emptyline_first@@/gmi, "@@br_emptyline@@");
-				var lines = text.split("@@br_emptyline@@");
+				if ((text == "<@@br_emptyline@@>") || (text == "<@@1nl@@>") ) return "<@@br_emptyline@@>"; // cell is empty
+				text = text.replace(/<@@br_emptyline_first@@>/gmi, "<@@br_emptyline@@>");
+				var lines = text.split("<@@br_emptyline@@>");
 
 				// Walk through text line by line adjusting
 				// emptylines appropriately
@@ -1072,14 +1059,14 @@ debugger;
 					//set emptyLine if line is empty
 					emptyLine = lines[i].match(/^(\s|&nbsp;)*$/);
 					if (!(emptyLine) && ((block > 0) || (i > 0 )) && (i < lines.length - 1 )) {
-						lines[i] = lines[i] + '@@br_emptyline@@';
+						lines[i] = lines[i] + '<@@br_emptyline@@>';
 					} else if ((emptyLine) && (block == 0) && (i == 1 )) {
-						lines[i] = lines[i] + '@@br_emptyline@@';
+						lines[i] = lines[i] + '<@@br_emptyline@@>';
 					} else if ((emptyLine) && (i == 0 )) {
-						lines[i] = lines[i] + '@@br_emptyline@@' + '@@br_emptyline@@';
+						lines[i] = lines[i] + '<@@br_emptyline@@>' + '<@@br_emptyline@@>';
 					}
 				}
-				return lines.join("@@br_emptyline@@");
+				return lines.join("<@@br_emptyline@@>");
 			}
 			for (var i = 0; i < nodes.length; i++) {
 				var child = nodes[i].firstChild;
@@ -1102,7 +1089,6 @@ debugger;
 		
 		//restore the new lines
 		text = text.replace(/@@TNL@@/gm, '\n');
-
 		//cleanup thead and tbody tags. Caution: Must be placed before th cleanup because of
 		//regex collision
 		text = text.replace(/<(\/)?tbody([^>]*)>/gmi, "");
@@ -1120,15 +1106,15 @@ debugger;
 //		text = text.replace(/<td><@@tnl@@>\{\|/gmi, "<td>{|"); // before table in table
 //		text = text.replace(/<td><@@tnl@@>\{\{\{!\}\}/gmi, "<td>{{{!}}"); // before table in table
 		text = text.replace(/^(<@@tnl@@>{)/, "{");//before table at start of text
-		text = text.replace(/(@@br_emptyline@@)<@@tnl@@>\{\|/gmi, "<@@tnl@@>{|"); // before table
-		text = text.replace(/(@@br_emptyline@@)<@@tnl@@>\{\{\{!\}\}/gmi, "<@@tnl@@>{{{!}}"); // before table
+		text = text.replace(/(<@@br_emptyline@@>)<@@tnl@@>\{\|/gmi, "<@@tnl@@>{|"); // before table
+		text = text.replace(/(<@@br_emptyline@@>)<@@tnl@@>\{\{\{!\}\}/gmi, "<@@tnl@@>{{{!}}"); // before table
 		text = text.replace(/<@@nl@@><@@tnl@@>\{\|/gmi, "<@@tnl@@>{|"); // before table
 		text = text.replace(/<@@nl@@><@@tnl@@>\{\{\{!\}\}/gmi, "<@@tnl@@>{{{!}}"); // before table
 		text = text.replace(/\|\}<@@tnl@@><\/td>/gmi, "|}<\/td>"); // after table in table
 		text = text.replace(/\{\{!\}\}\}<@@tnl@@><\/td>/gmi, "{{!}}}<\/td>"); // after table in table
-		text = text.replace(/\|\}<@@tnl@@>@@br_emptyline@@/gmi, "|}<@@tnl@@>"); // after table
+		text = text.replace(/\|\}<@@tnl@@><@@br_emptyline@@>/gmi, "|}<@@tnl@@>"); // after table
 		text = text.replace(/\|\}<@@tnl@@><@@nl@@>/gmi, "|}<@@tnl@@>"); // after table
-		text = text.replace(/\{\{!\}\}\}<@@tnl@@>@@br_emptyline@@/gmi, "{{!}}}<@@tnl@@>"); // after table
+		text = text.replace(/\{\{!\}\}\}<@@tnl@@><@@br_emptyline@@>/gmi, "{{!}}}<@@tnl@@>"); // after table
 		text = text.replace(/<@@tnl@@><@@tnl@@>/gmi, "<@@tnl@@>");//between tables
 
 		text = text.replace(/\n?<caption([^>]*)>/gmi, "<@@tnl@@>" + pipeText + "+$1");
@@ -1143,12 +1129,11 @@ debugger;
 		text = text.replace(/\n?<td([^>]*)>/gmi, "<@@tnl@@>" + pipeText + "$1" + pipeText);
 
 		// remove extra new lines in tables
-		text = text.replace(/@@br_emptyline@@<\/td([^>]*)>/gmi, "");
+		text = text.replace(/<@@br_emptyline@@><\/td([^>]*)>/gmi, "");
 		text = text.replace(/<@@tnl@@><\/td([^>]*)>/gmi, "");
 		text = text.replace(/\n?<\/td([^>]*)>/gmi, "");
-
-//		text = text.replace(/\|\|&nbsp;/gi, pipeText + pipeText);
-		text = text.replace(/\|&nbsp;/gi, pipeText);
+		text = text.replace(/\|\|&nbsp;/gi, pipeText + pipeText);
+//		text = text.replace(/\|&nbsp;|\|\s/gi, pipeText);
 
 		return text;
 	}
@@ -1293,8 +1278,8 @@ debugger;
 
 			//Process lines
 			if (line && line !== '') { //Process lines that are members of wiki lists.
-				//DC reset the empty line count to zero as this line isn't empty
-				//Strip out the wiki code for the list element to leave just the text content
+				// reset the empty line count to zero as this line isn't empty
+				// strip out the wiki code for the list element to leave just the text content
 				lines[i] = lines[i].replace(/^(\*|#|:|;)*\s*(.*?)$/gmi, "$2");
 				if (line[0].match(/^(\*|#)+:$/) ) {
 					// If the line starts with something like '*:' or '#:', it's not
@@ -1315,23 +1300,25 @@ debugger;
 					} else if (line[0].length < lastList.length) {//close list
 						lines[i] = _closeList2html(lastList, line[0]) + lines[i];
 					}
-				} else {//else if the line doesn't belong to a definition list starting with a ':' and follows
+				} else {
+					//else if the line doesn't belong to a definition list starting with a ':' and follows
 					//the last line of a sub list, include <li> at start of line
 					if (line[0].length === lastList.length) {
 						lines[i] = _continueList2html(lastList, line[0]) + lines[i];
-					} else if (line[0].length > lastList.length) {//DC if this is the start of top level list add opening <div> as list will be enclosed in <div>s
+					} else if (line[0].length > lastList.length) {
+						//DC if this is the start of top level list add opening <div> as list will be enclosed in <div>s
 						if (line[0].length == 1) { // if first line of list place in a <div>
 							lines[i] = '<div>' +  _openList2html(lastList, line[0]) + lines[i];
 						} else {
 							lines[i] = _openList2html(lastList, line[0]) + lines[i];
 						}
-					} else if (line[0].length < lastList.length) {//if moving back to higher level list from a sub list then precede line with a <li> tag
+					} else if (line[0].length < lastList.length) {
+						//if moving back to higher level list from a sub list then precede line with a <li> tag
 						lines[i] = _closeList2html(lastList, line[0]) + '<li>' + lines[i];
 					}
 				}
 				//set lastlist as this will be used if the next line is a list line to determine if it is a sublist or not
 				lastList = line[0];
-
 			} else {//else process lines that are not wiki list items
 				//set emptyLine if line is empty
 				emptyLine = lines[i].match(/^(\s|&nbsp;)*$/);
@@ -1345,26 +1332,34 @@ debugger;
 							//do nothing
 						} else {
 //dc 29122017				lines[i] = lines[i] + '<div class="mw_emptyline_first"><br class="mw_emptyline_first"/></div>';
-							//lines[i] = lines[i] + '<br class="mw_emptyline_first"/>';
-							lines[i] = lines[i] + '<br class="mw_emptyline_first"/><br class="mw_emptyline_first"/>';
+//dc 04052018				lines[i] = lines[i] + '<br class="mw_emptyline_first"/><br class="mw_emptyline>';
+							lines[i] = lines[i] + '<br class="mw_emptyline_first"/>';
+//							lines[i] = lines[i] + '<br class="mw_emptyline_first"/><br class="mw_emptyline_first"/>';
 						}
 						inParagraph = true;
-					} else {// this is already in a paragraph
+					} else {
+						// this is already in a paragraph
 //dc 29122017			lines[i] = lines[i] + '<div class="mw_emptyline"><br class="mw_emptyline"/></div>';
 						lines[i] = lines[i] + '<br class="mw_emptyline"/>';
 					}
-				} else { // not an empty line
-					if (!inParagraph && lines[i].match(/(^\<@@@TAG)/i) && i>0 ) { // if the line starts with <@@@TAG then precede it with a blank line
+				} else { 
+				// not an empty line
+					if (!inParagraph && lines[i].match(/(^\<@@@TAG)/i) && i>0 ) { 
+					// if the line starts with <@@@TAG then precede it with a blank line
 							lines[i] = '<br class="mw_emptyline"/>' + lines[i];
-					}
-					if (!inParagraph && lines[i].match(/(^\<@@@CMT)/i) && i>0 ) { // if the line starts with <@@@CMT then precede it with a blank line
+					} else if (!inParagraph && lines[i].match(/(^\<@@@CMT)/i) && i>0 ) { 
+					// if the line starts with <@@@CMT then precede it with a blank line
 							lines[i] = '<br class="mw_emptyline"/>' + lines[i];
 					}
 					inParagraph = false;
-					if ((lines[i].match(/(^\<td\>)/i)) || (lines[i].match(/(^\<\/td\>\<td\>)/i))) {	// if first line of data in a table cell
-						if (!(lines[i+1].match(/(^\<\/td)/i))) { // and not a single line
-							if (!(lines[i+1].match(/^(\s|&nbsp;)*$/))) { // and not an empty line after
-								if (!(lines[i+1].match(/(^\<table)/))) { // and not a table after
+					if ((lines[i].match(/(^\<td\>)/i)) || (lines[i].match(/(^\<\/td\>\<td\>)/i))) {	
+					// if first line of data in a table cell
+						if (!(lines[i+1].match(/(^\<\/td)/i))) { 
+						// and if not a single line
+							if (!(lines[i+1].match(/^(\s|&nbsp;)*$/))) { 
+							// and if not an empty line after
+								if (!(lines[i+1].match(/(^\<table)/))) { 
+								// and if not a table after
 									lines[i] = lines[i] + '<br class="mw_emptyline"/>';
 								}
 							}
@@ -1510,7 +1505,7 @@ debugger;
 			id = "<@@@SWT"+ t + "@@@>";
 			var codeAttrs = {
 				'id': id,
-				'class': "mceNonEditable wikimagic switch",
+				'class': "mceNonEditable wikimagic mw-switch",
 				'title': switchWikiText,
 				'data-mw-type': "switch",
 				'data-mw-id': id,
@@ -1566,9 +1561,12 @@ debugger;
 		// preserve tags for recovery later
 		text = _preserveTags4Html(text, e);
 
-		// preserve templates and parser functions for recovery later
+		// preserve templates for recovery later
 		text = _preserveTemplates4Html(text, e);
 		
+		// preserve images for recovery later
+//		text = _preserveImages4Html(text, e)
+
 		// preserve comments for recovery later
 		text = _preserveComments4Html(text, e)
 
@@ -1619,6 +1617,7 @@ debugger;
 //		text = _recoverPres2wiki(text);
 		text = _recoverTags2html(text);
 		text = _recoverTemplates2html(text);
+		text = _recoverImages2html(text);
 		text = _recoverComments2html(text);
 
 		//In some cases (i.e. Editor.insertContent('<img ... />') ) the content
@@ -1676,8 +1675,8 @@ debugger;
 	}
 
 	function _preserveNewLines4wiki (text) {
-		//TODO make this work whatever the forced_root_ block element is, even false
-		var findText, 
+		var regex,
+			findText, 
 			replaceText, 
 			currentPos, 
 			nextPos;
@@ -1687,52 +1686,61 @@ debugger;
 
 		//Process Enter Key (<p>) and Shift-Enter key (<br>)formatting
 		//first clean when multiple Enter keypresses one after another
-//		text = text.replace(/<p class="mw_paragraph"><br data-mce-bogus="1"><\/p>/gmi, '@@br_emptyline_first@@@@br_emptyline@@');
-		text = text.replace(/<p class="mw_paragraph"><br data-mce-bogus="1"><\/p>/gmi, '@@br_emptyline_first@@');
+//		text = text.replace(/<p class="mw_paragraph"><br data-mce-bogus="1"><\/p>/gmi, '<@@br_emptyline_first@@><@@br_emptyline@@>');
+		text = text.replace(/<p class="mw_paragraph"><br data-mce-bogus="1"><\/p>/gmi, '<@@br_emptyline_first@@>');
 		//then replace paragraphs containing only blank lines first followed by a <div> with just blank line
-		//text = text.replace(/<p class="mw_paragraph"><br class="mw_emptyline_first"><\/p><div>/gmi, '@@br_emptyline@@<div>');
+		//text = text.replace(/<p class="mw_paragraph"><br class="mw_emptyline_first"><\/p><div>/gmi, '<@@br_emptyline@@><div>');
 		//then replace paragraphs containing only blank lines first with just blank lines first
-		//text = text.replace(/<p class="mw_paragraph"><br class="mw_emptyline_first"><\/p>/gmi, '@@br_emptyline_first@@');
+		//text = text.replace(/<p class="mw_paragraph"><br class="mw_emptyline_first"><\/p>/gmi, '<@@br_emptyline_first@@>');
 		text = text.replace(/<p class="mw_paragraph"><br class="mw_emptyline_first">/gmi, '<p class="mw_paragraph">');
+		//then replace empty paragraph following a paragraph with nothing
+		text = text.replace(/<\/p><p class="mw_paragraph"><\/p>/gmi, '</p>');
 		//then replace blank lines first followed by blank line at end of paragraph with blank line first
-		//text = text.replace(/<br class="mw_emptyline_first"><br class="mw_emptyline"><\/p>/gmi, '@@br_emptyline_first@@</p>');
+		//text = text.replace(/<br class="mw_emptyline_first"><br class="mw_emptyline"><\/p>/gmi, '<@@br_emptyline_first@@></p>');
 		//then replace blank lines first at end of paragraph with blank line
-		//text = text.replace(/<br class="mw_emptyline_first"><\/p>/gmi, '@@br_emptyline@@</p>');
+		//text = text.replace(/<br class="mw_emptyline_first"><\/p>/gmi, '<@@br_emptyline@@></p>');
 		text = text.replace(/<br class="mw_emptyline_first"><\/p>/gmi, '</p>');
 		text = text.replace(/<br class="mw_emptyline"><\/p>/gmi, '</p>');
+		text = text.replace(/<br><\/p>/gmi, '</p>');
 		//then replace Enter keypress followed by 'div's (eg table, lists etc, with a single empty line
-		text = text.replace(/<p class="mw_paragraph">(.*?)<\/p><div>/gmi, '$1@@br_emptyline@@<div>');
+		text = text.replace(/<p class="mw_paragraph">(.*?)<\/p><div>/gmi, '$1<@@br_emptyline@@><div>');
+		//then replace Enter keypress followed by specialTags (eg <h, <source,  etc, with a single empty line
+		regex = '<p class="mw_paragraph">(.*?)<\/p><(' + _specialTagsList + ')';
+		findText = new RegExp(regex, 'gmi');
+		text = text.replace(findText, '$1<@@br_emptyline@@><$2');
 		//then replace Enter keypress with wiki paragraph eg three new lines
-		text = text.replace(/<p class="mw_paragraph">(.*?)<\/p>/gmi, '$1@@br_emptyline_first@@@@br_emptyline@@');
-//		text = text.replace(/<p class="mw_paragraph">(.*?)<\/p>/gmi, '$1@@br_emptyline_first@@');
+		text = text.replace(/<p class="mw_paragraph">(.*?)<\/p>/gmi, '$1<@@br_emptyline_first@@><@@br_emptyline@@>');
+//		text = text.replace(/<p class="mw_paragraph">(.*?)<\/p>/gmi, '$1<@@br_emptyline_first@@>');
 		//finally replace Shift enters appropriate number of new lines eg two for first and one for immediately following
-//		text = text.replace(/<br>/gmi, '@@br_emptyline_first@@');
+//		text = text.replace(/<br>/gmi, '<@@br_emptyline_first@@>');
 /*		currentPos = text.search(/(<br>)+/mi);
 		while (currentPos > -1) {
-			text = text.replace(/<br ?\/>/mi, '@@br_emptyline_first@@');
+			text = text.replace(/<br ?\/>/mi, '<@@br_emptyline_first@@>');
 			nextPos = currentPos - 1;
 			currentPos = text.search(/(<br>)+/mi);
 			while (currentPos - 9 === nextPos) {
-				text = text.replace(/<br>/mi, '@@br_emptyline@@');
+				text = text.replace(/<br>/mi, '<@@br_emptyline@@>');
 				currentPos = text.search(/(<br>)+/mi);
 				nextPos = currentPos - 1;
 			}
 		}*/
 
-		text = text.replace(/<br class="mw_emptyline_first"[^>]*>/gmi, "@@br_emptyline_first@@");
+		text = text.replace(/<br class="mw_emptyline_first"[^>]*>/gmi, "<@@br_emptyline_first@@>");
 		// if emptyline_first is no longer empty, change it to a normal p
-//		text = text.replace(/<div class="mw_emptyline_first"[^>]*>&nbsp;<\/div>/gmi, '<div>@@br_emptyline_first@@</div>'); // TinyMCE 4
+//		text = text.replace(/<div class="mw_emptyline_first"[^>]*>&nbsp;<\/div>/gmi, '<div><@@br_emptyline_first@@></div>'); // TinyMCE 4
 //		text = text.replace(/<div class="mw_emptyline_first"[^>]*>(.*?\S+.*?)<\/div>/gmi, "<div>$1</div>");
-//		text = text.replace(/<div class="mw_emptyline_first"[^>]*>.*?<\/div>/gmi, "<div>@@br_emptyline_first@@</div>");
-//		text = text.replace(/<div>@@br_emptyline_first@@<\/div>/gmi, "@@br_emptyline_first@@");
-		text = text.replace(/<br class="mw_emptyline"[^>]*>/gmi, "@@br_emptyline@@");
-		//text = text.replace(/<br>/gmi, "@@br_emptyline@@");
+//		text = text.replace(/<div class="mw_emptyline_first"[^>]*>.*?<\/div>/gmi, "<div><@@br_emptyline_first@@></div>");
+//		text = text.replace(/<div><@@br_emptyline_first@@><\/div>/gmi, "<@@br_emptyline_first@@>");
+		text = text.replace(/<br class="mw_emptyline"[^>]*>/gmi, "<@@br_emptyline@@>");
+		//text = text.replace(/<br>/gmi, "<@@br_emptyline@@>");
 		// if emptyline is no longer empty, change it to a normal p
-//		text = text.replace(/<div class="mw_emptyline"[^>]*>&nbsp;<\/div>/gmi, '<div>@@br_emptyline@@</div>'); // TinyMCE 4
+//		text = text.replace(/<div class="mw_emptyline"[^>]*>&nbsp;<\/div>/gmi, '<div><@@br_emptyline@@></div>'); // TinyMCE 4
 //		text = text.replace(/<div class="mw_emptyline"[^>]*>(.*?\S+.*?)<\/div>/gmi, "<div>$1</div>"); //doesn't replace 2nd occurence
-//		text = text.replace(/<div class="mw_emptyline"[^>]*>(.*?)<\/div>/gmi, "<div>@@br_emptyline@@</div>");//file 10
-		text = text.replace(/<br mce_bogus="1"\/>/gmi, "");
+//		text = text.replace(/<div class="mw_emptyline"[^>]*>(.*?)<\/div>/gmi, "<div><@@br_emptyline@@></div>");//file 10
+		// replace <br /> with <@@br_emptyline_first@@>
+		text = text.replace(/<br \/>/gi, "<@@br_emptyline_first@@>");
 		// remove stray bogus data placeholders
+		text = text.replace(/<br mce_bogus="1"\/>/gmi, "");
 		text = text.replace(/<br data-mce-bogus="1">/gmi, "");
 
 		text = text.replace(/<br.*?>/gi, function(match, offset, string) {
@@ -1746,17 +1754,17 @@ debugger;
 		return text;
 	}
 
-	function _divs2wiki (text) {
+/*	function _divs2wiki (text) {
 		text = text.replace(/<\/div>\n?/gmi, "</div>\n");
 		text = text.replace(/<div>(.*?)<\/div>/gmi, "$1");
 		return text;
-	}
+	}*/
 	
 	function _blocks2wiki (text) {
 		var listTag, currentPos, nextPos, oldText, message;
 
 		listTag = '';
-		text = text.replace(/@@br_emptyline_first@@/gi, "<br />");
+//		text = text.replace(/<@@br_emptyline_first@@>/gi, "<br />");
 		// careful in the upcoming code: .*? does not match newline, however, [\s\S] does.
 		nextPos = _htmlFindList(text);
 		while (nextPos !== -1) {
@@ -1844,6 +1852,7 @@ debugger;
 					break;
 				case '<br' :
 				//TODO check this now works as simple <br>s were preserved in preserveNewLines4wiki function
+				//shouldn't get here now I think
 					if (listTag.length > 0) {
 						text = text.replace(/<br .*?\/>/, "<@@nl@@>" + listTag + ": ");
 					} else {
@@ -1954,8 +1963,8 @@ debugger;
 	
 	function _newLines2wiki (text) {
 		//DC if the br_emptyline was preceded by abr_emptyline_first then replacing the br_emptyline before the br_emptyline_first
-		text = text.replace(/\n?@@br_emptyline_first@@/gmi, "<@@2nl@@>");
-		text = text.replace(/\n?@@br_emptyline@@/gmi, "<@@nl@@>");
+		text = text.replace(/\n?<@@br_emptyline_first@@>/gmi, "<@@2nl@@>");
+		text = text.replace(/\n?<@@br_emptyline@@>/gmi, "<@@nl@@>");
 		//DC clean up new lines associated with blocks and or headers
 		text = text.replace(/<@@bnl@@><@@bnl@@>/gmi, "<@@nl@@>");
 		text = text.replace(/<@@hnl@@><@@hnl@@>/gmi, "<@@nl@@>");
@@ -2000,6 +2009,7 @@ debugger;
 	function _html2wiki(e) {
 		var text = e.content;
 		// save some work, if the text is empty
+		
 		if (text === '') {
 			return text;
 		}
@@ -2031,7 +2041,7 @@ debugger;
 //		text = _links2wiki(text);
 
 		// convert divs
-		text = _divs2wiki(text);
+//		text = _divs2wiki(text);
 
 		// convert blocks 
 		text = _blocks2wiki(text);
@@ -2073,7 +2083,20 @@ debugger;
 			curlyBraceDepth, squareBraceDepth, templateDepth,
 			squareBraceFirst, tempTemplate, innerText, id, htmlText, el,
 			templateName, templateText, templateResult, templateNameLines,
-			switchWikiText, parserResult = [];
+			switchWikiText, parserResult = [],
+			retValue = false,
+			innerText = '',
+			moreAttribs = '',
+			tagName = '',
+			tagWikiText = '',
+			tagHTML = '',
+			displayTagWikiText = '',
+			t,
+			id,
+			codeAttrs,
+			tagText,
+			searchText,
+			replaceText;
 
 		var ed = tinymce.get(e.target.id);
 		if (ed == null) {
@@ -2087,19 +2110,6 @@ debugger;
 		mtext = text;
 		i = 0;
 		st = '';
-		var retValue = false,
-			innerText = '',
-			moreAttribs = '',
-			tagName = '',
-			tagWikiText = '',
-			tagHTML = '',
-			displayTagWikiText = '',
-			t,
-			id,
-			codeAttrs,
-			tagText,
-			searchText,
-			replaceText;
 		
 		if (!_tags4Html) {
 			_tags4Html = new Array();
@@ -2122,7 +2132,7 @@ debugger;
 			id = "<@@@TAG"+ t + "@@@>";
 			codeAttrs = {
 				'id': id,
-				'class': "mceNonEditable wikimagic tag",
+				'class': "mceNonEditable wikimagic mw-tag",
 				'title': tagWikiText ,
 				'data-mw-type': "tag",
 				'data-mw-id': t,
@@ -2265,7 +2275,7 @@ debugger;
 				id = "<@@@TPL"+ t + "@@@>";
 				codeAttrs = {
 					'id': id,
-					'class': "mceNonEditable wikimagic template",
+					'class': "mceNonEditable wikimagic mw-template",
 					'title': templateWikiText,
 					'data-mw-type': "template",
 					'data-mw-id': t,
@@ -2275,7 +2285,6 @@ debugger;
 				};
 				
 				templateHTML = $.trim(templateHTML);
-//				templateHTML = '<div class="mceNonEditableStart"></div>' + templateHTML + '<div class="mceNonEditableOverlay"></div><div class="mceNonEditableEnd"></div>';
 				templateHTML = '<mwspan>' + templateHTML + '<div class="mceNonEditableOverlay"></div></mwspan>';
 				el = ed.dom.create('span', codeAttrs, templateHTML);
 				templateWikiText = templateWikiText.replace(/[^A-Za-z0-9_]/g, '\\$&');
@@ -2321,7 +2330,7 @@ debugger;
 			id = "mw_switch:@@@CMT"+ i + "@@@";
 			var codeAttrs = {
 				'id': id,
-				'class': "mceNonEditable wikimagic comment",
+				'class': "mceNonEditable wikimagic mw-comment",
 				'title': cmt[1],
 				'data-mw-type': "comment",
 				'data-mw-id': i,
@@ -2495,6 +2504,25 @@ debugger;
 
 	/**
 	 *
+	 * recover html image text from placeholders
+	 * @param {String} text
+	 * @returns {String}
+	 */
+	function _recoverImages2html(text) {
+		var regex,
+			imageLabel;
+			
+		if (_images4Html) {
+			for (imageLabel in _images4Html) {
+				regex = imageLabel;
+				text = text.replace(new RegExp(regex, 'gmi'), _images4Html[imageLabel]);
+			}
+		}
+		return text;
+	}
+
+	/**
+	 *
 	 * recover html tag text from placeholdes
 	 * @param {String} text
 	 * @returns {String}
@@ -2579,6 +2607,25 @@ debugger;
 		return text;
 	}
 
+	/**
+	 *
+	 * @param {String} text
+	 * @returns {String}
+	 */
+	function _recoverImages2Wiki(e) {
+		var text = e.content,
+			imageLabel,
+			regex;
+
+		if (_images4Wiki) {
+			for (imageLabel in _images4Wiki) {
+				regex = imageLabel;
+				text = text.replace(new RegExp(regex, 'gmi'), decodeURI(_images4Wiki[imageLabel]));
+			}
+		}
+
+		return text;
+	}
 
 	/**
 	 *
@@ -2680,6 +2727,11 @@ debugger;
 		
 		$dom = $( "<div id='tinywrapper'>" + text + "</div>" );
 
+		// replace divs with their contents
+		$dom.find( "div" ).replaceWith( function() {
+			return $( this ).html();
+		} );
+
 		// replace spans of class variable with their contents
 		$dom.find( "span[class*='variable']" ).replaceWith( function() {
 			return $( this ).html();
@@ -2701,43 +2753,43 @@ debugger;
 		} );
 
 		// replace spans of class tag with a placeholder to preserve their contents
-		$dom.find( "span[class*='tag']" ).replaceWith( function(a) {
+		$dom.find( "span[class*='mw-tag']" ).replaceWith( function(a) {
 			return this.id;
 		});
 
 		// replace spans of class template with a placeholder to preserve their contents
-		$dom.find( "span[class*='template']" ).replaceWith( function(a) {
+		$dom.find( "span[class*='mw-template']" ).replaceWith( function(a) {
 			return this.id;
 		});
 
-		// replace spans of class mw-image with their wikitext
+		// replace spans of class mw-image with a placeholder to preserve their contents
 		$dom.find( "span[class*='mw-image']" ).replaceWith( function() {
-			return decodeURI(this.getAttribute("data-mw-wikitext"));
+			return this.id;
 		} );
 
-		// replace html image links with inneml htl
+		// replace html image links with inner html
 		$dom.find( "a[class*='mw-image-link']" ).replaceWith( function() {
 			return $( this ).html();
 		} );
 
 		// replace html links with wikitext
-		$dom.find( "a[class*='link']" ).replaceWith( function() {
+		$dom.find( "a[class*='mw-link']" ).replaceWith( function() {
 			return decodeURI(this.getAttribute("data-mw-wikitext"));
 		} );
 
 		// replace spans of class comment with their wikitext
-		$dom.find( "span[class*='comment']" ).replaceWith( function(a) {
+		$dom.find( "span[class*='mw-comment']" ).replaceWith( function(a) {
 			return decodeURI(this.getAttribute("data-mw-wikitext"));
 		});
 
 		// replace spans of class switch with their wikitext
-		$dom.find( "span[class*='switch']" ).replaceWith( function(a) {
+		$dom.find( "span[class*='mw-switch']" ).replaceWith( function(a) {
 			return decodeURI(this.getAttribute("data-mw-wikitext"));
 		});
 
 		// replace spans of class single_linebreak with a single linebreak placeholder
 		$dom.find( "span[class*='single_linebreak']" ).replaceWith( function(a) {
-			return '<@@nl@@>';
+			return '<br class="mw_emptyline">';
 		});
 
 		//replace style span wrappers with inner html
@@ -2777,6 +2829,8 @@ debugger;
 		e.content = _recoverTags2Wiki(e);
 		// recover templates to wiki code from placeholders
 		e.content = _recoverTemplates2Wiki(e);
+		// recover images to wiki code from placeholders
+		e.content = _recoverImages2Wiki(e);
 
 		return e.content
 	}
@@ -2822,63 +2876,6 @@ debugger;
 	}
 
 	function _onLoadContent(ed, o) {
-/*		var internalLinks = [],
-			internalLinksTitles = [],
-			titles;
-		
-		$(this.dom.doc).find('a.mw-internal-link').each(function(){
-			var href = $(this).attr('data-mce-href');
-			
-			if( !href ) {
-				href = $(this).attr('href');
-			}
-			
-			internalLinksTitles.push( decodeURIComponent(href).replace("_"," ") );
-			internalLinks.push($(this));
-		});
-
-		$(document).trigger( 'TinyMCErLoadContentBeforeCheckLinks', [
-			this,
-			internalLinksTitles,
-			internalLinks
-		]);
-
-		if( internalLinksTitles.length == 0 ) return;
-		
-		titles = decodeURIComponent(internalLinksTitles[0]).replace("_"," ");
-		for( var i = 1; i < internalLinksTitles.length; i++ ) {
-			titles += "|" + decodeURIComponent(internalLinksTitles[i].replace("_"," "));
-		}
-		// DC now go and check the links to see if pages exist 
-		var server = mw.config.get( "wgServer" ) ;
-		var script = mw.config.get( 'wgScriptPath' ) + '/api.php';
-		var data = {'action': 'query','titles': titles,'format': 'json',};
-		$.ajax({
-			dataType: "json",
-			url: script,
-			data: data,
-			async: false,
-			success: function(data) {
-				if (typeof data.query.pages == "undefined") {
-					for( var i = 0; i < internalLinksTitles.length; i++ ) {
-						internalLinks[i].addClass( 'new' );
-					}
-				} else {
-					var pages = data.query.pages;
-					for( var page in pages ) {
-						if ( !(typeof pages[page].missing == "undefined" && typeof pages[page].invalid == "undefined") ) {
-							var pageTitle = pages[page].title
-							for( var i = 0; i < internalLinksTitles.length; i++ ) {
-								if (pageTitle == decodeURIComponent(internalLinksTitles[i].replace("_"," ")) ) {
-									internalLinks[i].addClass( 'new' );
-									internalLinks[i].context.attributes["title"].value += " (page does not exist)";
-								}
-							}
-						}
-					}
-				}
-			}
-		});*/
 		return;
 	}
 
@@ -2930,17 +2927,17 @@ debugger;
 				},
 			onsubmit: function(e) {
 				var text = e.data.code;
-				e.content = text;
-				text = _wiki2html(e);				
 				_ed.undoManager.transact(function(){
 					_ed.focus();
-					_ed.selection.setContent(text, {format: 'raw'});
+//					_ed.selection.setContent(text, {format: 'raw'});
+					_ed.selection.setContent(text);
 					_ed.undoManager.add();
 					_ed.format = 'raw';
 				});
 				return;
 			}
 		});
+		return;
 	}
 	
 	function showWikiSourceCodeDialog() {
@@ -2961,11 +2958,12 @@ debugger;
 				// We get a lovely "Wrong document" error in IE 11 if we
 				// don't move the focus to the editor before creating an undo
 				// transation since it tries to make a bookmark for the current selection
-				_ed.focus();
-
 				_ed.undoManager.transact(function() {
+					_ed.focus();
 					e.load = true;
-					_ed.setContent(e.data.code,e);
+					_ed.setContent(e.data.code,e);	
+					_ed.undoManager.add();
+					_ed.format = 'raw';
 				});
 				_ed.selection.setCursorLocation();
 				_ed.nodeChanged();
