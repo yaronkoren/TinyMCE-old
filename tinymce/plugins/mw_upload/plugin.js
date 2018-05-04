@@ -23,16 +23,15 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 		_userThumbsize = 3,
 		_thumbsizes = ['120', '150', '180', '200', '250', '300'];
 
+	var _wikiApi = mw.config.get( 'wgScriptPath' ) + '/api.php',
+		_title = mw.config.get( "wgCanonicalNamespace" ) + ':' + mw.config.get( "wgTitle" );
+
 	_userThumbsize = _thumbsizes[ mw.user ? mw.user.options.get('thumbsize') : 3 ];
 	
 //DC always have the advtab leave for now incase want to repurpos?
 /*	if (!editor.settings.image_advtab) {
 		return;
 	}*/
-
-	var scriptPath = mw.config.get( 'wgScriptPath' )
-		_wikiApi = mw.config.get( 'wgScriptPath' ) + '/api.php',
-		_title = mw.config.get( "wgCanonicalNamespace" ) + ':' + mw.config.get( "wgTitle" );
 
 	// display and process upload form
 	function showDialog(dialogData) {
@@ -41,6 +40,7 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 		var imageDimensions = editor.settings.image_dimensions !== false;
 		var userMayUpload = true;
 		var userMayUploadFromURL = false;
+
 		//Check and process upload permissions
 		function checkPermisionsOk() {
 			if (mw.config.get( 'wgReadOnly' )) {
@@ -118,140 +118,10 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 			return submittedData;
 		}
 
-		function getImageSize(url, callback) {
-			var img = document.createElement('img');
-	
-			function done(width, height) {
-				if (img.parentNode) {
-					img.parentNode.removeChild(img);
-				}
-	
-				callback({width: width, height: height});
-			}
-	
-			img.onload = function() {
-				done(Math.max(img.width, img.clientWidth), Math.max(img.height, img.clientHeight));
-			};
-	
-			img.onerror = function() {
-				done();
-			};
-	
-			var style = img.style;
-			style.visibility = 'hidden';
-			style.position = 'fixed';
-			style.bottom = style.left = 0;
-			style.width = style.height = 'auto';
-	
-			document.body.appendChild(img);
-			img.src = url;
-		}
-
-		function recalcSize() {
-			var widthCtrl = win.find('#width')[0],
-				heightCtrl = win.find('#height')[0],
-				formatCtrl = win.find('#format')[0],
-				dimensions = [],
-				newWidth,
-				newHeight;
-			
-			newWidth = widthCtrl.value();
-			newHeight = heightCtrl.value();
-			format = formatCtrl.value();
-			
-			//if no width or height set and format is thumb, use user thumbsize for width
-			if (newWidth == 0 && newHeight == 0) {
-			}
-
-			if (win.find('#constrain')[0].checked() && (newWidth)) {
-				if ((width != newWidth) && (newWidth != 0 )) {
-					newHeight = Math.round((newWidth / width) * height);
-
-					if (isNaN(newHeight) || (newHeight == 0)) {
-						newHeight = null;
-					}
-
-					heightCtrl.value(newHeight);
-				}
-			}
-
-			dimensions['width'] = newWidth;
-			dimensions['height'] = newHeight;
-			return dimensions;
-		}
-
-		function updateStyle() {
-			function addPixelSuffix(value) {
-				if (value.length > 0 && /^[0-9]+$/.test(value)) {
-					value += 'px';
-				}
-
-				return value;
-			}
-
-			var data = win.toJSON(),
-				css = dom.parseStyle(data.style);
-
-			data.style = '';
-
-			//In the first place we have to assume that "thumb" and "frame" floats
-			//right,as this is MW default. May be overridden below.
-			if (data.format === 'thumb' || data.format === 'frame') {
-				data.style += 'border:1px solid #CCCCCC;';
-				if (data.format === 'thumb') {
-					pclass = 'thumb ';
-				} else  {
-					pclass = 'thumbimage ';
-				}
-				if (data.horizontalalign === 'none'){
-					data.style += 'float:right;';
-					data.style += 'clear:right;';
-					data.style += 'margin-left:1.4em;';
-				}
-			} else if (format === 'border') {
-				pclass = 'thumbborder ';
-			}
-			if (data.horizontalalignment === 'center') {
-				data.style += 'display: block;';
-				data.style += 'float:none;';
-				data.style += 'clear:none;';
-				data.style += 'margin-left:auto;';
-				data.style += 'margin-right:auto;';
-				if (width) {
-					data.style += 'width:' + width + ';';
-				} else {
-					data.style += 'width:auto;';
-				}
-				if (height) {
-					data.style += 'height:' + height + ';';
-				}
-			} else if (data.horizontalalignment === 'right') {
-				pclass += 'tright ';
-				data.style += 'float:right;';
-				data.style += 'clear:right;';
-				data.style += 'margin-left:1.4em;';
-			} else if (data.horizontalalignment === 'left') {
-				pclass += 'tleft ';
-				data.style += 'float:left;';
-				data.style += 'clear:left;';
-				data.style += 'margin-right:1.4em;';
-			}
-			if (data.verticalalignment) {
-				data.style += 'vertical-align:' + data.verticalalignment + ';';
-			}
-
-			return data.style;
-		}
-
-		function removePixelSuffix(value) {
-			if (value) {
-				value = value.replace(/px$/, '');
-			}
-			return value;
-		}
-
 		// get details of file already uploaded to wiki including url
 		function getFileDetailsFromWiki(fileName) {
+			var fileDetails = false;
+			
 			queryData = new FormData();
 			queryData.append("action", "query");
 			queryData.append("prop", "imageinfo");
@@ -259,11 +129,10 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 			queryData.append("iiurlwidth", _userThumbsize);
 			queryData.append("titles", fileName);
 			queryData.append("format", "json");
-			var url = scriptPath + '/api.php';
-			var fileDetails = false;
+			
 			//as we now have created the data to send, we send it...
 			$.ajax( { //http://stackoverflow.com/questions/6974684/how-to-send-formdata-objects-with-ajax-requests-in-jquery
-				url: url, //url to api.php
+				url: _wikiApi, //url to api.php
 				contentType:false,
 				processData:false,
 				type:'POST',
@@ -298,55 +167,6 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 				}
 			});
 			return fileDetails;
-		}
-
-		function getParsedHtmlFromWiki(wikiText) {
-			var data = {
-					'action': 'parse',
-					'title': _title,
-					'text': wikiText,
-					'prop': 'text|wikitext',
-					'disablelimitreport': '',
-					'disableeditsection': '',
-					'disabletoc': '',
-					'format': 'json',},
-				parserResult = [];
-			
-			$.ajax({
-				dataType: "json",
-				url: _wikiApi,
-				data: data,
-				async: false,
-				success: function(data) {
-					var parsedHtml = data.parse.text["*"],
-						parsedWikiText = data.parse.wikitext["*"];
-	  
-					// remove leading and trailing spaces
-					parsedHtml = $.trim(parsedHtml);
-					
-					// replace encoded & characters
-					parsedHtml = parsedHtml.replace(/\&amp\;/gmi,'&');
-					
-					// remove href tags in returned html as links will screw up conversions
-					parsedHtml = parsedHtml.replace(/\shref="([^"]*)"/gmi,'');
-	  
-					// remove leading and trailing <p>
-					parsedWikiText = $.trim(parsedWikiText);
-					if (parsedWikiText.substring(0, 3) == '<p>') {
-						parsedWikiText = parsedWikiText.substring(3, parsedWikiText.length);
-					}
-					if (parsedWikiText.substring(parsedWikiText.length-4,parsedWikiText.length) == '</p>') {
-						parsedWikiText = parsedWikiText.substring(0, parsedWikiText.length-4);
-					}
-					parsedWikiText = $.trim(parsedWikiText);
-					
-					parserResult['parsedWikiText'] = parsedWikiText;
-					parserResult['parsedHtml'] = parsedHtml;		
-				},
-				error:function(xhr,status, error){
-				}
-			});
-			return parserResult;
 		}
 
 		function onBeforeCall(e) {
@@ -855,24 +675,24 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 		function onSubmitForm(e) {
 			var srcCtrl = win.find('#src')[0],
 				alternateSrcCtrl = win.find('#alternatesrc')[0],
-				destCtrl = win.find('#dest')[0]
+				destCtrl = win.find('#dest')[0];
 
 			var submittedData = win.toJSON();
 
 			var figureElm,
-				oldImg,
-				style,
-				nodeID,
 				uploadDetails,
 				uploadResult,
 				fileType,
 				fileContent,
 				fileName,
 				fileSummary,
-				ignoreWarnings;
+				ignoreWarnings,
+				wikitext = '';
 				
 			// attempt upload of file to wiki
 			function doUpload(fileType, fileToUpload, fileName, fileSummary, ignoreWarnings){
+				var uploadDetails;
+
 				uploadData = new FormData();
 				uploadData.append("action", "upload");
 				uploadData.append("filename", fileName);
@@ -882,11 +702,11 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 				if (fileType == 'File') uploadData.append("file", fileToUpload);
 				if (fileType == 'URL') uploadData.append("url", fileToUpload);
 				uploadData.append("format", 'json');
-				var url = scriptPath + '/api.php';
-				var uploadDetails;
+				tinymce.activeEditor.setProgressState(true);
+
 				//as we now have created the data to send, we send it...
 				$.ajax( { //http://stackoverflow.com/questions/6974684/how-to-send-formdata-objects-with-ajax-requests-in-jquery
-					url: url, //url to api.php
+					url: _wikiApi, //url to api.php
 					contentType:false,
 					processData:false,
 					type:'POST',
@@ -899,6 +719,7 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 						console.log(error)
 					}
 				});
+				tinymce.activeEditor.setProgressState(false);
 				return uploadDetails;
 			}
 
@@ -964,15 +785,10 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 			e.stopImmediatePropagation();
 
 			submittedData = cleanSubmittedData(submittedData);
-			dimensions = recalcSize();
-			width = dimensions['width'];
-			height = dimensions['height'];
-			style = updateStyle();
 			uploadDetails = [];
 			result = [];
 			uploadResult = '';
 			uploadPage = '';
-			uploadThumb = '';
 			ignoreWarnings = false;
 
 			// have to have a destination name unless editing previous upload
@@ -983,9 +799,7 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 			}
 
 			if (imgElm) {		//Editing image node so skip upload
-				nodeID = imgElm.id
-				uploadResult = dom.getAttrib(imgElm, 'data-mw-src');
-				uploadPage = uploadResult;
+				uploadPage = dom.getAttrib(imgElm, 'data-mw-src');
 			} else {
 
 				if ((submittedData.type == 'File') || (submittedData.type == 'URL')) {
@@ -994,7 +808,6 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 					} else {
 						fileContent = submittedData.alternatesrc;
 					}
-					nodeID = "<IMG" + (Math.floor((Math.random() * 100000) + 100000)) + ">";
 					fileType = submittedData.type;
 					fileName = submittedData.dest;
 					fileSummary = submittedData.summary;
@@ -1004,10 +817,6 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 							result = checkUploadDetail(uploadDetails, ignoreWarnings);
 							uploadResult = result["url"];
 							uploadPage = result["page"];
-							uploadThumb = getFileDetailsFromWiki(uploadPage);
-							if (!uploadThumb) {
-								uploadThumb = uploadResult;
-							}
 							if (uploadResult == 'ignore_warning') {
 								ignoreWarnings = true;
 							} else {
@@ -1026,21 +835,21 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 					uploadPage = "File:" + fileName;
 				}
 			}
-			//set up node data for inserting or updating in editor window
-			var parserResult = [],
-				wikitext = '',
-				innerText = '';
+			//set up wiki text for inserting or updating in editor window
+			if (submittedData.constrain) {
+				submittedData.height = false;
+			}
 
 			wikitext += "[[" + uploadPage;
-			if (width) {
-				wikitext += "|" + width;
-				if (height) {
-					wikitext += "x" + height + "px";
+			if (submittedData.width) {
+				wikitext += "|" + submittedData.width;
+				if (submittedData.height) {
+					wikitext += "x" + submittedData.height + "px";
 				} else {
 				wikitext += "px"
 				}
-			} else if (height) {
-				wikitext += "|x" + height + "px";
+			} else if (submittedData.height) {
+				wikitext += "|x" + submittedData.height + "px";
 			}
 			if (submittedData.link) {
 				wikitext += "|link=" + submittedData.link;
@@ -1062,37 +871,11 @@ tinymce.PluginManager.add('wikiupload', function(editor) {
 			}
 			wikitext += "]]";
 
-			parserResult = getParsedHtmlFromWiki(wikitext);
-			innerText = parserResult['parsedHtml']
-			wikitext = encodeURI(parserResult['parsedWikiText']);	
-
-			var data = {
-				id: nodeID,
-				class: 'mw-image',
-				"data-mw-src": uploadPage,
-				"data-mw-link": submittedData.link,
-				"data-mw-title": submittedData.title,
-				"data-mw-caption": submittedData.title,
-				"data-mw-alt": submittedData.alt,
-				"data-mw-sizewidth": width,
-				"data-mw-sizeheight": height,
-				"data-mw-horizontalalign": submittedData.horizontalalignment,
-				"data-mw-verticalalign": submittedData.verticalalignment,
-				"data-mw-format": submittedData.format,
-				"data-mw-wikitext": wikitext,
-				contentEditable: 'false'
-			};
-
-			innerText = '<mwspan>' + innerText + '</mwspan>';
-
-			var el = editor.dom.create('SPAN', data, innerText );
 			editor.undoManager.transact(function(){
 				editor.focus();
-				editor.selection.setNode(el);
-				editor.dom.setHTML(el, innerText );
+				editor.selection.setContent(wikitext);
 				editor.undoManager.add();
 			});
-
 
 			// close the dialog window
 			win.close()
