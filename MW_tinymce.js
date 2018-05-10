@@ -7,6 +7,8 @@ if ( tinyMCELanguage !== 'en' ) {
 }
 //var tinyMCEDirectionality = mw.config.get( 'wgTinyMCEDirectionality' );
 //var tinyMCEMacros = mw.config.get( 'wgTinyMCEMacros' );
+var mw_skin = mw.config.get( 'skin' );
+var mw_skin_css = '/load.php?debug=false&lang=en-gb&modules=mediawiki.legacy.commonPrint%2Cshared%7Cmediawiki.sectionAnchor%7Cmediawiki.skinning.interface%7Cskins.' + mw_skin + '.styles&only=styles&skin=' + mw_skin ;
 
 window.mwTinyMCEInit = function( tinyMCESelector ) {
 	window.tinymce.init({ 
@@ -19,7 +21,9 @@ window.mwTinyMCEInit = function( tinyMCESelector ) {
 		tinyMCEMacros: mw.config.get( 'wgTinyMCEMacros' ),
 		automatic_uploads: true,
 		paste_data_images: true,
-		content_css: scriptPath + '/extensions/TinyMCE/MW_tinymce.css',
+		content_css: 
+			[scriptPath + '/extensions/TinyMCE/MW_tinymce.css',
+			scriptPath + mw_skin_css],
 		theme_url: scriptPath + '/extensions/TinyMCE/tinymce/themes/modern/theme.js',
 		skin_url: scriptPath + '/extensions/TinyMCE/tinymce/skins/lightgray',
 		paste_word_valid_elements: 'b,strong,i,em,h1,h2,h3,h4,h5,table,thead,tfoot,tr,th,td,ol,ul,li,a,sub,sup,strike,br,del,div,p',
@@ -37,6 +41,7 @@ window.mwTinyMCEInit = function( tinyMCESelector ) {
 			{title: 'External', value: 'link external mw-external-link mceNonEditable'},
 			{title: 'Internal', value: 'link internal mw-internal-link mceNonEditable'},
 		],
+		target_list: false,
 		visual_table_class : "wikitable",
 		table_default_attributes: {
 			class: 'wikitable'
