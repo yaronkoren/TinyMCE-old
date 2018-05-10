@@ -2773,7 +2773,7 @@ var MwWikiCode = function() {
 		} );
 
 		// replace html links with wikitext
-		$dom.find( "a[class*='mw-link']" ).replaceWith( function() {
+		$dom.find( "a[class*='mw-external-link'],a[class*='mw-internal-link']" ).replaceWith( function() {
 			return decodeURI(this.getAttribute("data-mw-wikitext"));
 		} );
 
@@ -2841,6 +2841,7 @@ var MwWikiCode = function() {
 	 * @param {tinymce.ContentEvent} e
 	 */
 	function _onBeforeSetContent(e) {
+//debugger;
 		// if raw format is requested, this is usually for internal issues like
 		// undo/redo. So no additional processing should occur. Default is 'html'
 		if (e.format == 'raw' ) return;
@@ -2854,6 +2855,7 @@ var MwWikiCode = function() {
 	 * @param {tinymce.ContentEvent} e
 	 */
 	function _onGetContent(e) {
+//debugger;
 		// if raw format is requested, this is usually for internal issues like
 		// undo/redo. So no additional processing should occur. Default is 'html'
 		if ( e.format == 'raw' ) return;
@@ -2876,6 +2878,7 @@ var MwWikiCode = function() {
 	}
 
 	function _onLoadContent(ed, o) {
+//debugger;
 		return;
 	}
 
