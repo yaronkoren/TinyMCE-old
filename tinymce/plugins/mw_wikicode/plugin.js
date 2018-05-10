@@ -518,6 +518,7 @@ var MwWikiCode = function() {
 			"data-mw-verticalalign": wikiImageObject.verticalalignment,
 			"data-mw-format": wikiImageObject.format,
 			'data-mw-wikitext': displayImageWikiText,
+			'draggable': "true",
 			'contenteditable': "false"
 		};
 
@@ -672,7 +673,6 @@ var MwWikiCode = function() {
 						}
 					}
 				}
-
 				link = link.replace( "@@PIPE@@", "|" );
 				text = text.replace("[[" + link + "]]", linkHtml);
 			}
@@ -2511,7 +2511,6 @@ var MwWikiCode = function() {
 	function _recoverImages2html(text) {
 		var regex,
 			imageLabel;
-			
 		if (_images4Html) {
 			for (imageLabel in _images4Html) {
 				regex = imageLabel;
@@ -2772,8 +2771,8 @@ var MwWikiCode = function() {
 			return $( this ).html();
 		} );
 
-		// replace html links with wikitext
-		$dom.find( "a[class*='mw-external-link'],a[class*='mw-internal-link']" ).replaceWith( function() {
+		// replace links with wikitext
+		$dom.find( "a[class*='mw-external-link'], a[class*='mw-internal-link']" ).replaceWith( function() {
 			return decodeURI(this.getAttribute("data-mw-wikitext"));
 		} );
 
@@ -2834,6 +2833,20 @@ var MwWikiCode = function() {
 
 		return e.content
 	}
+	
+	function _convertHtml2Wiki(e) {
+		//get rid of blank lines at end of text
+		e.content = tinymce.util.Tools.trim(e.content);
+		// preprocess spans in html using placeholders where needed
+		e.content = _preprocessHtml2Wiki(e);
+		// convert the html to wikicode
+		e.content = _html2wiki(e);
+		// postprocess to recover wikitext from placeholders
+		e.content = _postprocessHtml2Wiki(e);
+		//get rid of blank lines at end of text
+		e.content = tinymce.util.Tools.trim(e.content);
+		return e.content;
+	}
 
 	/**
 	 * Event handler for "beforeSetContent"
@@ -2844,9 +2857,17 @@ var MwWikiCode = function() {
 //debugger;
 		// if raw format is requested, this is usually for internal issues like
 		// undo/redo. So no additional processing should occur. Default is 'html'
-		if (e.format == 'raw' ) return;
+		if (e.format == 'raw' ) {
+			return;
+		}
 		e.format = 'raw';
+		if (!e.load) e.content = _convertHtml2Wiki(e);
+		if (e.content.startsWith('<dropsrc>')) {
+			e.content = e.content.substring(9, e.content.length - 10);
+			return;
+		}
 		e.content = _wiki2html(e);
+		return e.content;
 	}
 
 	/**
@@ -2865,16 +2886,7 @@ var MwWikiCode = function() {
 			var ed = tinymce.get(e.target.id);
 			e.content= ed.getContent({source_view: true, no_events: true, format: 'raw'});
 		}
-		//get rid of blank lines at end of text
-		e.content = tinymce.util.Tools.trim(e.content);
-		// preprocess spans in html using placeholders where needed
-		e.content = _preprocessHtml2Wiki(e);
-		// convert the html to wikicode
-		e.content = _html2wiki(e);
-		// postprocess to recover wikitext from placeholders
-		e.content = _postprocessHtml2Wiki(e);
-		//get rid of blank lines at end of text
-		e.content = tinymce.util.Tools.trim(e.content);
+		e.content = _convertHtml2Wiki(e);
 	}
 
 	function _onLoadContent(ed, o) {
@@ -3052,9 +3064,20 @@ var MwWikiCode = function() {
 			onclick: showWikiSourceCodeDialog
 		});
 		
+		ed.on('drop', function(e) {
+//debugger;
+			if (typeof e.targetClone != 'undefined') {
+				if ((e.targetClone.tagName == "IMG") || (e.targetClone.tagName == "SPAN")) {
+					if (e.targetClone.className.includes("mw-image")) {
+						e.targetClone = _ed.dom.create('dropsrc', '' , e.targetClone);
+					}
+				}
+			}
+		})
+		
 		// On select if image make sure you get the IMG span
 		// not just the img
-		ed.on('click', function(e) {
+/*		ed.on('click', function(e) {
 			var selectedNode;
 			if (e.target.tagName == "IMG") {
 				selectedNode = e.target;
@@ -3067,21 +3090,22 @@ var MwWikiCode = function() {
 					e.target = selectedNode;
 				}
 			}
-		});	
+		});	*/
 	  
 		// Add option to double-click on non-editable overlay to get
 		// "wikimagic" popup.
 		ed.on('dblclick', function(e) {
 			var selectedNode;
-			if (e.target.tagName == "IMG") {
+			if ((e.target.tagName == "IMG") || (e.target.tagName == "SPAN")) {
 				selectedNode = e.target;
-				while ((selectedNode.parentNode != 'undefined') &&
-					(!selectedNode.className.includes("mw-image"))) {
+				while (selectedNode.parentNode != null) {
+					if (typeof selectedNode.className != "undefined") {
+						if (selectedNode.className.includes("mw-image")) {
+							_ed.selection.select(selectedNode);
+							e.target = selectedNode;
+						}
+					}
 					selectedNode = selectedNode.parentNode;
-				}
-				if (selectedNode.parentNode != 'undefined') {
-					_ed.selection.select(selectedNode);
-					e.target = selectedNode;
 				}
 			} else if (e.target.className == 'mceNonEditableOverlay' ) {
 				if (e.target.parentNode.parentNode.className.includes("wikimagic")) {
