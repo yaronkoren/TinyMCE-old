@@ -180,6 +180,7 @@ $GLOBALS['wgResourceModules'] += array(
 			'tinymce-wikimagic-title',
 			'tinymce-wikisourcecode',
 			'tinymce-wikisourcecode-title',
+			'tinymce-link-title',
 			'tinymce-link-title-label',
 			'tinymce-link-display-text-label',
 			'tinymce-link-link-list-label',
