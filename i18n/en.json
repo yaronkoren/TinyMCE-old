@@ -119,6 +119,7 @@
 	"tinymce-wikicode-alert-image-request-invalid": "Request to find page $1 on this wiki is invalid",
 	"tinymce-wikicode-alert-image-request-unknown-error": "Error encountered trying to find page $1 on this wiki",
 	"tinymce-wikicode-alert-infinte-loop": "Sorry, an infinite loop occurred. The editor had to shut down.\nPlease check your wiki page for errors.",
+	"tinymce-link-title": "Insert/edit link",
 	"tinymce-link-title-label": "Title",
 	"tinymce-link-url-page-label": "Link url/page",
 	"tinymce-link-display-text-label": "Text to display",
