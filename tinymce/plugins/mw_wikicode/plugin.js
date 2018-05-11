@@ -1374,6 +1374,13 @@ var MwWikiCode = function() {
 				}
 			}
 		}
+		//Test if the previous line was in a list then
+		//we will need to close the list
+		//and place closing </div> at end of last line
+		if (lastList.length > 0) {
+			lines[i - 1] = lines[i - 1] + _closeList2html(lastList, '') + '</div>';
+			lastList = '';
+		}
 		return lines.join("");
 	}
 
