@@ -1253,9 +1253,9 @@ var MwWikiCode = function() {
 
 	function _listsAndEmptyLines2html(text) {
 		var
-			lines = text.split("\n"),
 			//lastlist is set to the wikicode for the list item excluding its text content
 			//it is used to determine whether the list item is at a lower, same or higher level in the list
+			lines = [],
 			lastList = '',
 			//line is current line being processed.  It is '' unless the line is a list item
 			line = '',
@@ -1268,6 +1268,8 @@ var MwWikiCode = function() {
 			startTags = 0,
 			endTags = 0,
 			blockLineCount = 0;
+
+			lines = text.split("\n");
 
 		//Walk through text line by line
 		for (var i = 0; i < lines.length; i++) {
@@ -1331,15 +1333,11 @@ var MwWikiCode = function() {
 							// if first line of data in a table cell
 							//do nothing
 						} else {
-//dc 29122017				lines[i] = lines[i] + '<div class="mw_emptyline_first"><br class="mw_emptyline_first"/></div>';
-//dc 04052018				lines[i] = lines[i] + '<br class="mw_emptyline_first"/><br class="mw_emptyline>';
 							lines[i] = lines[i] + '<br class="mw_emptyline_first"/>';
-//							lines[i] = lines[i] + '<br class="mw_emptyline_first"/><br class="mw_emptyline_first"/>';
 						}
 						inParagraph = true;
 					} else {
 						// this is already in a paragraph
-//dc 29122017			lines[i] = lines[i] + '<div class="mw_emptyline"><br class="mw_emptyline"/></div>';
 						lines[i] = lines[i] + '<br class="mw_emptyline"/>';
 					}
 				} else { 
@@ -1381,7 +1379,8 @@ var MwWikiCode = function() {
 			lines[i - 1] = lines[i - 1] + _closeList2html(lastList, '') + '</div>';
 			lastList = '';
 		}
-		return lines.join("");
+		text = lines.join('');
+		return text;
 	}
 
 	/**
@@ -1521,7 +1520,6 @@ var MwWikiCode = function() {
 				'contenteditable': "false"
 			};
 
-//			switchHtml = '<div class="mceNonEditableStart"></div>' + '&sect;' + '<div class="mceNonEditableOverlay"></div><div class="mceNonEditableEnd"></div>';
 			switchHtml = '<mwspan>' + '&sect;' + '<div class="mceNonEditableOverlay"></div></mwspan>';
 			el = ed.dom.create('span', codeAttrs, switchHtml);
 			var searchText = new RegExp(switchWikiText, 'g');
@@ -1571,9 +1569,6 @@ var MwWikiCode = function() {
 		// preserve templates for recovery later
 		text = _preserveTemplates4Html(text, e);
 		
-		// preserve images for recovery later
-//		text = _preserveImages4Html(text, e)
-
 		// preserve comments for recovery later
 		text = _preserveComments4Html(text, e)
 
@@ -1621,7 +1616,6 @@ var MwWikiCode = function() {
 		text = _listsAndEmptyLines2html(text);
 
 		//Write back content of preserved code.
-//		text = _recoverPres2wiki(text);
 		text = _recoverTags2html(text);
 		text = _recoverTemplates2html(text);
 		text = _recoverImages2html(text);
@@ -1699,7 +1693,10 @@ var MwWikiCode = function() {
 		//text = text.replace(/<p class="mw_paragraph"><br class="mw_emptyline_first"><\/p><div>/gmi, '<@@br_emptyline@@><div>');
 		//then replace paragraphs containing only blank lines first with just blank lines first
 		//text = text.replace(/<p class="mw_paragraph"><br class="mw_emptyline_first"><\/p>/gmi, '<@@br_emptyline_first@@>');
-		text = text.replace(/<p class="mw_paragraph"><br class="mw_emptyline_first">/gmi, '<p class="mw_paragraph">');
+//		text = text.replace(/<p class="mw_paragraph"><br class="mw_emptyline_first">/gmi, '<p class="mw_paragraph">');
+		text = text.replace(/<p class="mw_paragraph"><br class="mw_emptyline_first"><br class="mw_emptyline">(.*?)<\/p>/gmi, '<@@br_emptyline_first@@>$1');
+		text = text.replace(/<p class="mw_paragraph"><br class="mw_emptyline_first">(.*?)<\/p>/gmi, '<@@br_emptyline_first@@>$1');
+		text = text.replace(/<p class="mw_paragraph"><br class="mw_emptyline">(.*?)<\/p>/gmi, '<@@br_emptyline@@>$1');
 		//then replace empty paragraph following a paragraph with nothing
 		text = text.replace(/<\/p><p class="mw_paragraph"><\/p>/gmi, '</p>');
 		//then replace blank lines first followed by blank line at end of paragraph with blank line first
@@ -1709,14 +1706,23 @@ var MwWikiCode = function() {
 		text = text.replace(/<br class="mw_emptyline_first"><\/p>/gmi, '</p>');
 		text = text.replace(/<br class="mw_emptyline"><\/p>/gmi, '</p>');
 		text = text.replace(/<br><\/p>/gmi, '</p>');
+		text = text.replace(/<br class="mw_emptyline_first"[^>]*>/gmi, "<@@br_emptyline_first@@>");
 		//then replace Enter keypress followed by 'div's (eg table, lists etc, with a single empty line
 		text = text.replace(/<p class="mw_paragraph">(.*?)<\/p><div>/gmi, '$1<@@br_emptyline@@><div>');
-		//then replace Enter keypress followed by specialTags (eg <h, <source,  etc, with a single empty line
-		regex = '<p class="mw_paragraph">(.*?)<\/p><(' + _specialTagsList + ')';
-		findText = new RegExp(regex, 'gmi');
-		text = text.replace(findText, '$1<@@br_emptyline@@><$2');
 		//then replace Enter keypress with wiki paragraph eg three new lines
 		text = text.replace(/<p class="mw_paragraph">(.*?)<\/p>/gmi, '$1<@@br_emptyline_first@@><@@br_emptyline@@>');
+		//then replace Enter keypress followed by specialTags (eg <h, <source,  etc, with a single empty line
+		regex = '<@@br_emptyline_first@@><@@br_emptyline@@><(' + _specialTagsList + ')';
+		findText = new RegExp(regex, 'gmi');
+		text = text.replace(findText, '<br><$1');
+		regex = '<@@br_emptyline_first@@><(' + _specialTagsList + ')';
+		findText = new RegExp(regex, 'gmi');
+		text = text.replace(findText, '<br><$1');
+		regex = '<p><\\/p><(' + _specialTagsList + ')';
+		findText = new RegExp(regex, 'gmi');
+		text = text.replace(findText, '<$1');
+		text = text.replace(/<@@br_emptyline_first@@><@@br_emptyline@@><br>/gmi, '<br>');
+//		text = text.replace(/<p><\/p>/gmi, '<@@br_emptyline@@>');
 //		text = text.replace(/<p class="mw_paragraph">(.*?)<\/p>/gmi, '$1<@@br_emptyline_first@@>');
 		//finally replace Shift enters appropriate number of new lines eg two for first and one for immediately following
 //		text = text.replace(/<br>/gmi, '<@@br_emptyline_first@@>');
@@ -1732,7 +1738,6 @@ var MwWikiCode = function() {
 			}
 		}*/
 
-		text = text.replace(/<br class="mw_emptyline_first"[^>]*>/gmi, "<@@br_emptyline_first@@>");
 		// if emptyline_first is no longer empty, change it to a normal p
 //		text = text.replace(/<div class="mw_emptyline_first"[^>]*>&nbsp;<\/div>/gmi, '<div><@@br_emptyline_first@@></div>'); // TinyMCE 4
 //		text = text.replace(/<div class="mw_emptyline_first"[^>]*>(.*?\S+.*?)<\/div>/gmi, "<div>$1</div>");
@@ -1753,7 +1758,8 @@ var MwWikiCode = function() {
 		text = text.replace(/<br.*?>/gi, function(match, offset, string) {
 			var attributes = $(match).attr('data-attributes');
 			if (typeof attributes === 'undefined' || attributes == "") {
-				return '<br class="single_linebreak"/>';
+//				return '<br class="single_linebreak"/>';
+				return '<@@br_emptyline@@>';
 			}
 			return '<br' + decodeURI(attributes) + '>';
 		});
@@ -1972,8 +1978,10 @@ var MwWikiCode = function() {
 		//DC if the br_emptyline was preceded by abr_emptyline_first then replacing the br_emptyline before the br_emptyline_first
 		text = text.replace(/\n?<@@br_emptyline_first@@>/gmi, "<@@2nl@@>");
 		text = text.replace(/\n?<@@br_emptyline@@>/gmi, "<@@nl@@>");
-		//DC clean up new lines associated with blocks and or headers
+		//DC clean up new lines associated with blocks and or headers and or tables
 		text = text.replace(/<@@bnl@@><@@bnl@@>/gmi, "<@@nl@@>");
+		text = text.replace(/<@@tnl@@><@@bnl@@>/gmi, "<@@nl@@>");
+		text = text.replace(/<@@bnl@@><@@tnl@@>/gmi, "<@@nl@@>");
 		text = text.replace(/<@@hnl@@><@@hnl@@>/gmi, "<@@nl@@>");
 		text = text.replace(/<@@2nl@@><@@[bh]nl@@>/gmi, "<@@2nl@@>");
 		text = text.replace(/<@@[bh]nl@@><@@2nl@@>/gmi, "<@@2nl@@>");
@@ -2149,7 +2157,6 @@ var MwWikiCode = function() {
 			};
 			
 			tagHTML = $.trim(tagHTML);
-//			tagHTML = '<div class="mceNonEditableStart"></div>' + tagHTML + '<div class="mceNonEditableOverlay"></div><div class="mceNonEditableEnd"></div>';
 			tagHTML = '<mwspan>' + tagHTML + '<div class="mceNonEditableOverlay"></div></mwspan>';
 			el = ed.dom.create('span', codeAttrs, tagHTML);
 			tagText = el.outerHTML;
@@ -2456,7 +2463,7 @@ var MwWikiCode = function() {
 
 		// Tiny replaces &nbsp; by space, so we need to undo this
 		text = text.replace(/<span class="mw_htmlentity">[\s\u00a0]<\/span>/gi, '<span class="mw_htmlentity">&nbsp;<\/span>');
-		regex = '<span class="mw_htmlentity">(&[^;]*?;)<\/span>';
+		regex = '<span class="mw_htmlentity">(&[^;]*?;)<\\/span>';
 		matcher = new RegExp(regex, 'gmi');
 
 		mtext = text;
@@ -2715,14 +2722,7 @@ var MwWikiCode = function() {
 		var text = e.content,
 			$dom,
 			htmlPrefilter = $.htmlPrefilter,
-			regex = '<div class="mceNonEditableStart"><\/div>[\\S\\s]*?<div class="mceNonEditableEnd"><\/div>',
-			matcher = new RegExp(regex, 'gmi');
-
-		$.htmlPrefilter = function( html ) {
-  			return html.replace(matcher, '<*****>' );
-		};
-
-			regex = '<mwspan>[\\S\\s]*?<\/mwspan>',
+			regex = '<mwspan>[\\S\\s]*?<\\/mwspan>',
 			matcher = new RegExp(regex, 'gmi');
 
 		$.htmlPrefilter = function( html ) {
@@ -2853,7 +2853,7 @@ var MwWikiCode = function() {
 		//get rid of blank lines at end of text
 		e.content = tinymce.util.Tools.trim(e.content);
 		return e.content;
-	}
+	} 
 
 	/**
 	 * Event handler for "beforeSetContent"
@@ -2910,7 +2910,236 @@ var MwWikiCode = function() {
 			_ed.undoManager.add();
 		});
 	}
+//******************
+	function showWikiLinkDialog() {
+		var selectedNode = _ed.selection.getNode(),
+			data = {},
+			dataType = '',
+			isWikiLink = '',
+			linkParts = [],
+			value = '',
+			aLink = '',
+			classListCtrl,
+			linkCtrl,
+			labelCtrl;
+
+		function buildListItems(inputList, itemCallback, startItems) {
+			function appendItems(values, output) {
+				output = output || [];
 	
+				tinymce.each(values, function(item) {
+					var menuItem = {text: item.text || item.title};
+	
+					if (item.menu) {
+						menuItem.menu = appendItems(item.menu);
+					} else {
+						menuItem.value = item.value;
+	
+						if (itemCallback) {
+							itemCallback(menuItem);
+						}
+					}
+					
+					output.push(menuItem);
+				});
+	
+				return output;
+			}
+	
+			return appendItems(inputList, startItems || []);
+		}
+		if (typeof(selectedNode.attributes["data-mw-type"]) !== "undefined" ) {
+			data.class = selectedNode.attributes["class"].value;
+			if (data.class =='link internal mw-internal-link mceNonEditable new') {
+				data.class = 'link internal mw-internal-link mceNonEditable';
+			}
+			dataType = selectedNode.attributes["data-mw-type"].value;
+			isWikiLink = 
+				dataType == "internal_link" || 
+				dataType == "external_link" ;	
+		}
+
+		if (isWikiLink) {
+			value = decodeURI(selectedNode.attributes["data-mw-wikitext"].value);
+			if (dataType == 'internal_link') {
+				value = value.substr(2, value.length - 4);
+				linkParts = value.split("|");
+				aLink = linkParts[0];
+				if (linkParts.length > 1) {
+					value = linkParts[1];
+				} else {
+					value = '';
+				}
+			} else if (dataType == 'external_link') {
+				value = value.substr(1, value.length - 2);
+				linkParts = value.split(" ");
+				aLink = linkParts[0];
+				if (linkParts.length > 1) {
+					linkParts.shift();
+					value = linkParts.join(" ");
+				} else {
+					value = '';
+				}
+			}
+		} else {
+			value = _ed.selection.getContent({format : 'text'});
+		}
+		data.href = aLink;
+		data.text = value;
+		
+		if (_ed.settings.link_class_list) {
+			classListCtrl = {
+				name: 'class',
+				type: 'listbox',
+				label: mw.msg("tinymce-link-type-label"),
+				value: data.class,
+				values: buildListItems(
+					_ed.settings.link_class_list,
+					function(item) {
+						if (item.value) {
+							item.textStyle = function() {
+								return _ed.formatter.getCssText({inline: 'a', classes: [item.value]});
+							};
+						}
+					}
+				)
+			};
+		}
+
+		linkCtrl = {
+			name: 'href',
+			type: 'textbox',
+			size: 40,
+			label: mw.msg("tinymce-link-url-page-label"),
+			value: data.href,
+			onchange: function() {
+				data.href = this.value();
+			}
+		};
+
+		labelCtrl = {
+			name: 'text',
+			type: 'textbox',
+			size: 40,
+			label: mw.msg("tinymce-link-display-text-label"),
+			value: data.text,
+			onchange: function() {
+				data.text = this.value();
+			}
+		};
+
+		_ed.windowManager.open({
+			title: mw.msg('tinymce-link-title'),
+			data: data,
+			body: [
+				classListCtrl,
+				linkCtrl,
+				labelCtrl
+			],
+			onsubmit: function(e) {
+				/*eslint dot-notation: 0*/
+				var href;
+				data = tinymce.extend(data, e.data);
+				href = data.href;
+
+				// Delay confirm since onSubmit will move focus
+				function delayedConfirm(message, callback) {
+					var rng = _ed.selection.getRng();
+
+					tinymce.util.Delay.setEditorTimeout(_ed, function() {
+						_ed.windowManager.confirm(message, function(state) {
+							_ed.selection.setRng(rng);
+							callback(state);
+						});
+					});
+				}
+
+				function createLink() {
+					//Trim left and right everything (including linebreaks) that is not a starting or ending link code
+					//This is necessary to avoid the bswikicode parser from breaking the markup
+					var href = data.href.replace(/(^.*?\[|\].*?$|\r\n|\r|\n)/gm, ''); //first layer of '[...]' //external-, file- and mailto- links
+					href = href.replace(/(^.*?\[|\].*?$|\r\n|\r|\n)/gm, ''); //potential second layer of '[[...]]' //internal and interwiki links
+					var aLink = decodeURIComponent(href).replace("_"," ");
+					var aLabel = decodeURI(data.text).replace("_"," ");
+					var wikitext = "";
+					
+					if (data["class"] == "link internal mw-internal-link mceNonEditable") { 
+						if (aLabel) {
+							wikitext = "[[" + aLink + "|" + aLabel + "]]";
+						} else {
+							wikitext = "[[" + aLink + "]]";			
+						}
+					} else if (data["class"] == "link external mw-external-link mceNonEditable") {
+						if (aLabel) {
+							wikitext = "[" + aLink + " " + aLabel + "]";
+						} else {
+							wikitext = "[" + aLink + "]";
+						}
+					}
+					
+//					_ed.undoManager.transact(function(){
+						_ed.focus();
+//						_ed.selection.setContent(text, {format: 'raw'});
+						_ed.selection.setContent(wikitext);
+						_ed.undoManager.add();
+						_ed.format = 'raw';
+//					});
+				}
+
+				function insertLink() {
+					_ed.undoManager.transact(createLink);
+				}
+
+				if (!href) {
+					_ed.execCommand('unlink');
+					return;
+				}
+
+				// Is email and not //user@domain.com
+				if (href.indexOf('@') > 0 && href.indexOf('//') == -1 && href.indexOf('mailto:') == -1) {
+					delayedConfirm(
+						mw.msg("tinymce-link-want-to-link-email"),
+						function(state) {
+							if (state) {
+								data.href = 'mailto:' + data.href;
+							}
+							insertLink();
+						}
+					);
+					return;
+				}
+
+				// Is not protocol prefixed
+				var hasUrl,
+				urlProtocolMatch = "/^" + mw.config.get( 'wgUrlProtocols' ) + "/i";
+				urlProtocolMatch = urlProtocolMatch.replace(/\|/g,"|^");
+				if (href.match(urlProtocolMatch) ||
+					href.substr(0,2) === "//" ) {
+					hasUrl = true;
+				}
+				
+				if ((data["class"] == "link external mw-external-link mceNonEditable") &&
+					(_ed.settings.link_assume_external_targets && !hasUrl)) {
+					delayedConfirm(
+						mw.msg("tinymce-link-want-to-link-external"),
+						function(state) {
+							if (state) {
+								data.href = '//' + data.href;
+							}
+							insertLink();
+						}
+					);
+					return;
+				}
+
+				insertLink();
+				return;
+			}
+		});
+		return;
+	}
+
+//******************
 	function showWikiMagicDialog() {
 		var selectedNode = _ed.selection.getNode(),
 			nodeType = '',
@@ -3013,7 +3242,6 @@ var MwWikiCode = function() {
 		// add in non rendered new line functionality
 		//
 		_useNrnlCharacter = ed.getParam("wiki_non_rendering_newline_character");
-//		_slb = '<span class="single_linebreak" title="single linebreak" contenteditable="false"><div class="mceNonEditableStart"></div>' + _useNrnlCharacter + '<div class="mceNonEditableOverlay"></div><div class="mceNonEditableEnd"></div></span>';
 		_slb = '<span class="single_linebreak" title="single linebreak" contenteditable="false"><mwspan>' + _useNrnlCharacter + '</mwspan></span>';
 
 		if (_useNrnlCharacter) {
@@ -3031,10 +3259,43 @@ var MwWikiCode = function() {
 				onclick: insertSingleLinebreak
 			});
 		}
-		
+
+		//
+		// add in wikilink functionality
+		//
+		ed.addShortcut('Meta+K', '', showWikiLinkDialog);
+		ed.addCommand('mceLink', showWikiLinkDialog);
+
+		ed.addButton('wikilink', {
+			icon: 'link',
+			tooltip: mw.msg("tinymce-link-link-button-tooltip"),
+			shortcut: 'Meta+K',
+			onclick: showWikiLinkDialog,
+			stateSelector: 'a[href]'
+		});
+	
+		ed.addButton('unlink', {
+			icon: 'unlink',
+			tooltip: mw.msg("tinymce-link-link-remove-button-tooltip"),
+			cmd: 'unlink',
+			stateSelector: 'a[href]'
+		});
+	
+		ed.addMenuItem('wikilink', {
+			icon: 'link',
+			text: mw.msg('tinymce-link'),
+			shortcut: 'Meta+K',
+			onclick: showWikiLinkDialog,
+			stateSelector: 'a[href]',
+			context: 'insert',
+			prependToContext: true
+		});
+
 		//
 		// add in wikimagic functionality
 		//
+		ed.addCommand('mceWikimagic', showWikiMagicDialog);
+	  
 		ed.addButton('wikimagic', {
 			icon: 'codesample',
 			stateSelector: '.wikimagic',
@@ -3050,8 +3311,6 @@ var MwWikiCode = function() {
 			context: 'insert',
 			onclick: showWikiMagicDialog
 		});
-	  
-		ed.addCommand('mceWikimagic', showWikiMagicDialog);
 	  
 		//
 		// add in wiki source code functionality
@@ -3071,8 +3330,8 @@ var MwWikiCode = function() {
 			onclick: showWikiSourceCodeDialog
 		});
 		
+		// Add wrapper for processing when drag/dropping an image.
 		ed.on('drop', function(e) {
-//debugger;
 			if (typeof e.targetClone != 'undefined') {
 				if ((e.targetClone.tagName == "IMG") || (e.targetClone.tagName == "SPAN")) {
 					if (e.targetClone.className.includes("mw-image")) {
@@ -3100,7 +3359,7 @@ var MwWikiCode = function() {
 		});	*/
 	  
 		// Add option to double-click on non-editable overlay to get
-		// "wikimagic" popup.
+		// "wikimagic" or "wikilink" popup.
 		ed.on('dblclick', function(e) {
 			var selectedNode;
 			if ((e.target.tagName == "IMG") || (e.target.tagName == "SPAN")) {
