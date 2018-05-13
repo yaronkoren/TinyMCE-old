@@ -498,6 +498,7 @@ define("tinymce/pasteplugin/SmartPaste", [
 
 	var pasteHtml = function (editor, html) {
 //		editor.insertContent(html, {
+console.log(html);
 		editor.selection.setContent(html, {
 			merge: editor.settings.paste_merge_formats !== false,
 			paste: true
