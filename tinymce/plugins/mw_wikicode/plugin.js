@@ -2721,6 +2721,7 @@ var MwWikiCode = function() {
 		// convert html text to DOM
 		var text = e.content,
 			$dom,
+			done,
 			htmlPrefilter = $.htmlPrefilter,
 			regex = '<mwspan>[\\S\\s]*?<\\/mwspan>',
 			matcher = new RegExp(regex, 'gmi');
@@ -2733,10 +2734,15 @@ var MwWikiCode = function() {
 		
 		$dom = $( "<div id='tinywrapper'>" + text + "</div>" );
 
-		// replace divs with their contents
-		$dom.find( "div" ).replaceWith( function() {
-			return $( this ).html();
-		} );
+		done = false;
+		while (!done) {
+			// replace divs recursively with their contents
+			done = true;
+			$dom.find( "div" ).replaceWith( function() {
+				done = false;
+				return $( this ).html();
+			} );
+		}
 
 		// replace spans of class variable with their contents
 		$dom.find( "span[class*='variable']" ).replaceWith( function() {
@@ -3340,6 +3346,37 @@ var MwWikiCode = function() {
 				}
 			}
 		})
+		
+		// add button for browser context menu 
+		ed.addButton('browsercontextmenu', {
+			icon: 'codesample',
+			tooltip: mw.msg( 'tinymce-browsercontextmenu' ),
+			onclick: showWikiMagicDialog
+			});
+
+		ed.addMenuItem('browsercontextmenu', {
+			icon: 'codesample',
+			text: mw.msg('tinymce-browsercontextmenu-title'),
+			tooltip: mw.msg( 'tinymce-browsercontextmenu' ),
+			context: 'insert',
+			onclick: function(ev) {
+//debugger;
+				ed.focus();
+//				var e = jQuery.Event('keydown');
+				var e = jQuery.Event('mousedown');
+				e.ctrlKey = true;
+				e.button = 2;
+//				ev.target.fire('mousedown',({button:2,ctrlKey:true}));
+//				ev.target.fire('mouseup');
+//				ed.fire(e).fire({type:'mouseup'});
+//				$(ed).trigger(e).trigger({type:'mouseup'});
+//				$(document).triggerHandler('contextmenu');
+//				$(document).trigger(e).trigger({type:'mousedown',button:2}).trigger({type:'mouseup'});
+				$(ev.target).trigger({type:'mousedown',button:2,ctrlKey:true}).trigger({type:'mouseup'});
+//				alert('done');
+			}
+		});
+
 		
 		// On select if image make sure you get the IMG span
 		// not just the img
