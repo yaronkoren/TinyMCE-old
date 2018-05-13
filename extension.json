@@ -113,6 +113,8 @@
 				"tinymce-openlink",
 				"tinymce-wikimagic",
 				"tinymce-wikimagic-title",
+				"tinymce-browsercontextmenu",
+				"tinymce-browsercontextmenu-title",
 				"tinymce-wikisourcecode",
 				"tinymce-wikisourcecode-title",
 				"tinymce-link-title",
