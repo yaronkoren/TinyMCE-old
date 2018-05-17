@@ -1086,11 +1086,13 @@ var MwWikiCode = function() {
 		text = text.replace(/(&[^\s]*?;)/gmi, function($0) {
 			return tinymce.DOM.decode($0);
 		});
-		
+
 		//restore the new lines
 		text = text.replace(/@@TNL@@/gm, '\n');
-		//cleanup thead and tbody tags. Caution: Must be placed before th cleanup because of
+		//cleanup colgroup, col, thead, tfoot and tbody tags. Caution: Must be placed before th cleanup because of
 		//regex collision
+		text = text.replace(/<(\/)?colgroup([^>]*)>/gmi, "");
+		text = text.replace(/<col(.*?)>/gmi, "");
 		text = text.replace(/<(\/)?tbody([^>]*)>/gmi, "");
 		text = text.replace(/<(\/)?thead([^>]*)>/gmi, "");
 		text = text.replace(/<(\/)?tfoot([^>]*)>/gmi, "");
@@ -2814,6 +2816,11 @@ var MwWikiCode = function() {
 		// convert DOM back to html text
 		text = $dom.html();
 
+		//remove &; encoding
+		text = text.replace(/(&[^\s]*?;)/gmi, function($0) {
+			return tinymce.DOM.decode($0);
+		});
+
 		//cleanup entities in attribtues
 		while ( text.match( /(\="[^"]*?)(<)([^"]*?")/gmi ) ) {
 			text = text.replace( /(\="[^"]*?)(<)([^"]*?")/g, '$1&lt;$3' );
@@ -2821,11 +2828,6 @@ var MwWikiCode = function() {
 		while ( text.match( /(\="[^"]*?)(>)([^"]*?")/gmi ) ) {
 			text = text.replace( /(\="[^"]*?)(>)([^"]*?")/g, '$1&gt;$3' );
 		}
-
-		//remove &; encoding
-		text = text.replace(/(&[^\s]*?;)/gmi, function($0) {
-			return tinymce.DOM.decode($0);
-		});
 
 		return text;
 	}
@@ -2900,6 +2902,7 @@ var MwWikiCode = function() {
 			e.content= ed.getContent({source_view: true, no_events: true, format: 'raw'});
 		}
 		e.content = _convertHtml2Wiki(e);
+		return;
 	}
 
 	function _onLoadContent(ed, o) {
@@ -3145,7 +3148,6 @@ var MwWikiCode = function() {
 		return;
 	}
 
-//******************
 	function showWikiMagicDialog() {
 		var selectedNode = _ed.selection.getNode(),
 			nodeType = '',
@@ -3336,43 +3338,51 @@ var MwWikiCode = function() {
 			onclick: showWikiSourceCodeDialog
 		});
 		
+		//
 		// Add wrapper for processing when drag/dropping an image.
+		//
 		ed.on('drop', function(e) {
+//debugger;
 			if (typeof e.targetClone != 'undefined') {
-				if ((e.targetClone.tagName == "IMG") || (e.targetClone.tagName == "SPAN")) {
-					if (e.targetClone.className.includes("mw-image")) {
+				if (typeof e.targetClone.className != 'undefined') {
+					if (/\bmw-image\b|\bmw-internal-link\b|\bmw-external-link\b|\bwikimagic\b/.test(e.targetClone.className)) {
 						e.targetClone = _ed.dom.create('dropsrc', '' , e.targetClone);
 					}
 				}
 			}
 		})
 		
-		// add button for browser context menu 
+		//
+		// add processing for browser context menu 
+		//
 		ed.addButton('browsercontextmenu', {
-			icon: 'codesample',
+			icon: 'info',
 			tooltip: mw.msg( 'tinymce-browsercontextmenu' ),
 			onclick: showWikiMagicDialog
 			});
 
 		ed.addMenuItem('browsercontextmenu', {
-			icon: 'codesample',
+			icon: 'info',
 			text: mw.msg('tinymce-browsercontextmenu-title'),
 			tooltip: mw.msg( 'tinymce-browsercontextmenu' ),
 			context: 'insert',
-			onclick: function(ev) {
+			onclick: function(e) {
 //debugger;
+				var mcePane = $("textarea#" + e.target.id).prev();
+				var ev = jQuery.Event('mousedown');
+				var ev2 = jQuery.Event('mouseup');
+				ev.ctrlKey = true;
+				ev.button = 2;
 				ed.focus();
+				mcePane.trigger(ev).trigger(ev2);
 //				var e = jQuery.Event('keydown');
-				var e = jQuery.Event('mousedown');
-				e.ctrlKey = true;
-				e.button = 2;
 //				ev.target.fire('mousedown',({button:2,ctrlKey:true}));
 //				ev.target.fire('mouseup');
 //				ed.fire(e).fire({type:'mouseup'});
-//				$(ed).trigger(e).trigger({type:'mouseup'});
+//				$(mcePane).trigger(ev).trigger({type:'mouseup'});
 //				$(document).triggerHandler('contextmenu');
 //				$(document).trigger(e).trigger({type:'mousedown',button:2}).trigger({type:'mouseup'});
-				$(ev.target).trigger({type:'mousedown',button:2,ctrlKey:true}).trigger({type:'mouseup'});
+//				$(mcePane).trigger({type:'mousedown',button:2,ctrlKey:true}).trigger({type:'mouseup'});
 //				alert('done');
 			}
 		});
