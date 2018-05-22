@@ -34,7 +34,7 @@ if ( defined( 'TINYMCE_VERSION' ) ) {
 	return 1;
 }
 
-define( 'TINYMCE_VERSION', '0.1' );
+define( 'TINYMCE_VERSION', '0.2' );
 
 $GLOBALS['wgExtensionCredits']['hook'][] = array(
 	'path' => __FILE__,

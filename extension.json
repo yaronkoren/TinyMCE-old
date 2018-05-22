@@ -1,7 +1,7 @@
 {
 	"@Note": "When updating this file please also update TinyMCE.php with the same changes.",
 	"name": "TinyMCE",
-	"version": "0.1",
+	"version": "0.2",
 	"author": [
 		"Ephox",
 		"Hallo Welt",
