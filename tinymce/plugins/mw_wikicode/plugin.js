@@ -349,7 +349,7 @@ var MwWikiCode = function() {
 		wikiImageObject.imagename = parts[0];
 		for (var i = 1; i < parts.length; i++) {
 			part = parts[i];
-			if (part.endsWith('px')) {
+			if (part.substr(part.length - 2, 2) == 'px') {
 				// Hint: frame ignores size but we want to keep this information
 				// See: mediawiki.org/wiki/Help:Images#Size_and_frame
 
@@ -3003,10 +3003,10 @@ var MwWikiCode = function() {
 				value: value
 				},
 			onsubmit: function(e) {
-				var text = e.data.code;
 				_ed.undoManager.transact(function(){
 					_ed.focus();
-					_ed.selection.setContent(text);
+					e.load = true;
+					_ed.selection.setContent(e.data.code,e);
 					_ed.undoManager.add();
 					_ed.format = 'raw';
 				});
@@ -3066,7 +3066,7 @@ var MwWikiCode = function() {
 		if (!e.load) e.content = _convertHtml2Wiki(e);
 		// check if this is the content of a drag/drop event
 		// if it is then no need to convert wiki to html
-		if (e.content.startsWith('<dropsrc>')) {
+		if ((e.content.length > 9) && (e.content.substring(0,9) == '<dropsrc>')) {
 			e.content = e.content.substring(9, e.content.length - 10);
 			return;
 		}
@@ -3129,7 +3129,7 @@ var MwWikiCode = function() {
 			selectedNode = e.target;
 			while (selectedNode.parentNode != null) {
 				if (typeof selectedNode.className != "undefined") {
-					if (selectedNode.className.includes("mw-image")) {
+					if (selectedNode.className.indexOf("mw-image") > -1) {
 						_ed.selection.select(selectedNode);
 						e.target = selectedNode;
 					}
@@ -3137,10 +3137,10 @@ var MwWikiCode = function() {
 				selectedNode = selectedNode.parentNode;
 			}
 		} else if (e.target.className == 'mceNonEditableOverlay' ) {
-			if (e.target.parentNode.parentNode.className.includes("wikimagic")) {
+			if (e.target.parentNode.parentNode.className.indexOf("wikimagic") > -1) {
 				tinyMCE.activeEditor.execCommand('mceWikimagic');
-			} else if (e.target.parentNode.parentNode.className.includes("mw-internal-link") 
-				|| e.target.parentNode.parentNode.className.includes("mw-external-link")) {
+			} else if (e.target.parentNode.parentNode.className.indexOf("mw-internal-link") > -1 
+				|| e.target.parentNode.parentNode.className.indexOf("mw-external-link") > -1) {
 				tinyMCE.activeEditor.execCommand('mceLink');
 			}
 		}
@@ -3271,7 +3271,6 @@ var MwWikiCode = function() {
 				alert(mw.msg( 'tinymce-browsercontextmenu' ));
 			}
 		});
-
 	  
 		// setup MW TinyMCE macros
 		// these are defined in localSettings.php
@@ -3312,7 +3311,21 @@ var MwWikiCode = function() {
 				}
 			});
 		}
-
+		// setup minimising menubar when field not selected in pageforms
+		var minimizeOnBlur = $(_ed.getElement()).hasClass( 'mceMinimizeOnBlur' );
+		if ( minimizeOnBlur ) {
+			_ed.on('focus', function(e) {
+				var mcePane = $("textarea#" + e.target.id).prev();
+				mcePane.find(".mce-toolbar-grp").css("height", "");
+				mcePane.find(".mce-toolbar-grp .mce-flow-layout").show("medium");
+			});
+			_ed.on('blur', function(e) {
+				var mcePane = $("textarea#" + e.target.id).prev();
+				// Keep a little sliver of the toolbar so that users see it.
+				mcePane.find(".mce-toolbar-grp").css("height", "10px");
+				mcePane.find(".mce-toolbar-grp .mce-flow-layout").hide("medium");
+			});
+		}
 	};
 
 	this.getInfo = function() {
