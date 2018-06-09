@@ -46,6 +46,8 @@
 	"tinymce-openlink": "Open link",
 	"tinymce-wikimagic": "Add wiki templates, parser functions and magic words",
 	"tinymce-wikimagic-title": "Wiki templates, parser functions and magic words",
+	"tinymce-browsercontextmenu": "You can access the browser's context menu by keying ctrl-rightclick",
+	"tinymce-browsercontextmenu-title": "Browser context menu",
 	"tinymce-wikisourcecode": "View and edit wiki source code",
 	"tinymce-wikisourcecode-title": "Wiki source code",
 	"tinymce-insert-linebreak": "Insert single linebreak at current position",
