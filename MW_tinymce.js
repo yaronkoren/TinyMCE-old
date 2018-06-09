@@ -30,7 +30,7 @@ window.mwTinyMCEInit = function( tinyMCESelector ) {
 		invalid_elements: 'tbody',
 		wiki_non_rendering_newline_character: '&para;', // set to false if you don't use non-rendering single new lines in wiki
 		wiki_tags_list: mw.config.get('wgTinyMCETagList'), 
-		additional_wiki_tags: '|ol|ul|li|h1|h2|h3|h4|h5|h6|ta',
+		additional_wiki_tags: '|ol|ul|li|h1|h2|h3|h4|h5|h6|ta|div',
 		browser_spellcheck: true,
 		wikimagic_context_toolbar: true,
 		browsercontextmenu_context_toolbar: true,
@@ -134,45 +134,7 @@ window.mwTinyMCEInit = function( tinyMCESelector ) {
 		autoresize_max_height: 400,
 		setup: function(editor) {
 
-/*		var numMacros = tinyMCEMacros.length;
-		for ( var i = 0; i < numMacros; i++ ) {
-			var curMacro = tinyMCEMacros[i];
-			editor.addMenuItem('macro' + i, {
-				text: curMacro['name'],
-				image: curMacro['image'],
-				context: 'insert',
-				wikitext: curMacro['text'],
-				onclick: function () {
-
-					// Insert the user-selected text into
-					// the macro text, if the macro text
-					// has a section to be replaced.
-					// (Demarcated by '!...!'.)
-					// @TODO - handle actual ! marks.
-					var selectedContent = editor.selection.getContent();
-					var insertText = this.settings.wikitext;
-					var replacementStart = insertText.indexOf('!');
-					var replacementEnd = insertText.indexOf('!', replacementStart + 1);
-					if ( selectedContent == '' ) {
-						insertText = insertText.replace( /!/g, '' );
-					} else if ( replacementStart > 0 && replacementEnd > 0 ) {
-						insertText = insertText.substr( 0, replacementStart ) + selectedContent + insertText.substr( replacementEnd + 1 );
-					}
-
-				editor.undoManager.transact(function(){
-					editor.focus();
-//					editor.selection.setContent(insertText, {format: 'raw'});
-					editor.selection.setContent(insertText);
-					editor.undoManager.add();
-					editor.format = 'raw';
-					});
-
-					return;
-				}
-			});
-		}*/
-
-		var minimizeOnBlur = $(editor.getElement()).hasClass( 'mceMinimizeOnBlur' );
+/*		var minimizeOnBlur = $(editor.getElement()).hasClass( 'mceMinimizeOnBlur' );
 		if ( minimizeOnBlur ) {
 			editor.on('focus', function(e) {
 				var mcePane = $("textarea#" + e.target.id).prev();
@@ -185,7 +147,7 @@ window.mwTinyMCEInit = function( tinyMCESelector ) {
 				mcePane.find(".mce-toolbar-grp").css("height", "10px");
 				mcePane.find(".mce-toolbar-grp .mce-flow-layout").hide("medium");
 			});
-		}
+		}*/
 	},
 	init_instance_callback: function (instance) {
 		// For some reason, in some installations this only works as an inline function,
