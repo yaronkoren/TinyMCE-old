@@ -1,12 +1,14 @@
+var server = 'https://' + mw.config.get( 'wgServer' ) + '/';
 var scriptPath = mw.config.get( 'wgScriptPath' );
+var extensionAssetsPath = mw.config.get( 'wgExtensionAssetsPath' );
+var tinyMCEMacros = mw.config.get( 'wgTinyMCEMacros' );
+var tinyMCETagList = mw.config.get( 'wgTinyMCETagList' );
 var tinyMCELanguage = mw.config.get( 'wgTinyMCELanguage' );
 var tinyMCELangURL = null;
 if ( tinyMCELanguage !== 'en' ) {
-	tinyMCELangURL = scriptPath + '/extensions/TinyMCE/tinymce/langs/' +
+	tinyMCELangURL = extensionAssetsPath + '/TinyMCE/tinymce/langs/' +
 		tinyMCELanguage + '.js';
 }
-//var tinyMCEDirectionality = mw.config.get( 'wgTinyMCEDirectionality' );
-//var tinyMCEMacros = mw.config.get( 'wgTinyMCEMacros' );
 var mw_skin = mw.config.get( 'skin' );
 var mw_skin_css = '/load.php?debug=false&lang=en-gb&modules=mediawiki.legacy.commonPrint%2Cshared%7Cmediawiki.sectionAnchor%7Cmediawiki.skinning.interface%7Cskins.' + mw_skin + '.styles&only=styles&skin=' + mw_skin ;
 
@@ -17,19 +19,19 @@ window.mwTinyMCEInit = function( tinyMCESelector ) {
 		branding: false,
 //		relative_urls: false,
 //		remove_script_host: false,
-		document_base_url: mw.config.get( 'wgServer' ),
-		tinyMCEMacros: mw.config.get( 'wgTinyMCEMacros' ),
+//		document_base_url: server,
+		tinyMCEMacros: tinyMCEMacros,
 		automatic_uploads: true,
 		paste_data_images: true,
 		content_css: 
-			[scriptPath + '/extensions/TinyMCE/MW_tinymce.css',
+			[extensionAssetsPath + '/TinyMCE/MW_tinymce.css',
 			scriptPath + mw_skin_css],
-		theme_url: scriptPath + '/extensions/TinyMCE/tinymce/themes/modern/theme.js',
-		skin_url: scriptPath + '/extensions/TinyMCE/tinymce/skins/lightgray',
+		theme_url: extensionAssetsPath + '/TinyMCE/tinymce/themes/modern/theme.js',
+		skin_url: extensionAssetsPath + '/TinyMCE/tinymce/skins/lightgray',
 		paste_word_valid_elements: 'b,strong,i,em,h1,h2,h3,h4,h5,table,thead,tfoot,tr,th,td,ol,ul,li,a,sub,sup,strike,br,del,div,p',
 		invalid_elements: 'tbody',
 		wiki_non_rendering_newline_character: '&para;', // set to false if you don't use non-rendering single new lines in wiki
-		wiki_tags_list: mw.config.get('wgTinyMCETagList'), 
+		wiki_tags_list: tinyMCETagList, 
 		additional_wiki_tags: '|ol|ul|li|h1|h2|h3|h4|h5|h6|ta|div',
 		browser_spellcheck: true,
 		wikimagic_context_toolbar: true,
@@ -87,26 +89,26 @@ window.mwTinyMCEInit = function( tinyMCESelector ) {
     		{title: mw.msg("tinymce-upload-type-label-wiki"), value: 'Wiki'}
 		],
 		external_plugins: {
-			'anchor': scriptPath + '/extensions/TinyMCE/tinymce/plugins/anchor/plugin.js',
-			'autolink': scriptPath + '/extensions/TinyMCE/tinymce/plugins/autolink/plugin.js',
-			'autoresize': scriptPath + '/extensions/TinyMCE/tinymce/plugins/autoresize/plugin.js',
-			'autosave': scriptPath + '/extensions/TinyMCE/tinymce/plugins/autosave/plugin.js',
-			'charmap': scriptPath + '/extensions/TinyMCE/tinymce/plugins/charmap/plugin.js',
-			'colorpicker': scriptPath + '/extensions/TinyMCE/tinymce/plugins/colorpicker/plugin.js',
-			'contextmenu': scriptPath + '/extensions/TinyMCE/tinymce/plugins/contextmenu/plugin.js',
-			'insertdatetime': scriptPath + '/extensions/TinyMCE/tinymce/plugins/insertdatetime/plugin.js',
-			'lists': scriptPath + '/extensions/TinyMCE/tinymce/plugins/lists/plugin.js',
-			'noneditable': scriptPath + '/extensions/TinyMCE/tinymce/plugins/noneditable/plugin.js',
-			'preview': scriptPath + '/extensions/TinyMCE/tinymce/plugins/preview/plugin.js',
-			'save': scriptPath + '/extensions/TinyMCE/tinymce/plugins/save/plugin.js',
-			'searchreplace': scriptPath + '/extensions/TinyMCE/tinymce/plugins/searchreplace/plugin.js',
-			'textcolor': scriptPath + '/extensions/TinyMCE/tinymce/plugins/textcolor/plugin.js',
-			'visualblocks': scriptPath + '/extensions/TinyMCE/tinymce/plugins/visualblocks/plugin.js',
-			'wikicode': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_wikicode/plugin.js',
-			'wikiupload': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_upload/plugin.js',
-//			'wikilink': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_link/plugin.js',
-			'wikipaste': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_paste/plugin.js',
-			'table': scriptPath + '/extensions/TinyMCE/tinymce/plugins/mw_table/plugin.js',
+			'anchor': extensionAssetsPath + '/TinyMCE/tinymce/plugins/anchor/plugin.js',
+			'autolink': extensionAssetsPath + '/TinyMCE/tinymce/plugins/autolink/plugin.js',
+			'autoresize': extensionAssetsPath + '/TinyMCE/tinymce/plugins/autoresize/plugin.js',
+			'autosave': extensionAssetsPath + '/TinyMCE/tinymce/plugins/autosave/plugin.js',
+			'charmap': extensionAssetsPath + '/TinyMCE/tinymce/plugins/charmap/plugin.js',
+			'colorpicker': extensionAssetsPath + '/TinyMCE/tinymce/plugins/colorpicker/plugin.js',
+			'contextmenu': extensionAssetsPath + '/TinyMCE/tinymce/plugins/contextmenu/plugin.js',
+			'insertdatetime': extensionAssetsPath + '/TinyMCE/tinymce/plugins/insertdatetime/plugin.js',
+			'lists': extensionAssetsPath + '/TinyMCE/tinymce/plugins/lists/plugin.js',
+			'noneditable': extensionAssetsPath + '/TinyMCE/tinymce/plugins/noneditable/plugin.js',
+			'preview': extensionAssetsPath + '/TinyMCE/tinymce/plugins/preview/plugin.js',
+			'save': extensionAssetsPath + '/TinyMCE/tinymce/plugins/save/plugin.js',
+			'searchreplace': extensionAssetsPath + '/TinyMCE/tinymce/plugins/searchreplace/plugin.js',
+			'textcolor': extensionAssetsPath + '/TinyMCE/tinymce/plugins/textcolor/plugin.js',
+			'visualblocks': extensionAssetsPath + '/TinyMCE/tinymce/plugins/visualblocks/plugin.js',
+			'wikicode': extensionAssetsPath + '/TinyMCE/tinymce/plugins/mw_wikicode/plugin.js',
+			'wikiupload': extensionAssetsPath + '/TinyMCE/tinymce/plugins/mw_upload/plugin.js',
+//			'wikilink': extensionAssetsPath + '/TinyMCE/tinymce/plugins/mw_link/plugin.js',
+			'wikipaste': extensionAssetsPath + '/TinyMCE/tinymce/plugins/mw_paste/plugin.js',
+			'table': extensionAssetsPath + '/TinyMCE/tinymce/plugins/mw_table/plugin.js',
 		},
 		menubar: false, //'edit insert view format table tools',
 		contextmenu_never_use_native: false,
@@ -134,20 +136,6 @@ window.mwTinyMCEInit = function( tinyMCESelector ) {
 		autoresize_max_height: 400,
 		setup: function(editor) {
 
-/*		var minimizeOnBlur = $(editor.getElement()).hasClass( 'mceMinimizeOnBlur' );
-		if ( minimizeOnBlur ) {
-			editor.on('focus', function(e) {
-				var mcePane = $("textarea#" + e.target.id).prev();
-				mcePane.find(".mce-toolbar-grp").css("height", "");
-				mcePane.find(".mce-toolbar-grp .mce-flow-layout").show("medium");
-			});
-			editor.on('blur', function(e) {
-				var mcePane = $("textarea#" + e.target.id).prev();
-				// Keep a little sliver of the toolbar so that users see it.
-				mcePane.find(".mce-toolbar-grp").css("height", "10px");
-				mcePane.find(".mce-toolbar-grp .mce-flow-layout").hide("medium");
-			});
-		}*/
 	},
 	init_instance_callback: function (instance) {
 		// For some reason, in some installations this only works as an inline function,
